@@ -298,7 +298,7 @@ def main():
         sys.exit(1)
     
     # Setup logging
-    setup_logging(config["LOG_DIR"])
+    setup_logging('./logs')
     
     # Extract patches
     extract_and_save_patches(
