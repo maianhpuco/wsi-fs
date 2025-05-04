@@ -218,8 +218,9 @@ def extract_and_save_patches(
         print(f"Processed {img_path}: {len(metadata)} patches saved, metadata at {metadata_csv}")
 
 def main():
+    dataset_name = "camelyon16" 
     parser = argparse.ArgumentParser(description="Extract patches from WSI TIFFs with XML mask filtering")
-    parser.add_argument("--config", type=str, default="config.yaml", help="Path to YAML config file")
+    parser.add_argument("--config", type=str, default=f"config/data_{dataset_name}.yaml", help="Path to YAML config file")
     parser.add_argument("--patch_size", type=int, default=256, help="Size of each patch")
     parser.add_argument("--stride", type=int, default=256, help="Stride for patch extraction")
     parser.add_argument("--tissue_threshold", type=float, default=0.1, help="Minimum tissue fraction to keep patch")
