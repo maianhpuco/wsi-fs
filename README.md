@@ -10,4 +10,8 @@ conda install -c conda-forge openslide openslide-python
  
 ``` 
 
+conda install -c conda-forge gdal
+pip install large-image
+ 
+pip install psutil
 Run batch file 

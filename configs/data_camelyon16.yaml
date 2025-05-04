@@ -3,3 +3,4 @@ WSI_MASK_DIR: '/project/hnguyen2/hqvo3/Datasets/digital_pathology/public/CAMELYO
 PATCH_DIR: '/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/patches'
 PATCH_MASK_DIR: '/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/mask_patches'
 PATCH_META_DIR: '/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/patches_meta'
+LOG_DIR: '/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/logs'
