@@ -291,7 +291,7 @@ def main():
         sys.exit(1)
     
     # Validate config
-    required_keys = ["WSI_DIR", "WSI_MASK_DIR", "PATCH_DIR", "PATCH_MASK_DIR", "PATCH_META_DIR", "LOG_DIR"]
+    required_keys = ["WSI_DIR", "WSI_MASK_DIR", "PATCH_DIR", "PATCH_MASK_DIR", "PATCH_META_DIR"]
     missing_keys = [key for key in required_keys if key not in config]
     if missing_keys:
         logging.error(f"Missing config keys: {missing_keys}")
