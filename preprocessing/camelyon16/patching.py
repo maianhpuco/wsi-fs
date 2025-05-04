@@ -1,6 +1,8 @@
 import os
 from glob import glob
 import large_image
+import openslide
+import tifffile
 import numpy as np
 from PIL import Image, ImageDraw
 from tqdm import tqdm
@@ -40,6 +42,28 @@ def log_memory_usage():
     process = psutil.Process()
     mem_info = process.memory_info()
     logging.info(f"Memory usage: {mem_info.rss / 1024**2:.2f} MB")
+
+def check_tiff_metadata(img_path):
+    """
+    Check TIFF file integrity and metadata.
+    
+    Args:
+        img_path (str): Path to TIFF file.
+    
+    Returns:
+        bool: True if valid, False if invalid.
+    """
+    try:
+        with tifffile.TiffFile(img_path) as tif:
+            if not tif.pages:
+                logging.error(f"No pages found in {img_path}")
+                return False
+            page = tif.pages[0]
+            logging.info(f"TIFF metadata for {img_path}: {page.shape}, is_tiled={page.is_tiled}")
+            return True
+    except Exception as e:
+        logging.error(f"Failed to read TIFF metadata for {img_path}: {e}")
+        return False
 
 def parse_xml(file_path):
     """
@@ -90,7 +114,6 @@ def extract_coordinates(file_path, scale_factor=1.0):
             except ValueError:
                 logging.warning(f"Invalid coordinate in {file_path}: x={x}, y={y}")
     
-    # Sort by Order (simplified)
     coordinates.sort(key=lambda c: c[0])
     logging.info(f"Extracted {len(coordinates)} coordinates from {file_path}")
     return coordinates
@@ -112,14 +135,10 @@ def is_patch_in_tissue(coordinates, x_start, y_start, patch_size, tissue_thresho
     if not coordinates:
         return False
     
-    # Create a small mask for the patch region
     mask = Image.new("L", (patch_size, patch_size), 0)
     draw = ImageDraw.Draw(mask)
     
-    # Adjust coordinates relative to patch
     relative_coords = [(x - x_start, y - y_start) for x, y in coordinates]
-    
-    # Draw polygon (clip to patch bounds)
     draw.polygon(relative_coords, fill=255)
     mask_array = np.array(mask)
     mask.close()
@@ -163,6 +182,9 @@ def extract_and_save_patches(
     mask_save_dir.mkdir(parents=True, exist_ok=True)
     meta_save_dir.mkdir(parents=True, exist_ok=True)
     
+    # Log available tilesources
+    logging.info(f"Available large_image tilesources: {large_image.tilesource.AvailableTileSources.keys()}")
+    
     # Get WSI image files
     image_paths = sorted(glob(os.path.join(wsi_dir, "*.tif")))
     logging.info(f"Found {len(image_paths)} WSI images")
@@ -177,17 +199,43 @@ def extract_and_save_patches(
         mask_path = os.path.join(mask_dir, f"{slide_name}.xml")
         has_mask = os.path.exists(mask_path)
         
-        # Load WSI
+        # Check TIFF metadata
+        if not check_tiff_metadata(img_path):
+            logging.warning(f"Skipping {img_path} due to invalid TIFF metadata")
+            continue
+        
+        # Try large_image
+        slide = None
         try:
             slide = large_image.getTileSource(img_path)
         except Exception as e:
-            logging.error(f"Failed to open {img_path}: {e}")
-            continue
+            logging.warning(f"large_image failed for {img_path}: {e}")
         
-        # Get dimensions at specified level
-        level_info = slide.getLevelForMagnification(slide.getNativeMagnification()['magnification'] / (2 ** level))
-        w, h = slide.getDimensions(level=level_info)
-        scale_factor = slide.getMagnificationForLevel(level) / slide.getNativeMagnification()['magnification']
+        # Fallback to OpenSlide
+        if slide is None:
+            try:
+                slide = openslide.OpenSlide(img_path)
+                is_openslide = True
+            except openslide.OpenSlideError as e:
+                logging.error(f"OpenSlide failed for {img_path}: {e}")
+                continue
+        else:
+            is_openslide = False
+        
+        # Get dimensions and scale factor
+        try:
+            if is_openslide:
+                w, h = slide.level_dimensions[level]
+                scale_factor = 1.0 / (2 ** level)
+            else:
+                level_info = slide.getLevelForMagnification(slide.getNativeMagnification()['magnification'] / (2 ** level))
+                w, h = slide.getDimensions(level=level_info)
+                scale_factor = slide.getMagnificationForLevel(level) / slide.getNativeMagnification()['magnification']
+        except Exception as e:
+            logging.error(f"Failed to get dimensions for {img_path}: {e}")
+            if is_openslide:
+                slide.close()
+            continue
         
         logging.info(f"Processing at level {level}: {w}x{h}, scale factor {scale_factor:.4f}")
         
@@ -200,7 +248,7 @@ def extract_and_save_patches(
         x_steps = (h - patch_size) // stride + 1
         y_steps = (w - patch_size) // stride + 1
         total_patches = x_steps * y_steps
-        batch_size = 1000  # Save metadata every 1000 patches
+        batch_size = 1000
         
         # Initialize metadata
         metadata = []
@@ -221,12 +269,16 @@ def extract_and_save_patches(
                     
                     # Extract image patch
                     try:
-                        tile, _ = slide.getSingleTile(
-                            tile_position=(yi * stride, xi * stride),
-                            tile_size=(patch_size, patch_size),
-                            level=level_info
-                        )
-                        img_patch = Image.frombytes("RGB", (patch_size, patch_size), tile['data'])
+                        if is_openslide:
+                            img_patch = slide.read_region((y_start, x_start), level, (patch_size, patch_size))
+                            img_patch = img_patch.convert("RGB")
+                        else:
+                            tile, _ = slide.getSingleTile(
+                                tile_position=(yi * stride, xi * stride),
+                                tile_size=(patch_size, patch_size),
+                                level=level_info
+                            )
+                            img_patch = Image.frombytes("RGB", (patch_size, patch_size), tile['data'])
                         img_patch_array = np.array(img_patch)
                     except Exception as e:
                         logging.warning(f"Failed to read patch at ({x_start}, {y_start}) in {img_path}: {e}")
@@ -251,7 +303,6 @@ def extract_and_save_patches(
                     mask_filename = None
                     mask_path = None
                     if has_mask:
-                        # Generate mask patch for this region
                         mask_patch = Image.new("L", (patch_size, patch_size), 0)
                         draw = ImageDraw.Draw(mask_patch)
                         relative_coords = [(x - x_start, y - y_start) for x, y in mask_coordinates]
@@ -306,6 +357,8 @@ def extract_and_save_patches(
                 logging.error(f"Failed to save final metadata for {img_path}: {e}")
         
         # Clean up
+        if is_openslide:
+            slide.close()
         del slide
         del mask_coordinates
         gc.collect()
@@ -353,4 +406,4 @@ def main():
     )
 
 if __name__ == "__main__":
-    main()
+    main() 
