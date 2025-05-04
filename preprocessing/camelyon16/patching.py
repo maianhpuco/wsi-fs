@@ -240,7 +240,7 @@ def main():
         config["WSI_MASK_DIR"],
         config["PATCH_DIR"],   
         config["PATCH_MASK_DIR"], 
-        config["PATH_META_DIR"], 
+        config["PATCH_META_DIR"], 
         patch_size=args.patch_size,
         stride=args.stride,
         tissue_threshold=args.tissue_threshold
