@@ -15,7 +15,7 @@ transform = transforms.Compose([
 ])
 
 # Initialize dataset
-patch_dir = '/project/hnguyen2/mvu9/camelyon16/patch_paths'  # Should match what's used inside TmpPatchesDataset
+patch_dir = '/project/hnguyen2/mvu9/miccai_25/camelyon16/patch_paths'  # Should match what's used inside TmpPatchesDataset
 dataset = TmpPatchesDataset(patch_dir=patch_dir, transform=transform)
 
 # Wrap with DataLoader
