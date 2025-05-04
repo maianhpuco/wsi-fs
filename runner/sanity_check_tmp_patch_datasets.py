@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) 
 sys.path.append(PROJECT_ROOT)
-from preprocessing.camelyon16 import TmpPatchesDataset 
+from src.datasets.camelyon16 import TmpPatchesDataset 
 
 
 # Define any transforms you want
