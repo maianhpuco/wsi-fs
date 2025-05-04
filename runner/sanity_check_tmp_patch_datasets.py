@@ -1,7 +1,18 @@
 import os
+import sys
+import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-# Assuming TmpPatchesDataset and transform are already defined
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) 
+sys.path.append(PROJECT_ROOT)
+from src.datasets.camelyon16 import TmpPatchesDataset 
+
+
+# Define any transforms you want
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),  # Resize patches to a common size
+    transforms.ToTensor(),          # Convert PIL image to PyTorch tensor
+])
 
 root_patch_dir = '/project/hnguyen2/mvu9/miccai_25/camelyon16/patch_paths'
 subdirs = sorted([d for d in os.listdir(root_patch_dir) if os.path.isdir(os.path.join(root_patch_dir, d))])
