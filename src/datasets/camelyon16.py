@@ -1,9 +1,7 @@
 from torch.utils.data import Dataset
 import os
-from sklearn.preprocessing import normalize
 
 from PIL import Image 
-from scipy import ndimage
 
 class TmpPatchesDataset(Dataset):
     """Read all the Patches within the slide"""
