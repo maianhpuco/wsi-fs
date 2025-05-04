@@ -231,8 +231,8 @@ def main():
         config = yaml.safe_load(f)
     # Ensure output directories exist
     
-    Path(config["PATCH_MASK_DIR"]).mkdir(parents=True, exist_ok=True)
-    Path(config["PATH_META_DIR"]).mkdir(parents=True, exist_ok=True)
+    # Path(config["PATCH_MASK_DIR"]).mkdir(parents=True, exist_ok=True)
+    # Path(config["PATH_META_DIR"]).mkdir(parents=True, exist_ok=True)
   
     # Extract patches
     extract_and_save_patches(
