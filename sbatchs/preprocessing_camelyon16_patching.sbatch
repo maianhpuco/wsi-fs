@@ -6,6 +6,8 @@
 #SBATCH --mem=24G
 #SBATCH --time=24:00:00
 
-conda activate wsi-fs
+
+
+conda activate /project/hnguyen2/mvu9/conda_envs/wsi-fs
 
 python python preprocessing/camelyon16/patching.py 
