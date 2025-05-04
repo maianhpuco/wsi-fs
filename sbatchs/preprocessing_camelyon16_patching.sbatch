@@ -6,7 +6,7 @@
 #SBATCH --mem=24G
 #SBATCH --time=24:00:00
 
-
+conda init 
 
 conda activate /project/hnguyen2/mvu9/conda_envs/wsi-fs
 
