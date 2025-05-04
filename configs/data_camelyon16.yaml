@@ -1,0 +1,5 @@
+WSI_DIR: '/project/hnguyen2/hqvo3/Datasets/digital_pathology/public/CAMELYON16/images'
+WSI_MASK_DIR: '/project/hnguyen2/hqvo3/Datasets/digital_pathology/public/CAMELYON16/annotations'
+PATCH_DIR: '/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/patches'
+PATCH_MASK_DIR: '/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/mask_patches'
+PATCH_META_PATH: '/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/patches_meta'
