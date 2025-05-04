@@ -34,5 +34,5 @@ for subdir in subdirs:
         images = batch['image']
         patch_infos = batch['patch_info']
         print(f"  Batch size: {images.size()}")
-        print(f"  First patch info: {patch_infos[0]}")
+        print(f"  First patch info: {patch_infos}")
         break  # Remove this if you want to process the entire folder
