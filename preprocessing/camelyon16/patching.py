@@ -27,13 +27,13 @@ def parse_xml(file_path):
     except ET.ParseError as e:
         print(f"Error parsing {file_path}: {e}")
         return None
-    
+
 def reset_dir(path: Path):
     import shutil 
     if path.exists():
         shutil.rmtree(path)
     path.mkdir(parents=True, exist_ok=True) 
-    
+
 def extract_coordinates(file_path):
     """
     Extract tissue coordinates from XML file.
@@ -105,38 +105,38 @@ def extract_and_save_patches(
     patch_save_dir, 
     mask_save_dir, 
     meta_save_dir, 
-    patch_size=256, stride=256, tissue_threshold=0.1):
+    patch_size=256, 
+    stride=256, 
+    tissue_threshold=0.1
+):
     """
     Extract patches from WSIs, filter by tissue contour (if mask exists), and save metadata.
     
     Args:
         wsi_dir (str): Directory containing WSI TIFFs.
         mask_dir (str): Directory containing XML mask files.
-        patch_save_dir (str): Directory to save patches and metadata.
-        mask_save_dir (str): Directory to save mask patches. 
+        patch_save_dir (str): Directory to save patches.
+        mask_save_dir (str): Directory to save mask patches.
+        meta_save_dir (str): Directory to save metadata.
         patch_size (int): Size of each patch (square).
         stride (int): Stride for patch extraction (default: patch_size for no overlap).
         tissue_threshold (float): Minimum tissue fraction to keep a patch.
     """
     # Create output directories
-    
     patch_save_dir = Path(patch_save_dir)
-    mask_save_dir = Path(mask_save_dir) 
-    meta_save_dir = Path(meta_save_dir) 
+    mask_save_dir = Path(mask_save_dir)
+    meta_save_dir = Path(meta_save_dir)
     
     patch_save_dir.mkdir(parents=True, exist_ok=True)
-    mask_save_dir.mkdir(parents=True, exist_ok=True) 
-    meta_save_dir.mkdir(parents=True, exist_ok=True) 
-    # ---------- reset directories if needed ---------- 
-    # reset_dir(patch_save_dir)
-    # reset_dir(mask_save_dir)
-    # reset_dir(meta_save_dir) 
+    mask_save_dir.mkdir(parents=True, exist_ok=True)
+    meta_save_dir.mkdir(parents=True, exist_ok=True)
+    
     # Get WSI image files
     image_paths = sorted(glob(os.path.join(wsi_dir, "*.tif")))
     print(f"Found {len(image_paths)} WSI images")
     
     # Process each WSI
-    for img_path in tqdm(image_paths, desc="Processing WSIs"):
+    for idx, img_path in enumerate(tqdm(image_paths, desc="Processing WSIs"), 1):
         # Get corresponding mask path
         slide_name = Path(img_path).stem
         mask_path = os.path.join(mask_dir, f"{slide_name}.xml")
@@ -160,55 +160,61 @@ def extract_and_save_patches(
         # Calculate patch grid
         x_steps = (h - patch_size) // stride + 1
         y_steps = (w - patch_size) // stride + 1
+        total_patches = x_steps * y_steps
         
         # Initialize metadata
         metadata = []
         
-        # Extract patches
-        for xi in range(x_steps):
-            for yi in range(y_steps):
-                x_start = xi * stride
-                y_start = yi * stride
-                
-                # Extract image patch
-                img_patch = wsi_img[x_start:x_start + patch_size, y_start:y_start + patch_size]
-                
-                # Filter by tissue content if mask exists
-                if has_mask:
-                    mask_patch = wsi_mask[x_start:x_start + patch_size, y_start:y_start + patch_size]
-                    if not filter_patch_by_contour(mask_patch, tissue_threshold):
-                        continue
-                
-                # Generate patch ID
-                patch_id = str(uuid.uuid4())
-                
-                # Save image patch
-                patch_filename = f"{slide_name}_{patch_id}_{x_start}_{y_start}.png"
-                patch_path = patch_save_dir / patch_filename
-                Image.fromarray(img_patch).save(patch_path)
-                
-                # Save mask patch if available
-                mask_filename = None
-                mask_path = None
-                if has_mask:
-                    mask_filename = f"{slide_name}_{patch_id}_{x_start}_{y_start}_mask.png"
-                    mask_path = mask_save_dir / mask_filename
-                    Image.fromarray(mask_patch).save(mask_path)
-                
-                # Store metadata
-                metadata.append({
-                    "patch_id": patch_id,
-                    "slide_name": slide_name,
-                    "patch_filename": patch_filename,
-                    "mask_filename": mask_filename or "",
-                    "x_start": x_start,
-                    "y_start": y_start,
-                    "patch_size": patch_size,
-                    "stride": stride,
-                    "patch_path": str(patch_path),
-                    "mask_path": str(mask_path) if mask_path else "",
-                    "has_mask": has_mask
-                })
+        # Progress bar for this WSI
+        with tqdm(total=total_patches, desc=f"Extracting patches for {slide_name}", leave=False) as pbar:
+            # Extract patches
+            for xi in range(x_steps):
+                for yi in range(y_steps):
+                    x_start = xi * stride
+                    y_start = yi * stride
+                    
+                    # Extract image patch
+                    img_patch = wsi_img[x_start:x_start + patch_size, y_start:y_start + patch_size]
+                    
+                    # Filter by tissue content if mask exists
+                    if has_mask:
+                        mask_patch = wsi_mask[x_start:x_start + patch_size, y_start:y_start + patch_size]
+                        if not filter_patch_by_contour(mask_patch, tissue_threshold):
+                            pbar.update(1)
+                            continue
+                    
+                    # Generate patch ID
+                    patch_id = str(uuid.uuid4())
+                    
+                    # Save image patch
+                    patch_filename = f"{slide_name}_{patch_id}_{x_start}_{y_start}.png"
+                    patch_path = patch_save_dir / patch_filename
+                    Image.fromarray(img_patch).save(patch_path)
+                    
+                    # Save mask patch if available
+                    mask_filename = None
+                    mask_path = None
+                    if has_mask:
+                        mask_filename = f"{slide_name}_{patch_id}_{x_start}_{y_start}_mask.png"
+                        mask_path = mask_save_dir / mask_filename
+                        Image.fromarray(mask_patch).save(mask_path)
+                    
+                    # Store metadata
+                    metadata.append({
+                        "patch_id": patch_id,
+                        "slide_name": slide_name,
+                        "patch_filename": patch_filename,
+                        "mask_filename": mask_filename or "",
+                        "x_start": x_start,
+                        "y_start": y_start,
+                        "patch_size": patch_size,
+                        "stride": stride,
+                        "patch_path": str(patch_path),
+                        "mask_path": str(mask_path) if mask_path else "",
+                        "has_mask": has_mask
+                    })
+                    
+                    pbar.update(1)
         
         # Save metadata to CSV
         metadata_df = pd.DataFrame(metadata)
@@ -218,7 +224,7 @@ def extract_and_save_patches(
         print(f"Processed {img_path}: {len(metadata)} patches saved, metadata at {metadata_csv}")
 
 def main():
-    dataset_name = "camelyon16" 
+    dataset_name = "camelyon16"
     parser = argparse.ArgumentParser(description="Extract patches from WSI TIFFs with XML mask filtering")
     parser.add_argument("--config", type=str, default=f"configs/data_{dataset_name}.yaml", help="Path to YAML config file")
     parser.add_argument("--patch_size", type=int, default=256, help="Size of each patch")
@@ -229,18 +235,14 @@ def main():
     # Load config
     with open(args.config, 'r') as f:
         config = yaml.safe_load(f)
-    # Ensure output directories exist
     
-    # Path(config["PATCH_MASK_DIR"]).mkdir(parents=True, exist_ok=True)
-    # Path(config["PATH_META_DIR"]).mkdir(parents=True, exist_ok=True)
-  
     # Extract patches
     extract_and_save_patches(
-        config["WSI_DIR"], 
+        config["WSI_DIR"],
         config["WSI_MASK_DIR"],
-        config["PATCH_DIR"],   
-        config["PATCH_MASK_DIR"], 
-        config["PATCH_META_DIR"], 
+        config["PATCH_DIR"],
+        config["PATCH_MASK_DIR"],
+        config["PATCH_META_DIR"],
         patch_size=args.patch_size,
         stride=args.stride,
         tissue_threshold=args.tissue_threshold
