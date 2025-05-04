@@ -1,20 +1,9 @@
-import torch
 from torch.utils.data import Dataset
-import h5py
 import os
-import sys 
-import numpy as np
-import pandas as pd
 from sklearn.preprocessing import normalize
-import glob
-import openslide 
-import json 
-import cv2 
-import time 
+
 from PIL import Image 
 from scipy import ndimage
-from PIL import Image, ImageFilter
-from PIL import ImageStat 
 
 class TmpPatchesDataset(Dataset):
     """Read all the Patches within the slide"""
