@@ -56,7 +56,7 @@ def extract_sample_labels(json_path, output_csv):
             })
 
     df = pd.DataFrame(records)
-    df.head(5)
+    print(df.head(5))
     # df.to_csv(output_csv, index=False)
     # print(f"Saved labels to {output_csv}")
  
