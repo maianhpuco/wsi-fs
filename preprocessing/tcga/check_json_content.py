@@ -26,6 +26,7 @@ output_csv = '/project/hnguyen2/mvu9/datasets/TCGA-labels/kirc_diagnosis_labels.
 import json
 import pandas as pd
 
+
 def extract_sample_labels(json_path, output_csv):
     with open(json_path, 'r') as f:
         data = json.load(f)
@@ -55,6 +56,10 @@ def extract_sample_labels(json_path, output_csv):
             })
 
     df = pd.DataFrame(records)
+    # df.to_csv(output_csv, index=False)
+    # print(f"Saved labels to {output_csv}")
+ 
+    # df = pd.DataFrame(records)
     unique_diagnoses = df["sample_type"].value_counts()
     print("[INFO] Unique primary diagnoses and their counts:")
     print(unique_diagnoses) 
