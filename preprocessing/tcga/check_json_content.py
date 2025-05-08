@@ -3,7 +3,8 @@ import sys
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")) 
 sys.path.append(PROJECT_ROOT) 
 
-json_dir =  '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kirc.2025-05-08.json'
+# json_dir =  '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kirc.2025-05-08.json'
+json_dir = '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kich.2025-05-08.json'
 import os
 import sys
 import json
