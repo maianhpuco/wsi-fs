@@ -4,7 +4,11 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.append(PROJECT_ROOT) 
 
 # json_dir =  '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kirc.2025-05-08.json'
-json_dir = '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kich.2025-05-08.json'
+# json_dir = '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kich.2025-05-08.json'
+data_root = '/project/hnguyen2/mvu9/datasets/TCGA-labels' 
+json_dir = os.path.join(data_root, 'clinical.project-tcga-kich.2025-05-08.json')
+# json_dir = os.path.join(data_root, 'clinical.project-tcga-brca.2025-05-03.json')
+
 import os
 import sys
 import json
@@ -15,7 +19,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.append(PROJECT_ROOT)
 
 # Path to the JSON file
-json_dir = '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kirc.2025-05-08.json'
+# json_dir = '/project/hnguyen2/mvu9/datasets/TCGA-labels/clinical.project-tcga-kirc.2025-05-08.json'
 
 # Output CSV path
 output_csv = '/project/hnguyen2/mvu9/datasets/TCGA-labels/kirc_diagnosis_labels.csv'
