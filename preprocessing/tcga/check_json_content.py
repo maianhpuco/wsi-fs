@@ -30,7 +30,7 @@ def extract_tcga_diagnoses(json_path, output_csv):
 
         # Extract diagnosis info if available
         if diagnoses:
-            diag = diagnoses[0]
+            diag = diagnoses[-1]
             primary_diagnosis = diag.get("primary_diagnosis", "Unknown")
             stage = diag.get("ajcc_pathologic_stage", "Unknown")
             morphology = diag.get("morphology", "Unknown")
