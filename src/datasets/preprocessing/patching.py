@@ -15,9 +15,9 @@ from typing import Dict, Tuple
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.append(project_root)
 
-from src.datasets.wsi_core.WholeSlideImage import wholeslideimage
+from src.datasets.wsi_core.WholeSlideImage import WholeSlideImage
 
-def patch_wsi(wsi: wholeslideimage, patch_params: Dict, patch_size: int, step_size: int, patch_level: int, save_path: str) -> Tuple[str, float]:
+def patch_wsi(wsi: WholeSlideImage, patch_params: Dict, patch_size: int, step_size: int, patch_level: int, save_path: str) -> Tuple[str, float]:
     """extract patches from the wsi.
 
     args:
