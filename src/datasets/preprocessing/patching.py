@@ -9,7 +9,7 @@ import os
 import sys
 import time
 import logging
-from typing import Dict, float
+from typing import Dict
 from PIL import Image
 
 # Set project root for importing custom modules
