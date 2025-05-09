@@ -109,7 +109,7 @@ def main():
     if args.config:
         import yaml 
         with open(args.config, 'r') as f:
-            config = yaml.safe_load(f)
+            config = yaml.safe_load(f)   
         source_dir = config.get('source_dir')
         metadata_dir = config.get('metadata_dir')
         manifest_path = config.get('manifest_path', None)

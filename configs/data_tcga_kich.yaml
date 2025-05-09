@@ -1,7 +1,7 @@
 # Configuration for WSI processing
 source_dir:    /project/hnguyen2/mvu9/datasets/TGCA-datasets/KICH
 metadata_dir:  /project/hnguyen2/mvu9/datasets/TGCA-datasets/KICH/metadata
-manifest_path: /project/hnguyen2/mvu9/download_tcga/gdc-client/manifest/KICH/gdc_manifest.2025-05-09.102009.txt
+manifest_path: /project/hnguyen2/mvu9/download_tcga/gdc-client/manifest/KICH/gdc_manifest.2025-05-09.101742.txt
 metadata_dir:  /project/hnguyen2/mvu9/datasets/TGCA-metadata/KICH
 
 # slide_name_file: "data/tcga_kirp/metadata/slides.xlsx"  # File with slide names
