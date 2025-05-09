@@ -13,6 +13,7 @@ import logging
 import numpy as np
 import pandas as pd
 from typing import Dict, Tuple
+import inspect
 
 # Set project root for importing custom modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
@@ -94,7 +95,20 @@ def process_slide(idx: int, slide: str, df: pd.DataFrame, id_names: Dict[str, st
         h5_path = os.path.join(config.patch_h5_dir, f"{slide_id}.h5")
         patch_png_dir = os.path.join(config.patch_png_dir, slide_id)
         os.makedirs(patch_png_dir, exist_ok=True)
-        patch_time = patch_wsi(wsi, patch_params, config.patch_size, config.step_size, config.patch_level, h5_path, patch_png_dir)
+        try:
+            patch_time = patch_wsi(
+                wsi=wsi,
+                patch_params=patch_params,
+                patch_size=config.patch_size,
+                step_size=config.step_size,
+                patch_level=config.patch_level,
+                h5_path=h5_path,
+                patch_png_dir=patch_png_dir
+            )
+        except TypeError as e:
+            logger.error(f"TypeError in patch_wsi: {e}")
+            logger.error(f"patch_wsi signature: {inspect.signature(patch_wsi)}")
+            raise
 
     if config.stitch and os.path.isfile(os.path.join(config.patch_h5_dir, f"{slide_id}.h5")):
         heatmap, stitch_time = stitch_wsi(os.path.join(config.patch_h5_dir, f"{slide_id}.h5"), wsi)
