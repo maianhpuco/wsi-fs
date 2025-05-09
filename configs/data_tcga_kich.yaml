@@ -1,0 +1,36 @@
+# Configuration for WSI processing
+source_dir:    /project/hnguyen2/mvu9/datasets/TGCA-datasets/KICH
+metadata_dir:  /project/hnguyen2/mvu9/datasets/TGCA-datasets/KICH/metadata
+manifest_path: /project/hnguyen2/mvu9/download_tcga/gdc-client/manifest/KICH/gdc_manifest.2025-05-09.102009.txt
+metadata_dir:  /project/hnguyen2/mvu9/datasets/TGCA-metadata/KICH
+
+# slide_name_file: "data/tcga_kirp/metadata/slides.xlsx"  # File with slide names
+# uuid_name_file: "data/tcga_kirp/metadata/uuids.xlsx"  # File with slide info
+# patch_size: 256  # Patch size
+# step_size: 256  # Step size
+# patch_level: 0  # Downsample level for patching
+# seg: true  # Enable segmentation
+# patch: true  # Enable patching
+# stitch: true  # Enable stitching
+# auto_skip: true  # Skip existing files
+# process_list: null  # CSV list of images to process (null for all slides)
+# preset: null  # Preset CSV for parameters (null for defaults)
+# seg_params:
+#   seg_level: -1
+#   sthresh: 8
+#   mthresh: 7
+#   close: 4
+#   use_otsu: false
+#   keep_ids: "none"
+#   exclude_ids: "none"
+# filter_params:
+#   a_t: 100
+#   a_h: 16
+#   max_n_holes: 8
+# vis_params:
+#   vis_level: -1
+#   line_thickness: 250
+# patch_params:
+#   use_padding: true
+#   contour_fn: "four_pt"
+# use_default_params: false
