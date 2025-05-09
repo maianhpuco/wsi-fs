@@ -1,7 +1,12 @@
 import h5py
 import numpy as np
 import os
-from wsi_core.util_classes import Mosaic_Canvas
+import sys 
+# Set project root for importing custom modules
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.append(PROJECT_ROOT) 
+
+from src.datasets.wsi_core.util_classes import Mosaic_Canvas
 from PIL import Image
 import math
 import cv2
