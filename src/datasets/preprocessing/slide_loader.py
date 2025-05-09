@@ -13,7 +13,7 @@ import pandas as pd
 from typing import Dict, List, Tuple
 
 # Set project root for importing custom modules
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 sys.path.append(PROJECT_ROOT)
 
 from src.datasets.wsi_core.batch_process_utils import initialize_df
@@ -38,7 +38,7 @@ def load_slides(config: ProcessingConfig) -> Tuple[List[str], Dict[str, str], pd
         slides.append(data[1])
         id_names[data[1]] = data[0]
 
-    slides = [slide for slide in slides if os.path.isfile(os.path.join(config.source, id_names[str(slide)], slide))]
+    slides = [slide for slide in slides if os.path.isfile(os.path.join(config.source_dir, id_names[str(slide)], slide))]
     
     if config.process_list:
         df = pd.read_csv(config.process_list)
