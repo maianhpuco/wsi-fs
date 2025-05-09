@@ -4,6 +4,8 @@ Entry point script for TCGA WSI processing pipeline.
 This script runs the WSI processing pipeline for TCGA datasets (e.g., KICH), including
 loading slides, segmenting tissue, extracting patches, and stitching heatmaps. It loads
 configuration from a YAML file specified via command-line arguments.
+
+Note: PNG patches are saved directly in patch_wsi, assuming process_contours returns patch images.
 """
 
 import os

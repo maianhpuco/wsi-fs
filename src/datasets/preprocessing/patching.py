@@ -8,13 +8,23 @@ and save them as HDF5 and PNG files.
 import os
 import sys
 import time
-from typing import Dict
+import logging
+from typing import Dict, float
+from PIL import Image
 
 # Set project root for importing custom modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 sys.path.append(PROJECT_ROOT)
 
 from src.datasets.wsi_core.WholeSlideImage import WholeSlideImage
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
 
 def patch_wsi(
     wsi: WholeSlideImage,
@@ -40,14 +50,43 @@ def patch_wsi(
         Time taken for patching (in seconds).
     """
     start_time = time.time()
-    patch_params.update({
+    
+    # Prepare patch parameters for process_contours, excluding patch_png_dir
+    contour_params = patch_params.copy()
+    contour_params.update({
         'patch_level': patch_level,
         'patch_size': patch_size,
         'step_size': step_size,
-        'save_path': h5_path,
-        'patch_png_dir': patch_png_dir  # Custom parameter for PNG saving
+        'save_path': h5_path
     })
+    if 'patch_png_dir' in contour_params:
+        del contour_params['patch_png_dir']  # Remove to avoid passing to process_contours
+    
     magnification = wsi.wsi.properties['aperio.AppMag']
-    patch_params['mag'] = str(magnification)
-    wsi.process_contours(**patch_params)  # Assumes process_contours handles both HDF5 and PNG
+    contour_params['mag'] = str(magnification)
+    
+    # Call process_contours to extract patches (assumes it returns patches and coordinates)
+    try:
+        patch_data = wsi.process_contours(**contour_params)  # Expecting list of (patch_image, coord) tuples
+    except TypeError as e:
+        logger.error(f"Error in process_contours: {e}")
+        raise
+
+    # Save PNG patches if patch_data contains images
+    os.makedirs(patch_png_dir, exist_ok=True)
+    if patch_data and isinstance(patch_data, (list, tuple)):
+        for idx, item in enumerate(patch_data):
+            if isinstance(item, tuple) and len(item) >= 2:
+                patch_image, coord = item[:2]
+                if isinstance(patch_image, Image.Image):
+                    patch_filename = os.path.join(patch_png_dir, f"patch_{coord[0]}_{coord[1]}.png")
+                    patch_image.save(patch_filename)
+                    logger.info(f"Saved PNG patch: {patch_filename}")
+                else:
+                    logger.warning(f"Patch at index {idx} is not a PIL Image: {type(patch_image)}")
+            else:
+                logger.warning(f"Unexpected patch data format at index {idx}: {item}")
+    else:
+        logger.warning("No patch data returned by process_contours, skipping PNG saving")
+
     return time.time() - start_time
