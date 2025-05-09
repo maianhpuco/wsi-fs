@@ -8,7 +8,7 @@ and save them as HDF5 and PNG files.
 import os
 import sys
 import time
-from typing import Dict, float
+from typing import Dict
 
 # Set project root for importing custom modules
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
