@@ -17,7 +17,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.append(PROJECT_ROOT)
 
 from src.datasets.wsi_core.batch_process_utils import initialize_df
-from config import ProcessingConfig
+from src.datasets.preprocessing.config import ProcessingConfig
 
 def load_slides(config: ProcessingConfig) -> Tuple[List[str], Dict[str, str], pd.DataFrame]:
     """Load slide information and initialize processing DataFrame.

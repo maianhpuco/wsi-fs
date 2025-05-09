@@ -18,7 +18,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.append(PROJECT_ROOT)
 
 from src.datasets.wsi_core.WholeSlideImage import WholeSlideImage
-from config import ProcessingConfig
+from src.datasets.preprocessing.config import ProcessingConfig
 
 def update_params_for_slide(df: pd.DataFrame, idx: int, wsi: WholeSlideImage, config: ProcessingConfig, legacy_support: bool) -> Tuple[Dict, Dict, Dict, Dict]:
     """Update parameters for a specific slide, handling legacy support.
