@@ -2,28 +2,29 @@
 Configuration module for WSI processing.
 
 This module defines the `ProcessingConfig` dataclass to store parameters for WSI processing
-and includes a function to parse command-line arguments. It sets default parameters for
-segmentation, filtering, visualization, and patching, and supports preset configurations
+and includes a function to load configurations from a YAML file. It sets default parameters
+for segmentation, filtering, visualization, and patching, and supports preset configurations
 from CSV files.
 """
 
 import os
 import sys
-import argparse
+import yaml
 from dataclasses import dataclass
 from typing import Dict, Optional
 import pandas as pd
 
 # Set project root for importing custom modules
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 sys.path.append(PROJECT_ROOT)
 
 @dataclass
 class ProcessingConfig:
     """Configuration for WSI processing parameters."""
-    source: str
+    source_dir: str
     save_dir: str
-    patch_save_dir: str
+    patch_h5_dir: str
+    patch_png_dir: str
     mask_save_dir: str
     only_mask_save_dir: str
     stitch_save_dir: str
@@ -60,55 +61,55 @@ class ProcessingConfig:
             'use_padding': True, 'contour_fn': 'four_pt'
         }
 
-def parse_args() -> ProcessingConfig:
-    """Parse command-line arguments for WSI processing.
+def load_config(config_path: str = "configs/wsi_processing.yaml") -> ProcessingConfig:
+    """Load configuration from a YAML file.
+
+    Args:
+        config_path: Path to the YAML configuration file.
 
     Returns:
-        ProcessingConfig: Configuration object with parsed parameters.
+        ProcessingConfig: Configuration object with parameters from the YAML file.
+
+    Raises:
+        FileNotFoundError: If the YAML file does not exist.
+        yaml.YAMLError: If the YAML file is invalid.
     """
-    parser = argparse.ArgumentParser(description='Segment and patch WSIs')
-    parser.add_argument('--source', type=str, required=True, help='Path to WSI image files')
-    parser.add_argument('--save_dir', type=str, required=True, help='Directory to save processed data')
-    parser.add_argument('--slide_name_file', type=str, required=True, help='File with slide names')
-    parser.add_argument('--uuid_name_file', type=str, required=True, help='File with slide info')
-    parser.add_argument('--patch_size', type=int, default=256, help='Patch size')
-    parser.add_argument('--step_size', type=int, default=256, help='Step size')
-    parser.add_argument('--patch_level', type=int, default=0, help='Downsample level for patching')
-    parser.add_argument('--seg', action='store_true', help='Enable segmentation')
-    parser.add_argument('--patch', action='store_true', help='Enable patching')
-    parser.add_argument('--stitch', action='store_true', help='Enable stitching')
-    parser.add_argument('--no_auto_skip', action='store_false', help='Disable auto-skip for existing files')
-    parser.add_argument('--process_list', type=str, default=None, help='CSV list of images to process')
-    parser.add_argument('--preset', type=str, default=None, help='Preset CSV for parameters')
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    args = parser.parse_args()
-    
-    patch_save_dir = os.path.join(args.save_dir, f'patches_{args.patch_size}')
-    mask_save_dir = os.path.join(args.save_dir, 'masks')
-    only_mask_save_dir = os.path.join(args.save_dir, 'only_masks')
-    stitch_save_dir = os.path.join(args.save_dir, f'graph_{args.patch_size}')
+    with open(config_path, 'r') as file:
+        config_data = yaml.safe_load(file)
 
+    # Create ProcessingConfig object
     config = ProcessingConfig(
-        source=args.source,
-        save_dir=args.save_dir,
-        patch_save_dir=patch_save_dir,
-        mask_save_dir=mask_save_dir,
-        only_mask_save_dir=only_mask_save_dir,
-        stitch_save_dir=stitch_save_dir,
-        slide_name_file=args.slide_name_file,
-        uuid_name_file=args.uuid_name_file,
-        patch_size=args.patch_size,
-        step_size=args.step_size,
-        patch_level=args.patch_level,
-        seg=args.seg,
-        patch=args.patch,
-        stitch=args.stitch,
-        auto_skip=args.no_auto_skip,
-        process_list=args.process_list
+        source_dir=config_data['source_dir'],
+        save_dir=config_data['save_dir'],
+        patch_h5_dir=config_data['patch_h5_dir'],
+        patch_png_dir=config_data['patch_png_dir'],
+        mask_save_dir=config_data['mask_save_dir'],
+        only_mask_save_dir=config_data['only_mask_save_dir'],
+        stitch_save_dir=config_data['stitch_save_dir'],
+        slide_name_file=config_data['slide_name_file'],
+        uuid_name_file=config_data['uuid_name_file'],
+        patch_size=config_data['patch_size'],
+        step_size=config_data['step_size'],
+        patch_level=config_data['patch_level'],
+        seg=config_data['seg'],
+        patch=config_data['patch'],
+        stitch=config_data['stitch'],
+        save_mask=config_data['save_mask'],
+        auto_skip=config_data['auto_skip'],
+        process_list=config_data['process_list'],
+        seg_params=config_data['seg_params'],
+        filter_params=config_data['filter_params'],
+        vis_params=config_data['vis_params'],
+        patch_params=config_data['patch_params'],
+        use_default_params=config_data['use_default_params']
     )
 
-    if args.preset:
-        preset_df = pd.read_csv(os.path.join('presets', args.preset))
+    # Handle preset CSV if provided
+    if config_data.get('preset'):
+        preset_df = pd.read_csv(os.path.join('presets', config_data['preset']))
         for params in [config.seg_params, config.filter_params, config.vis_params, config.patch_params]:
             for key in params:
                 params[key] = preset_df.loc[0, key]

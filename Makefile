@@ -9,4 +9,9 @@ metadata_kich:
 clean_kich:
 	rm -f /project/hnguyen2/mvu9/datasets/TGCA-metadata/KICH/metadata/*.xlsx
 
+patching_kich:
+	python scripts/preprocessing/tcga/patching.py --config configs/data_tcga_kich.yaml
+
 .PHONY: all metadata_kich clean_kich
+
+

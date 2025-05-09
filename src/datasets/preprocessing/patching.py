@@ -2,22 +2,30 @@
 Patching module for WSI processing.
 
 This module provides a function to extract patches from Whole Slide Images (WSIs)
-based on specified parameters, saving them to an HDF5 file.
+and save them as HDF5 and PNG files.
 """
 
 import os
 import sys
 import time
-from typing import Dict, Tuple
+from typing import Dict, float
 
 # Set project root for importing custom modules
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 sys.path.append(PROJECT_ROOT)
 
 from src.datasets.wsi_core.WholeSlideImage import WholeSlideImage
 
-def patch_wsi(wsi: WholeSlideImage, patch_params: Dict, patch_size: int, step_size: int, patch_level: int, save_path: str) -> Tuple[str, float]:
-    """Extract patches from the WSI.
+def patch_wsi(
+    wsi: WholeSlideImage,
+    patch_params: Dict,
+    patch_size: int,
+    step_size: int,
+    patch_level: int,
+    h5_path: str,
+    patch_png_dir: str
+) -> float:
+    """Extract patches from the WSI and save as HDF5 and PNG files.
 
     Args:
         wsi: WholeSlideImage object to patch.
@@ -25,14 +33,21 @@ def patch_wsi(wsi: WholeSlideImage, patch_params: Dict, patch_size: int, step_si
         patch_size: Size of each patch (e.g., 256).
         step_size: Step size for patch extraction.
         patch_level: Downsample level for patching.
-        save_path: Directory to save the patch HDF5 file.
+        h5_path: Path to save the HDF5 file.
+        patch_png_dir: Directory to save PNG patches.
 
     Returns:
-        Tuple containing the path to the saved HDF5 file and the time taken.
+        Time taken for patching (in seconds).
     """
     start_time = time.time()
-    patch_params.update({'patch_level': patch_level, 'patch_size': patch_size, 'step_size': step_size, 'save_path': save_path})
+    patch_params.update({
+        'patch_level': patch_level,
+        'patch_size': patch_size,
+        'step_size': step_size,
+        'save_path': h5_path,
+        'patch_png_dir': patch_png_dir  # Custom parameter for PNG saving
+    })
     magnification = wsi.wsi.properties['aperio.AppMag']
     patch_params['mag'] = str(magnification)
-    file_path = wsi.process_contours(**patch_params)
-    return file_path, time.time() - start_time
+    wsi.process_contours(**patch_params)  # Assumes process_contours handles both HDF5 and PNG
+    return time.time() - start_time
