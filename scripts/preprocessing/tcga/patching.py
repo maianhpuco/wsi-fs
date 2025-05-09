@@ -95,6 +95,8 @@ def process_slide(idx: int, slide: str, df: pd.DataFrame, id_names: Dict[str, st
         h5_path = os.path.join(config.patch_h5_dir, f"{slide_id}.h5")
         patch_png_dir = os.path.join(config.patch_png_dir, slide_id)
         os.makedirs(patch_png_dir, exist_ok=True)
+        logger.info(f"Calling patch_wsi from module: {patch_wsi.__module__}")
+        logger.info(f"patch_wsi signature: {inspect.signature(patch_wsi)}")
         try:
             patch_time = patch_wsi(
                 wsi=wsi,
@@ -107,7 +109,6 @@ def process_slide(idx: int, slide: str, df: pd.DataFrame, id_names: Dict[str, st
             )
         except TypeError as e:
             logger.error(f"TypeError in patch_wsi: {e}")
-            logger.error(f"patch_wsi signature: {inspect.signature(patch_wsi)}")
             raise
 
     if config.stitch and os.path.isfile(os.path.join(config.patch_h5_dir, f"{slide_id}.h5")):
