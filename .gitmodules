@@ -1,0 +1,3 @@
+[submodule "src/includes/Tip-Adapter"]
+	path = src/includes/Tip-Adapter
+	url = https://github.com/gaopengcuhk/Tip-Adapter.git
