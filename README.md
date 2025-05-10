@@ -13,8 +13,11 @@ pip install large-image
  
 pip install psutil
 pip install torch torchvision torchaudio 
+``` 
 
 
+
+Down load TGCA 
 
 ``` 
 ls /project/hnguyen2/mvu9/datasets/TGCA-datasets/KIRP > downloaded_ids_kirp.txt
