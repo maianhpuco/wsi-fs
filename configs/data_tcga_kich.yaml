@@ -1,39 +1,21 @@
-# Configuration for TCGA-KICH WSI processing
-source_dir: "/project/hnguyen2/mvu9/datasets/TGCA-datasets/KICH"  # Path to WSI image files
-save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich"  # Base directory for processed data
-patch_h5_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/patches_h5"  # Directory for HDF5 patches
-patch_png_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/patches_png"  # Directory for PNG patches
-mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/masks"  # Directory for masks
-only_mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/only_masks"  # Directory for only masks
-stitch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/graph_256"  # Directory for stitched heatmaps
-slide_name_file: "/project/hnguyen2/mvu9/datasets/TGCA-metadata/KICH/slides.xlsx"  # File with slide names
-uuid_name_file: "/project/hnguyen2/mvu9/datasets/TGCA-metadata/KICH/uuids.xlsx"  # File with slide info
-patch_size: 256  # Patch size
-step_size: 256  # Step size
-patch_level: 0  # Downsample level for patching
-seg: true  # Enable segmentation
-patch: true  # Enable patching
-stitch: true  # Enable stitching
-save_mask: true  # Save masks
-auto_skip: true  # Skip existing files
-process_list: null  # CSV list of images to process (null for all slides)
-preset: null  # Preset CSV for parameters (null for defaults)
-seg_params:
-  seg_level: -1
-  sthresh: 8
-  mthresh: 7
-  close: 4
-  use_otsu: false
-  keep_ids: "none"
-  exclude_ids: "none"
-filter_params:
-  a_t: 100
-  a_h: 16
-  max_n_holes: 8
-vis_params:
-  vis_level: -1
-  line_thickness: 250
-patch_params:
-  use_padding: true
-  contour_fn: "four_pt"
-use_default_params: false
+paths:
+  source_dir: "/project/hnguyen2/mvu9/datasets/TGCA-datasets/KICH"
+  save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich"
+  patch_h5_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/patches_h5"
+  patch_png_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/patches_png"
+  mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/masks"
+  only_mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/only_masks"
+  stitch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tgca/kich/graph_1024"
+  slide_name_file: "/project/hnguyen2/mvu9/datasets/TGCA-metadata/KICH/slides.xlsx"
+  uuid_name_file: "/project/hnguyen2/mvu9/datasets/TGCA-metadata/KICH/uuids.xlsx"
+  preset_file: "./presets/tcga.csv"
+
+# Processing parameters
+processing:
+  patch_size: 256
+  step_size: 256
+  patch_level: 1
+  seg: true
+  patch: true
+  stitch: false
+  auto_skip: true
