@@ -18,8 +18,11 @@ class RegionProposalNetwork(nn.Module):
     def forward(self, patches):
         B, N, C, H, W = patches.shape
         patches_flat = patches.view(-1, C, H, W)
-        outputs = self.rpn(patches_flat)
-
+        # outputs = self.rpn(patches_flat)
+        self.rpn.eval()  # Set RPN to eval mode to suppress training requirement
+        with torch.no_grad():  # Disable gradients for inference
+            outputs = self.rpn(patches_flat)
+ 
         selected_features = []
         for i in range(B):
             start, end = i * N, (i + 1) * N
