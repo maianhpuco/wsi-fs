@@ -30,9 +30,44 @@ class SimplePatchEncoder(nn.Module):
         )  # [B, K, 512]
 
         return selected_features
-
-
 class VisionLanguageTransformer(nn.Module):
+    def __init__(self, vision_dim=512, text_model_name="t5-small", num_heads=8):
+        super().__init__()
+        self.vision_proj = nn.Linear(vision_dim, 512)
+        self.text_model = T5ForConditionalGeneration.from_pretrained(text_model_name)
+        self.tokenizer = T5Tokenizer.from_pretrained(text_model_name)
+        self.cross_attn = MultiheadAttention(embed_dim=512, num_heads=num_heads)
+        self.cls_head = nn.Linear(512, 2)
+
+        self.prompt = "Describe the histopathological features:"
+        self.prompt_ids = self.tokenizer.encode(self.prompt, return_tensors="pt")
+
+    def forward(self, patch_feats, generate_expl=True):
+        B, M, _ = patch_feats.shape
+        patch_feats_proj = self.vision_proj(patch_feats)
+
+        # Attention pooling for classification
+        attn_output, _ = self.cross_attn(patch_feats_proj, patch_feats_proj, patch_feats_proj)
+        pooled = torch.sum(attn_output * patch_feats_proj, dim=1)
+        logits = self.cls_head(pooled)
+
+        explanations = []
+        attn_maps = None
+
+        if generate_expl:
+            for b in range(B):
+                vision_prefix = patch_feats_proj[b][:5]  # take first 5 tokens
+                vision_text = " ".join([f"[VIS{i}]" for i in range(vision_prefix.shape[0])])
+                full_prompt = vision_text + " " + self.prompt
+                input_ids = self.tokenizer.encode(full_prompt, return_tensors="pt").to(patch_feats.device)
+                generated_ids = self.text_model.generate(input_ids=input_ids, max_length=100)
+                explanation = self.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+                explanations.append(explanation)
+
+        return logits, explanations, attn_maps
+ 
+
+class VisionLanguageTransformer_old(nn.Module):
     def __init__(self, vision_dim=512, text_model_name="t5-small", num_heads=8):
         super().__init__()
         self.vision_projection = nn.Linear(vision_dim, 512)
