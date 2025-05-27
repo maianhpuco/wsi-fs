@@ -1,42 +1,39 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models.detection import fasterrcnn_resnet50_fpn
+from torchvision.models import resnet18
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from torch.nn import MultiheadAttention
 
 
-class RegionProposalNetwork(nn.Module):
+class SimplePatchEncoder(nn.Module):
     def __init__(self, num_proposals=100):
         super().__init__()
-        self.rpn = fasterrcnn_resnet50_fpn(pretrained=True)
+        self.encoder = resnet18(pretrained=True)
+        self.encoder.fc = nn.Identity()  # Remove classification head
         self.num_proposals = num_proposals
-        for param in self.rpn.backbone.parameters():
-            param.requires_grad = False
-        self.feature_dim = 256  # Assumed FPN output feature dim
+        self.feature_dim = 512
 
     def forward(self, patches):
         B, N, C, H, W = patches.shape
-        patches_flat = patches.view(-1, C, H, W)
-        # outputs = self.rpn(patches_flat)
-        self.rpn.eval()  # Set RPN to eval mode to suppress training requirement
-        with torch.no_grad():  # Disable gradients for inference
-            outputs = self.rpn(patches_flat)
- 
-        selected_features = []
-        for i in range(B):
-            start, end = i * N, (i + 1) * N
-            boxes = outputs['boxes'][start:end]
-            scores = outputs['scores'][start:end]
-            top_k = torch.topk(scores, min(self.num_proposals, scores.shape[0])).indices
-            features = outputs['features'][start:end][top_k]
-            selected_features.append(features)
+        patches_flat = patches.view(-1, C, H, W)  # [B*N, C, H, W]
+        with torch.no_grad():
+            features_flat = self.encoder(patches_flat)  # [B*N, 512]
+        features = features_flat.view(B, N, -1)  # [B, N, 512]
 
-        return torch.stack(selected_features)  # [B, num_proposals, feature_dim]
+        # Select top-k using L2 norm as importance score
+        scores = torch.norm(features, dim=-1)  # [B, N]
+        topk_idx = torch.topk(scores, self.num_proposals, dim=1).indices  # [B, K]
+        selected_features = torch.gather(
+            features, 1,
+            topk_idx.unsqueeze(-1).expand(-1, -1, features.shape[-1])
+        )  # [B, K, 512]
+
+        return selected_features
 
 
 class VisionLanguageTransformer(nn.Module):
-    def __init__(self, vision_dim=256, text_model_name="t5-small", num_heads=8):
+    def __init__(self, vision_dim=512, text_model_name="t5-small", num_heads=8):
         super().__init__()
         self.vision_projection = nn.Linear(vision_dim, 512)
         self.text_model = T5ForConditionalGeneration.from_pretrained(text_model_name)
@@ -84,17 +81,15 @@ class VisionLanguageTransformer(nn.Module):
 class VLM_MIL_Model(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.rpn = RegionProposalNetwork(config.num_proposals)
-        self.vlm = VisionLanguageTransformer(vision_dim=256)
+        self.encoder = SimplePatchEncoder(config.num_proposals)
+        self.vlm = VisionLanguageTransformer(vision_dim=512)
 
         self.loss_ce = nn.CrossEntropyLoss()
-        self.loss_lm = nn.CrossEntropyLoss(ignore_index=0)
         self.lambda_class = config.lambda_class
-        self.lambda_lm = config.lambda_lm
         self.lambda_ground = config.lambda_ground
 
     def forward(self, patches, labels=None, generate_explanation=True):
-        patch_features = self.rpn(patches)  # [B, num_proposals, vision_dim]
+        patch_features = self.encoder(patches)  # [B, num_proposals, 512]
         logits, explanations, attention = self.vlm(patch_features, generate_explanation)
 
         loss = 0
@@ -118,7 +113,6 @@ class Config:
     def __init__(self):
         self.num_proposals = 100
         self.lambda_class = 1.0
-        self.lambda_lm = 0.5
         self.lambda_ground = 0.1
 
 
