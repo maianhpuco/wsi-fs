@@ -1,0 +1,26 @@
+paths:
+  source_dir: "/project/hnguyen2/mvu9/datasets/TCGA-datasets/LUSC"
+  error_files: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/error_files.txt" 
+  new_source_dir: "/project/hnguyen2/mvu9/datasets/processing_datasets/processing_tcga_256/luad/pyramidal_images"
+  save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc"
+  patch_h5_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/patches_h5"
+  # patch_png_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/patches_png"
+  patch_png_dir:
+    patch_256x256_10x: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/png_patches/patch_256x256_10x"
+    patch_256x256_5x:  "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/png_patches/patch_256x256_5x" 
+  mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/masks"
+  only_mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/only_masks"
+  stitch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/graph_1024"
+  slide_name_file: "/project/hnguyen2/mvu9/datasets/TCGA-metadata/LUSC/slides.xlsx"
+  uuid_name_file: "/project/hnguyen2/mvu9/datasets/TCGA-metadata/LUSC/uuids.xlsx"
+  preset_file: "/project/hnguyen2/mvu9/folder_04_ma/wsi-data/presets/tcga_vilamil.csv"
+  manifest_dir: "/project/hnguyen2/mvu9/download_tcga/gdc-client/manifest/LUSC"
+# Processing parameters
+processing:
+  patch_size: 256
+  step_size: 256
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: false
+  auto_skip: true

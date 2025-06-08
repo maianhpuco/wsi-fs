@@ -1,0 +1,11 @@
+paths:
+  metadata:
+    kich: "/home/mvu9/datasets/TCGA-metadata/KICH/uuids.xlsx"
+    kirp: "/home/mvu9/datasets/TCGA-metadata/KIRP/uuids.xlsx"
+    kirc: "/home/mvu9/datasets/TCGA-metadata/KIRC/uuids.xlsx"
+  split_folder: "/home/mvu9/processing_datasets/processing_tcga_256/splits_csv"
+  pt_files_dir:
+    kich: "/home/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files"
+    kirp: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp/pt_files"
+    kirc: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/features_fp/pt_files"
+fold_number: 5

@@ -1,0 +1,83 @@
+# paths:
+#   source_dir: "/home/mvu9/datasets/camelyon16/raw_data/camelyon16/images"
+#   save_dir: "/home/mvu9/processing_datasets/processing_camelyon16"
+#   patch_h5_dir: "/home/mvu9/processing_datasets/processing_camelyon16/patches_h5"
+#   patch_png_dir: "/home/mvu9/processing_datasets/processing_camelyon16/patches_png"
+#   mask_save_dir: "/home/mvu9/processing_datasets/processing_camelyon16/masks"
+#   only_mask_save_dir: "/home/mvu9/processing_datasets/processing_camelyon16/only_masks"
+#   stitch_save_dir: "/home/mvu9/processing_datasets/processing_camelyon16/graph_1024"
+#   slide_name_file: "/home/mvu9/datasets/TGCA-metadata/CAMELYON16/slides.xlsx"
+
+# # Processing parameters
+# processing:
+#   patch_size: 1024
+#   step_size: 1024
+#   patch_level: 1
+#   seg: true
+#   patch: true
+#   stitch: false
+  # auto_skip: true
+
+
+
+paths:
+  source: "/home/mvu9/datasets/camelyon16/raw_data/camelyon16/images"
+  slide_dir: "/home/mvu9/datasets/camelyon16/raw_data/camelyon16/images"  
+  anno_xml_dir: "/home/mvu9/datasets/camelyon16/raw_data/camelyon16/annotations"
+  label_file: 'datasets/camelyon16/camelyon16_csv_splits_camil/splits_0.csv'
+  save_dir: "/home/mvu9/processing_datasets/processing_camelyon16"
+  patch_save_dir: "/home/mvu9/processing_datasets/processing_camelyon16/patches"
+  # patch_png_dir: "/home/mvu9/processing_datasets/processing_camelyon16/patches_png"
+  patch_png_dir:
+    patch_256x256_10x: "/home/mvu9/processing_datasets/processing_camelyon16/png_patches/patch_256x256_10x"
+    patch_256x256_5x:  "/home/mvu9/processing_datasets/processing_camelyon16/png_patches/patch_256x256_5x"
+  patch_h5_dir: "/home/mvu9/processing_datasets/processing_camelyon16/patches"
+  mask_save_dir: "/home/mvu9/processing_datasets/processing_camelyon16/masks"
+  stitch_save_dir: "/home/mvu9/processing_datasets/processing_camelyon16/stitches"
+  slide_list:  "/home/mvu9/processing_datasets/processing_camelyon16/process_list_autogen.csv" 
+  feature_fp: "/home/mvu9/processing_datasets/processing_camelyon16/features_fp"
+  pt_files: "/home/mvu9/processing_datasets/processing_camelyon16/features_fp/pt_files"
+  ht_files: "/home/mvu9/processing_datasets/processing_camelyon16/features_fp/h5_files"
+  split_folder: "/home/mvu9/processing_datasets/processing_camelyon16/splits_csv" 
+  gt_h5_dir: "/home/mvu9/processing_datasets/processing_camelyon16/gt_h5" 
+
+fold_number: 5  
+processing:
+  patch_size: 256
+  step_size: 256
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: false 
+  auto_skip: false 
+
+segmentation:
+  seg_level: -1
+  sthresh: 8
+  mthresh: 7
+  close: 4
+  use_otsu: false
+  keep_ids: "none"
+  exclude_ids: "none"
+
+filtering:
+  a_t: 100
+  a_h: 16
+  max_n_holes: 8
+
+visualization:
+  vis_level: -1
+  line_thickness: 250
+
+patching:
+  use_padding: true
+  contour_fn: "four_pt"
+  # white_thresh: 5
+  # black_thresh: 50
+
+feature_extraction:
+  model_name: resnet50_trunc
+  batch_size: 256
+  target_patch_size: 224
+  slide_ext: .tif
+  no_auto_skip: False

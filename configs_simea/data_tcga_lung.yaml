@@ -1,0 +1,9 @@
+paths:
+  metadata:
+    luad: "/home/mvu9/datasets/TCGA-metadata/LUAD/uuids.xlsx"
+    lusc: "/home/mvu9/datasets/TCGA-metadata/LUSC/uuids.xlsx"
+  split_folder: "/home/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_lung"
+  pt_files_dir:
+    luad: "/home/mvu9/processing_datasets/processing_tcga_256/luad/features_fp/pt_files"
+    lusc: "/home/mvu9/processing_datasets/processing_tcga_256/lusc/features_fp/pt_files"
+fold_number: 5

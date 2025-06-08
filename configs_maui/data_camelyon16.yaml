@@ -1,0 +1,62 @@
+
+paths:
+  source: "/project/hnguyen2/hqvo3/Datasets/digital_pathology/public/CAMELYON16/images"
+  slide_dir: "/project/hnguyen2/hqvo3/Datasets/digital_pathology/public/CAMELYON16/images" 
+  anno_xml_dir: "/project/hnguyen2/hqvo3/Datasets/digital_pathology/public/CAMELYON16/annotations"
+  
+  label_file: "/project/hnguyen2/mvu9/processing_datasets/camelyon16/camil_label_file/camelyon_17_splits/splits_0.csv"
+  save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16"
+  patch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/patches"
+  patch_png_dir:
+    patch_256x256_10x: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/png_patches/patch_256x256_10x"
+    patch_256x256_5x:  "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/png_patches/patch_256x256_5x"
+  patch_h5_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/patches"
+  mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/masks"
+  stitch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/stitches"
+  slide_list:  "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/process_list_autogen.csv" 
+  feature_fp: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/features_fp"
+  pt_files: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/features_fp/pt_files"
+  ht_files: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/features_fp/h5_files"
+  split_folder: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/splits_csv" 
+  gt_h5_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_camelyon16/gt_h5" 
+
+fold_number: 5  
+processing:
+  patch_size: 256
+  step_size: 256
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: false 
+  auto_skip: false 
+
+segmentation:
+  seg_level: -1
+  sthresh: 8
+  mthresh: 7
+  close: 4
+  use_otsu: false
+  keep_ids: "none"
+  exclude_ids: "none"
+
+filtering:
+  a_t: 100
+  a_h: 16
+  max_n_holes: 8
+
+visualization:
+  vis_level: -1
+  line_thickness: 250
+
+patching:
+  use_padding: true
+  contour_fn: "four_pt"
+  # white_thresh: 5
+  # black_thresh: 50
+
+feature_extraction:
+  model_name: resnet50_trunc
+  batch_size: 256
+  target_patch_size: 224
+  slide_ext: .tif
+  no_auto_skip: False

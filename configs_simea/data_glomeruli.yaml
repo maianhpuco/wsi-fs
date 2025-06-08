@@ -1,0 +1,61 @@
+paths: 
+  slide_dir: 
+    train: "/home/mvu9/processing_datasets/processing_glomeruli/pyramidal_images/train"
+    test: "/home/mvu9/processing_datasets/processing_glomeruli/pyramidal_images/test" 
+  orbit_db : "/home/mvu9/datasets/processing_glomeruli/orbit.db"  
+  patch_dir: 
+    train: "/home/mvu9/processing_datasets/processing_glomeruli/patches/train"
+    test: "/home/mvu9/processing_datasets/processing_glomeruli/patches/test"
+  save_dir: "/home/mvu9/processing_datasets/processing_glomeruli/"
+
+  anno_dir:
+    train: "/home/mvu9/processing_datasets/processing_glomeruli/annotations/train"
+    test: "/home/mvu9/processing_datasets/processing_glomeruli/annotations/test"  
+  sanity_downscale_dir: 
+    train: "/home/mvu9/processing_datasets/processing_glomeruli/downscale_sanity_check/train"
+    test: "/home/mvu9/processing_datasets/processing_glomeruli/downscale_sanity_check/test"
+  json_save_path: "/home/mvu9/processing_datasets/processing_glomeruli/annotations.json" 
+  raw_slide_dir_not_used: 
+    train: "/home/mvu9/datasets/processing_glomeruli/train"
+    test: "/home/mvu9/datasets/processing_glomeruli/test"   
+processing:
+  patch_size: 256
+  step_size: 256
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: true
+  auto_skip: true
+
+segmentation:
+  seg_level: -1
+  sthresh: 8
+  mthresh: 7
+  close: 4
+  use_otsu: False
+  keep_ids: "none"
+  exclude_ids: "none"
+
+filtering:
+  a_t: 100
+  a_h: 16
+  max_n_holes: 8
+
+visualization:
+  vis_level: -1
+  line_thickness: 500
+
+patching:
+  use_padding: True
+  contour_fn: "four_pt"
+  # white_thresh: 5
+  # black_thresh: 50
+
+    # black_thresh: 50
+
+feature_extraction:
+  model_name: resnet50_trunc
+  batch_size: 256
+  target_patch_size: 224
+  slide_ext: .tiff
+  no_auto_skip: False

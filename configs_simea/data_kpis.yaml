@@ -1,0 +1,89 @@
+paths:
+  save_dir: "/home/mvu9/processing_datasets/processing_kpis/" 
+  slide_dir: 
+    train: "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/pyramidal_images/train" 
+    test:  "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/pyramidal_images/test" 
+    validation: "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/pyramidal_images/validation"  
+  reorganized_slide_dir: # reorganize into train, test , val folder 
+    train: "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/images/train" 
+    test:  "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/images/test" 
+    validation: "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/image/validation" 
+  annotation_dir: 
+    train: "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/annotations/train" 
+    test:  "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/annotations/test" 
+    validation: "/home/mvu9/processing_datasets/processing_kpis/reorganized_rawdata/annotations/validation"  
+  original_slide_dir:  
+    train: "/home/mvu9/datasets/kidney_pathology_image/train/Task2_WSI_level" 
+    test:  "/home/mvu9/datasets/kidney_pathology_image/test/Task2_WSI_level" 
+    validation: "/home/mvu9/datasets/kidney_pathology_image/validation/Task2_WSI_level" 
+  original_anno_xml_dir: 
+    train: "/home/mvu9/datasets/kidney_pathology_image/train/Task2_WSI_level"
+    test:  "/home/mvu9/datasets/kidney_pathology_image/test/Task2_WSI_level"
+    validation: "/home/mvu9/datasets/kidney_pathology_image/validation/Task2_WSI_level" 
+
+  sanity_downscale_dir: 
+    train: "/home/mvu9/processing_datasets/processing_kpis/downscale_sanity_check/train"
+    test:  "/home/mvu9/processing_datasets/processing_kpis/downscale_sanity_check/test"
+    validation: "/home/mvu9/processing_datasets/processing_kpis/downscale_sanity_check/validation" 
+  patch_dir: 
+    train:      "/home/mvu9/processing_datasets/processing_kpis/patches/train"
+    test:       "/home/mvu9/processing_datasets/processing_kpis/patches/test"
+    validation: "/home/mvu9/processing_datasets/processing_kpis/patches/validation" 
+  anno_dir: 
+  patch_save_dir: ""
+  mask_save_dir: ""
+  stitch_save_dir: ""
+
+patterns: 
+  slide_dir: 
+    train: "/home/mvu9/datasets/kidney_pathology_image/train/Task2_WSI_level/*/*_wsi.tiff" 
+    test:  "/home/mvu9/datasets/kidney_pathology_image/test/Task2_WSI_level/*/*_wsi.tiff"
+    validation:  "/home/mvu9/datasets/kidney_pathology_image/validation/Task2_WSI_level/*/*_wsi.tiff" 
+  anno_xml_dir: 
+    train: "/home/mvu9/datasets/kidney_pathology_image/train/Task2_WSI_level/*/*_mask.tiff"
+    test:  "/home/mvu9/datasets/kidney_pathology_image/test/Task2_WSI_level/*/*_mask.tiff"
+    validation: "/home/mvu9/datasets/kidney_pathology_image/validation/Task2_WSI_level/*/*_mask.tiff"
+  sanity_downscale_dir: 
+    train: "/home/mvu9/processing_datasets/processing_kpis/downscale_sanity_check/train/Task2_WSI_level/*/*_wsi.tiff"
+    test:  "/home/mvu9/processing_datasets/processing_kpis/downscale_sanity_check/test/Task2_WSI_level/*/*_wsi.tiff"
+    validation: "/home/mvu9/processing_datasets/processing_kpis/downscale_sanity_check/validation/Task2_WSI_level/*/*_wsi.tiff"
+    
+processing:
+  patch_size: 256
+  step_size: 256
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: true
+  auto_skip: true
+
+segmentation:
+  seg_level: -1
+  sthresh: 8
+  mthresh: 7
+  close: 4
+  use_otsu: false
+  keep_ids: "none"
+  exclude_ids: "none"
+
+filtering:
+  a_t: 100
+  a_h: 16
+  max_n_holes: 8
+
+visualization:
+  vis_level: -1
+  line_thickness: 500
+
+patching:
+  use_padding: true
+  contour_fn: "four_pt"
+  # white_thresh: 5
+  # black_thresh: 50
+
+feature_extraction:
+  model_name: resnet50_trunc
+  batch_size: 256
+  target_patch_size: 224
+  slide_ext: .tiff
+  no_auto_skip: False

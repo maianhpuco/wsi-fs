@@ -1,0 +1,26 @@
+paths:
+  source_dir: "/home/mvu9/datasets/TCGA-datasets/KIRC"
+  save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc"
+  patch_h5_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/patches_h5"
+  # patch_png_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/patches_png"
+  patch_png_dir:
+    patch_256x256_10x: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/png_patches/patch_256x256_10x"
+    patch_256x256_5x:  "/home/mvu9/processing_datasets/processing_tcga_256/kirc/png_patches/patch_256x256_5x" 
+  mask_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/masks"
+  only_mask_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/only_masks"
+  stitch_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/graph_1024"
+  slide_name_file: "/home/mvu9/datasets/TCGA-metadata/KIRC/slides.xlsx"
+  uuid_name_file: "/home/mvu9/datasets/TCGA-metadata/KIRC/uuids.xlsx"
+  preset_file: "/home/mvu9/folder_04_ma/wsi-data/presets/tcga_vilamil.csv"
+  slide_list:  "/home/mvu9/processing_datasets/processing_tcga_256/kirc/process_list_autogen.csv" 
+  missing_patches_h5: "/home/mvu9/processing_datasets/missing_files/patches_h5/kirc.csv"
+  missing_pt_files: "/home/mvu9/processing_datasets/missing_files/pt_files/kirc.csv" 
+# Processing parameters
+processing:
+  patch_size: 1024
+  step_size: 1024
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: false
+  auto_skip: true
