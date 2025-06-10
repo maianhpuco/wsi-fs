@@ -1,3 +1,4 @@
+dataset_name: 'lusc'  
 paths:
   source_dir: "/project/hnguyen2/mvu9/datasets/TCGA-datasets/LUSC"
   error_files: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/lusc/error_files.txt" 

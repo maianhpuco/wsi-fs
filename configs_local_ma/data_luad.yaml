@@ -1,0 +1,37 @@
+dataset_name: 'luad'
+paths:
+  # source_dir: "/project/hnguyen2/mvu9/datasets/TCGA-datasets/luad"
+  # save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad"
+  features_fp_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/features_fp"
+  h5_files_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/features_fp/h5_files"  
+  pt_files_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/features_fp/pt_files"    
+  # patch_png_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/patches_png"
+  patch_png_dir:
+    patch_256x256_10x: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/png_patches/patch_256x256_10x"
+    patch_256x256_5x:  "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/png_patches/patch_256x256_5x" 
+  # mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/masks"
+  # only_mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/only_masks"
+  # stitch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/graph_1024"
+  # slide_name_file: "/project/hnguyen2/mvu9/datasets/TCGA-metadata/luad/slides.xlsx"
+  # uuid_name_file: "/project/hnguyen2/mvu9/datasets/TCGA-metadata/luad/uuids.xlsx"
+  # preset_file: "/project/hnguyen2/mvu9/folder_04_ma/wsi-data/presets/tcga_vilamil.csv"
+  # slide_list:  "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/process_list_autogen.csv" 
+  # missing_patches_h5: "/project/hnguyen2/mvu9/processing_datasets/missing_files/patches_h5/luad.csv"
+  # missing_pt_files: "/project/hnguyen2/mvu9/processing_datasets/missing_files/pt_files/luad.csv"
+  # manifest_dir: "/project/hnguyen2/mvu9/download_tcga/gdc-client/manifest/luad"
+# Processing parameters
+processing:
+  patch_size: 1024
+  step_size: 1024
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: false
+  auto_skip: true
+
+feature_extraction:
+  model_name: "resnet50_trunc"
+  batch_size: 256
+  target_patch_size: 224
+  slide_ext: ".svs"  # Adjust if TCGA-luad uses .tif or other format
+  no_auto_skip: false  # Inverted from processing.auto_skip

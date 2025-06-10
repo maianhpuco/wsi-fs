@@ -1,0 +1,37 @@
+dataset_name: 'kirp'
+paths:
+  # source_dir: "/project/hnguyen2/mvu9/datasets/TCGA-datasets/kirp"
+  # save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp"
+  features_fp_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp"
+  h5_files_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp/h5_files"  
+  pt_files_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp/pt_files"    
+  # patch_png_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/patches_png"
+  patch_png_dir:
+    patch_256x256_10x: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/png_patches/patch_256x256_10x"
+    patch_256x256_5x:  "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/png_patches/patch_256x256_5x" 
+  # mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/masks"
+  # only_mask_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/only_masks"
+  # stitch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/graph_1024"
+  # slide_name_file: "/project/hnguyen2/mvu9/datasets/TCGA-metadata/kirp/slides.xlsx"
+  # uuid_name_file: "/project/hnguyen2/mvu9/datasets/TCGA-metadata/kirp/uuids.xlsx"
+  # preset_file: "/project/hnguyen2/mvu9/folder_04_ma/wsi-data/presets/tcga_vilamil.csv"
+  # slide_list:  "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/process_list_autogen.csv" 
+  # missing_patches_h5: "/project/hnguyen2/mvu9/processing_datasets/missing_files/patches_h5/kirp.csv"
+  # missing_pt_files: "/project/hnguyen2/mvu9/processing_datasets/missing_files/pt_files/kirp.csv"
+  # manifest_dir: "/project/hnguyen2/mvu9/download_tcga/gdc-client/manifest/kirp"
+# Processing parameters
+processing:
+  patch_size: 1024
+  step_size: 1024
+  patch_level: 0
+  seg: true
+  patch: true
+  stitch: false
+  auto_skip: true
+
+feature_extraction:
+  model_name: "resnet50_trunc"
+  batch_size: 256
+  target_patch_size: 224
+  slide_ext: ".svs"  # Adjust if TCGA-kirp uses .tif or other format
+  no_auto_skip: false  # Inverted from processing.auto_skip

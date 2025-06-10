@@ -1,3 +1,4 @@
+dataset_name: 'luad'
 paths:
   source_dir: "/project/hnguyen2/mvu9/datasets/TCGA-datasets/LUAD"
   error_files: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/error_files.txt" 
