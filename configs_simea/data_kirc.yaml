@@ -4,8 +4,9 @@ paths:
   patch_h5_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/patches_h5"
   # patch_png_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/patches_png"
   patch_png_dir:
-    patch_256x256_10x: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/png_patches/patch_256x256_10x"
-    patch_256x256_5x:  "/home/mvu9/processing_datasets/processing_tcga_256/kirc/png_patches/patch_256x256_5x" 
+    patch_256x256_10x: "/home/mvu9/sample_data/kirc/png_patches"
+    # patch_256x256_10x: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/png_patches/patch_256x256_10x"
+    # patch_256x256_5x:  "/home/mvu9/processing_datasets/processing_tcga_256/kirc/png_patches/patch_256x256_5x" 
   mask_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/masks"
   only_mask_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/only_masks"
   stitch_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/graph_1024"

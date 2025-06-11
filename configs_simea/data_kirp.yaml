@@ -4,8 +4,9 @@ paths:
   patch_h5_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/patches_h5"
   # patch_png_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/patches_png"
   patch_png_dir:
-    patch_256x256_10x: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/png_patches/patch_256x256_10x"
-    patch_256x256_5x:  "/home/mvu9/processing_datasets/processing_tcga_256/kirp/png_patches/patch_256x256_5x"  
+    patch_256x256_10x: "/home/mvu9/sample_data/kirp/png_patches"
+    # patch_256x256_10x: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/png_patches/patch_256x256_10x"
+    # patch_256x256_5x:  "/home/mvu9/processing_datasets/processing_tcga_256/kirp/png_patches/patch_256x256_5x"  
   mask_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/masks"
   only_mask_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/only_masks"
   stitch_save_dir: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/graph_1024"
