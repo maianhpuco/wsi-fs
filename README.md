@@ -48,3 +48,27 @@ curl -s -X POST https://api.gdc.cancer.gov/manifest \
 
 Run batch file 
 # dual-expert
+
+
+vila-MIL 
+
+---- CLIP 
+python patch_extraction.py \
+--patches_path 'PATCHES_PATH' \
+--library_path 'LIBRARY_PATH' \
+--model_name 'clip_RN50' \
+--batch_size 64 \ 
+
+
+
+python create_splits_seq.py \
+--label_frac 1 \
+--k 5 \
+--task 'TASK' \
+--val_frac VAL_FRAC \
+--test_frac TEST_FRAC \
+--dataset DATASET \ 
+
+
+python create_splits_fewshot.py
+ 
