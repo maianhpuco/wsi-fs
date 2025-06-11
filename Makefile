@@ -1,2 +1,2 @@
 juputer_launch:
-	sbatch_scripts/juputer_notebook.sbatch
+	sbatch sbatch_scripts/juputer_notebook.sbatch
