@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=jupyter
-#SBATCH --output=jupyter.log
+#SBATCH --output=logs/jupyter.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=4G
