@@ -1,9 +1,6 @@
 [submodule "src/externals/Tip-Adapter"]
 	path = src/externals/Tip-Adapter
 	url = https://github.com/gaopengcuhk/Tip-Adapter.git
-[submodule "src/externals/external/Tip-Adapter"]
-	path = src/externals/external/Tip-Adapter
-	url = https://github.com/gaopengcuhk/Tip-Adapter.git
 [submodule "src/externals/ViLa-MIL"]
 	path = src/externals/ViLa-MIL
 	url = https://github.com/Jiangbo-Shi/ViLa-MIL
