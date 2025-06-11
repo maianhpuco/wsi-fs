@@ -10,7 +10,7 @@
 
 # Load your conda env or module
 source ~/.bashrc
-conda activate your_env_name  # or module load python
+conda activate jupyter_notebook_env  # or module load python
 
 # Launch Jupyter
 jupyter notebook --no-browser --ip=0.0.0.0 --port=8888
