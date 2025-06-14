@@ -5,7 +5,7 @@ import torch
 import sys 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
-explainer_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'externals', 'explainer'))
+explainer_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'explainer'))
 sys.path.append(explainer_path) 
 
 # from torch.utils.data import Dataset
