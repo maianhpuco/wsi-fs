@@ -10,9 +10,9 @@ prototype_training:
 paths:
   split_folder: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal/fold_1" 
   pt_files_dir:
-    kich: "/home/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files"
-    kirp: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp/pt_files"
-    kirc: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/features_fp/pt_files"
+    kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files"
+    kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp/pt_files"
+    kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/features_fp/pt_files"
   prototype_out_dir: /project/hnguyen2/mvu9/prototype_outputs/
 label_map:
   kich: 0
