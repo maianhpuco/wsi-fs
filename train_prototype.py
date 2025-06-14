@@ -7,13 +7,12 @@ from datetime import datetime
 
 # Set up path
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
-_path = os.path.abspath(os.path.join(current_dir,'src'))
-sys.path.append(_path)
+explainer_path = os.path.abspath(os.path.join(current_dir, 'src'))
+sys.path.append(explainer_path)
 
 from explainer.explainer_utils import train_prototype_module
 from explainer.prototype import ViLaPrototypeTrainer
-from datasets.tcga import return_splits_custom
-
+from explainer.dataset import return_splits_custom  # Adjusted import to match dataset location
 
 def main(args):
     with open(args.config, 'r') as f:
@@ -24,17 +23,18 @@ def main(args):
     input_size = proto_cfg['input_size']
     hidden_size = proto_cfg['hidden_size']
     prototype_number = proto_cfg['prototype_number']
-    num_classes = proto_cfg.get('num_classes', 3)
+    num_classes = proto_cfg['num_classes']  # Required for classification
     epochs = proto_cfg.get('epochs', 10)
     lr = proto_cfg.get('lr', 1e-4)
     batch_size = proto_cfg.get('batch_size', 4)
 
     # === Load path and label map ===
-    pt_dirs = config['paths']['pt_files_dir']
+    data_cfg = config['data']
+    pt_dirs = data_cfg['data_dir_map']
     out_path = config['paths']['prototype_out_dir']
-    label_dict = config['label_dict']
+    label_dict = data_cfg['label_dict']
 
-    # Create dummy train/val/test CSVs (assumes you've pre-split and saved them)
+    # === Load dataset splits ===
     split_folder = config['paths'].get('split_folder', None)
     if not split_folder:
         raise ValueError("split_folder not found in config['paths']")
@@ -47,6 +47,10 @@ def main(args):
         if not os.path.exists(p):
             raise FileNotFoundError(f"Missing split file: {p}")
 
+    for label, data_dir in pt_dirs.items():
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"Data directory not found for {label}: {data_dir}")
+
     # === Load datasets ===
     train_dataset, val_dataset, test_dataset = return_splits_custom(
         train_csv_path=train_csv_path,
@@ -56,7 +60,7 @@ def main(args):
         label_dict=label_dict,
         seed=1,
         print_info=True,
-        use_h5=False
+        use_h5=data_cfg.get('use_h5', False)
     )
 
     # === Build model ===
@@ -78,7 +82,6 @@ def main(args):
         batch_size=batch_size,
         device=args.device
     )
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

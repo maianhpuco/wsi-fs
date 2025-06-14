@@ -6,7 +6,6 @@ import warnings
 from torch.nn import MultiheadAttention
 
 
-# ========== Truncated Normal Initialization ==========
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     def norm_cdf(x):
         return (1. + math.erf(x / math.sqrt(2.))) / 2.
@@ -33,13 +32,11 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
     return _no_grad_trunc_normal_(tensor, mean, std, a, b)
 
 
-# ========== ViLa Prototype Module ==========
 class ViLaPrototypeTrainer(nn.Module):
     """
     Learns visual prototypes using cross-attention and attention-based aggregation.
-    Optionally supports class-specific prototypes.
+    Supports class-specific prototypes and classification.
     """
-
     def __init__(self, input_size, hidden_size, prototype_number, num_classes=None):
         """
         Args:
@@ -65,32 +62,50 @@ class ViLaPrototypeTrainer(nn.Module):
         self.learnable_image_center = nn.Parameter(torch.Tensor(total_prototypes, 1, input_size))
         trunc_normal_(self.learnable_image_center, std=0.02)
 
+        # LayerNorm after cross-attention
         self.norm = nn.LayerNorm(input_size)
 
         # Cross-attention module
         self.cross_attention = MultiheadAttention(embed_dim=input_size, num_heads=1, batch_first=False)
 
-    def forward(self, x):
+        # Classification head
+        self.classifier = nn.Linear(input_size, num_classes) if num_classes else None
+
+    def forward(self, x, labels=None):
         """
         Args:
-            x (Tensor): Bag features of shape (N, D), where N is number of patches.
+            x (Tensor): Bag features of shape (B, N, D), where B is batch size, N is number of patches, D is feature dim.
+            labels (Tensor, optional): Class labels of shape (B,) for selecting class-specific prototypes.
 
         Returns:
-            image_features (Tensor): Aggregated feature.
-            prototypes (Tensor): All learned prototype vectors.
+            logits (Tensor): Classification logits of shape (B, num_classes) if num_classes is set, else None.
+            image_features (Tensor): Aggregated feature of shape (B, D).
+            prototypes (Tensor): All learned prototype vectors of shape (P, 1, D).
         """
-        M = x.float()
-        M = M.unsqueeze(1) if M.ndim == 2 else M  # (N, 1, D)
+        B, N, D = x.shape  # Batch dimension included
+        M = x.float()  # (B, N, D)
 
-        # Cross-attention between prototypes and image patches
-        compents, _ = self.cross_attention(self.learnable_image_center, M, M)
-        compents = self.norm(compents + self.learnable_image_center)
+        # Expand prototypes to match batch size
+        total_prototypes = self.prototype_number * self.num_classes if self.num_classes else self.prototype_number
+        prototypes = self.learnable_image_center.expand(total_prototypes, B, D)  # (P, B, D)
 
-        H = compents.squeeze(1)  # (P, D)
-        A_V = self.attention_V(H)
-        A_U = self.attention_U(H)
-        A = self.attention_weights(A_V * A_U)  # (P, 1)
-        A = F.softmax(A.T, dim=1)              # (1, P)
-        image_features = torch.mm(A, H)        # (1, D)
+        # Apply cross-attention
+        compents, _ = self.cross_attention(
+            prototypes,           # Query: (P, B, D)
+            M.transpose(0, 1),    # Key: (N, B, D)
+            M.transpose(0, 1)     # Value: (N, B, D)
+        )
+        compents = self.norm(compents + prototypes)  # Residual: (P, B, D)
 
-        return image_features, self.learnable_image_center.detach()
+        # Attention-based aggregation
+        H = compents.transpose(0, 1).reshape(B * total_prototypes, D)  # (B*P, D)
+        A_V = self.attention_V(H)  # (B*P, H)
+        A_U = self.attention_U(H)  # (B*P, H)
+        A = self.attention_weights(A_V * A_U)  # (B*P, 1)
+        A = F.softmax(A.view(B, total_prototypes), dim=1)  # (B, P)
+        image_features = torch.bmm(A.unsqueeze(1), H.view(B, total_prototypes, D)).squeeze(1)  # (B, D)
+
+        # Classification
+        logits = self.classifier(image_features) if self.classifier else None
+
+        return logits, image_features, self.learnable_image_center.detach()
