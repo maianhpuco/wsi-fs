@@ -7,7 +7,7 @@ from datetime import datetime
 
 # Set up path
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
-_path = os.path.abspath(os.path.join(current_dir, '..', 'src'))
+_path = os.path.abspath(os.path.join(current_dir,'src'))
 sys.path.append(_path)
 
 from explainer.explainer_utils import train_prototype_module
