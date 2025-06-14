@@ -5,13 +5,13 @@ import torch
 import sys 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
-explainer_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'explainer'))
+explainer_path = os.path.abspath(os.path.join(current_dir, 'src'))
 sys.path.append(explainer_path) 
 
 # from torch.utils.data import Dataset
-from dataset import FeatureDataset 
-from explainer_utils  import train_prototype_module
-from prototype import ViLaPrototypeTrainer 
+from explainer.dataset import FeatureDataset 
+from explainer.explainer_utils  import train_prototype_module
+from explainer.prototype import ViLaPrototypeTrainer 
 
 def main(args):
     # Load config
