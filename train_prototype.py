@@ -5,61 +5,63 @@ import torch
 import sys
 from datetime import datetime
 
+# Set up path
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
-explainer_path = os.path.abspath(os.path.join(current_dir, 'src'))
+explainer_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'externals', 'explainer'))
+dataset_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'externals'))
 sys.path.append(explainer_path)
+sys.path.append(dataset_path)
 
-from datasets.tcga import return_splits_custom
 from explainer.explainer_utils import train_prototype_module
 from explainer.prototype import ViLaPrototypeTrainer
+from datasets.tcga import return_splits_custom
+
 
 def main(args):
-    # Load config
     with open(args.config, 'r') as f:
         config = yaml.safe_load(f)
 
+    # === Load prototype training hyperparameters ===
     proto_cfg = config['prototype_training']
-    data_cfg = config['data']
-    out_path = config['paths']['prototype_out_dir']
-
-    # Extract parameters
     input_size = proto_cfg['input_size']
     hidden_size = proto_cfg['hidden_size']
     prototype_number = proto_cfg['prototype_number']
-    num_classes = proto_cfg.get('num_classes', 3)  # Default to 3 classes
+    num_classes = proto_cfg.get('num_classes', 3)
     epochs = proto_cfg.get('epochs', 10)
     lr = proto_cfg.get('lr', 1e-4)
-    batch_size = proto_cfg.get('batch_size', 1)
-    use_h5 = data_cfg.get('use_h5', False)
+    batch_size = proto_cfg.get('batch_size', 4)
 
-    # Load data configuration
-    data_dir_map = data_cfg['data_dir_map']
-    label_dict = data_cfg.get('label_dict', {'kich': 0, 'kirp': 1, 'kirc': 2})
-    train_csv_path = data_cfg['train_csv_path']
-    val_csv_path = data_cfg['val_csv_path']
-    test_csv_path = data_cfg['test_csv_path']
+    # === Load path and label map ===
+    pt_dirs = config['paths']['pt_files_dir']
+    out_path = config['paths']['prototype_out_dir']
+    label_map = config['label_map']
 
-    # Validate file paths
-    for path in [train_csv_path, val_csv_path, test_csv_path]:
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"CSV file not found: {path}")
-    for label, data_dir in data_dir_map.items():
-        if not os.path.exists(data_dir):
-            raise FileNotFoundError(f"Data directory not found for {label}: {data_dir}")
+    # Create dummy train/val/test CSVs (assumes you've pre-split and saved them)
+    split_folder = config['paths'].get('split_folder', None)
+    if not split_folder:
+        raise ValueError("split_folder not found in config['paths']")
 
-    # Load datasets
+    train_csv_path = os.path.join(split_folder, 'train.csv')
+    val_csv_path = os.path.join(split_folder, 'val.csv')
+    test_csv_path = os.path.join(split_folder, 'test.csv')
+
+    for p in [train_csv_path, val_csv_path, test_csv_path]:
+        if not os.path.exists(p):
+            raise FileNotFoundError(f"Missing split file: {p}")
+
+    # === Load datasets ===
     train_dataset, val_dataset, test_dataset = return_splits_custom(
         train_csv_path=train_csv_path,
         val_csv_path=val_csv_path,
         test_csv_path=test_csv_path,
-        data_dir_map=data_dir_map,
-        label_dict=label_dict,
+        data_dir_map=pt_dirs,
+        label_dict=label_map,
         seed=1,
         print_info=True,
-        use_h5=use_h5
+        use_h5=False
     )
 
-    # Initialize model
+    # === Build model ===
     model = ViLaPrototypeTrainer(
         input_size=input_size,
         hidden_size=hidden_size,
@@ -67,7 +69,7 @@ def main(args):
         num_classes=num_classes
     )
 
-    # Train
+    # === Train ===
     train_prototype_module(
         model=model,
         train_dataset=train_dataset,
@@ -79,10 +81,11 @@ def main(args):
         device=args.device
     )
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', required=True, help='Path to YAML config file')
     default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    parser.add_argument('--device', default=default_device, type=str, help='Device to use (cuda or cpu)')
+    parser.add_argument('--device', default=default_device, type=str, help='Device to use')
     args = parser.parse_args()
     main(args)
