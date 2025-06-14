@@ -12,7 +12,7 @@ sys.path.append(explainer_path)
 
 from explainer.explainer_utils import train_prototype_module
 from explainer.prototype import ViLaPrototypeTrainer
-from explainer.dataset import return_splits_custom  # Adjusted import to match dataset location
+from datasets.tcga import return_splits_custom  # Adjusted import to match dataset location
 
 def main(args):
     with open(args.config, 'r') as f:

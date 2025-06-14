@@ -51,6 +51,8 @@ def train_prototype_module(model, train_dataset, val_dataset, out_path, epochs=5
 
             # Forward
             logits, image_feats, _ = model(features)
+            if logits is None:
+                raise ValueError("Model did not return logits. Ensure num_classes is set in ViLaPrototypeTrainer.")
 
             # Compute loss
             loss = criterion(logits, labels)
@@ -81,6 +83,9 @@ def train_prototype_module(model, train_dataset, val_dataset, out_path, epochs=5
                 labels = labels.to(device)     # (B,)
 
                 logits, image_feats, _ = model(features)
+                if logits is None:
+                    raise ValueError("Model did not return logits during validation.")
+
                 loss = criterion(logits, labels)
 
                 val_loss += loss.item() * features.size(0)
