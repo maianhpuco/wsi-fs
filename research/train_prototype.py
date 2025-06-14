@@ -10,8 +10,7 @@ sys.path.append(explainer_path)
 
 # from torch.utils.data import Dataset
 from dataset import FeatureDataset 
-
-from utils.train  import train_prototype_module
+from explainer_utils  import train_prototype_module
 from prototype import ViLaPrototypeTrainer 
 
 def main(args):
