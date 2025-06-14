@@ -1,0 +1,18 @@
+prototype_training:
+  input_size: 1024
+  hidden_size: 512
+  prototype_number: 10
+  num_classes: 3
+  epochs: 10
+  lr: 0.0001
+  batch_size: 4
+paths:
+  pt_files_dir:
+    kich: "/home/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files"
+    kirp: "/home/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp/pt_files"
+    kirc: "/home/mvu9/processing_datasets/processing_tcga_256/kirc/features_fp/pt_files"
+  prototype_out_dir: /project/hnguyen2/mvu9/prototype_outputs/
+label_map:
+  kich: 0
+  kirp: 1
+  kirc: 2
