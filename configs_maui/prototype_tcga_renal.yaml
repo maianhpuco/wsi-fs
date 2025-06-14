@@ -14,7 +14,4 @@ paths:
     kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/features_fp"
     kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/features_fp"
   prototype_out_dir: /project/hnguyen2/mvu9/prototype_outputs/
-label_map:
-  kich: 0
-  kirp: 1
-  kirc: 2
+label_dict: {'KIRP': 0, 'KIRC': 1, 'KICH': 2} 
