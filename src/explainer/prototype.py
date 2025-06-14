@@ -37,19 +37,24 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
 class ViLaPrototypeTrainer(nn.Module):
     """
     Learns visual prototypes using cross-attention and attention-based aggregation.
+    Optionally supports class-specific prototypes.
     """
 
-    def __init__(self, input_size, hidden_size, prototype_number):
+    def __init__(self, input_size, hidden_size, prototype_number, num_classes=None):
         """
         Args:
             input_size (int): Dimensionality of input features (e.g., 1024 or 512).
             hidden_size (int): Size of hidden projection in attention.
-            prototype_number (int): Number of learnable prototype vectors.
+            prototype_number (int): Number of learnable prototype vectors (per class if num_classes is given).
+            num_classes (int, optional): If set, each class gets its own prototype set.
         """
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.prototype_number = prototype_number
+        self.num_classes = num_classes
+
+        total_prototypes = prototype_number * num_classes if num_classes else prototype_number
 
         # Attention projection heads
         self.attention_V = nn.Sequential(nn.Linear(input_size, hidden_size), nn.Tanh())
@@ -57,13 +62,12 @@ class ViLaPrototypeTrainer(nn.Module):
         self.attention_weights = nn.Linear(hidden_size, 1)
 
         # Learnable prototype tokens
-        self.learnable_image_center = nn.Parameter(torch.Tensor(prototype_number, 1, input_size))
+        self.learnable_image_center = nn.Parameter(torch.Tensor(total_prototypes, 1, input_size))
         trunc_normal_(self.learnable_image_center, std=0.02)
 
-        # LayerNorm after cross-attention
         self.norm = nn.LayerNorm(input_size)
 
-        # Cross-attention: prototype (query) attends to bag features
+        # Cross-attention module
         self.cross_attention = MultiheadAttention(embed_dim=input_size, num_heads=1, batch_first=False)
 
     def forward(self, x):
@@ -72,26 +76,21 @@ class ViLaPrototypeTrainer(nn.Module):
             x (Tensor): Bag features of shape (N, D), where N is number of patches.
 
         Returns:
-            image_features (Tensor): Aggregated image-level feature vector.
-            prototypes (Tensor): Frozen prototype vectors after learning.
+            image_features (Tensor): Aggregated feature.
+            prototypes (Tensor): All learned prototype vectors.
         """
-        M = x.float()  # (N, D)
+        M = x.float()
         M = M.unsqueeze(1) if M.ndim == 2 else M  # (N, 1, D)
 
-        # Apply cross-attention between prototypes and patch features
-        compents, _ = self.cross_attention(
-            self.learnable_image_center,  # Query: (P, 1, D)
-            M,                            # Key:   (N, 1, D)
-            M                             # Value: (N, 1, D)
-        )
-        compents = self.norm(compents + self.learnable_image_center)  # Residual
+        # Cross-attention between prototypes and image patches
+        compents, _ = self.cross_attention(self.learnable_image_center, M, M)
+        compents = self.norm(compents + self.learnable_image_center)
 
-        # Aggregation using attention over prototypes
         H = compents.squeeze(1)  # (P, D)
-        A_V = self.attention_V(H)  # (P, H)
-        A_U = self.attention_U(H)  # (P, H)
+        A_V = self.attention_V(H)
+        A_U = self.attention_U(H)
         A = self.attention_weights(A_V * A_U)  # (P, 1)
         A = F.softmax(A.T, dim=1)              # (1, P)
         image_features = torch.mm(A, H)        # (1, D)
 
-        return image_features, self.learnable_image_center.detach()  # Return frozen prototypes
+        return image_features, self.learnable_image_center.detach()
