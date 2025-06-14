@@ -35,3 +35,4 @@ missing_all = missing_train + missing_val + missing_test
 import pandas as pd
 df_missing = pd.DataFrame(missing_all, columns=["label", "slide_id", "missing_pt", "missing_h5"])
 
+print(df_missing)
