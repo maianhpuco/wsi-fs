@@ -32,7 +32,7 @@ def main(args):
     # === Load path and label map ===
     pt_dirs = config['paths']['pt_files_dir']
     out_path = config['paths']['prototype_out_dir']
-    label_map = config['label_map']
+    label_dict = config['label_dict']
 
     # Create dummy train/val/test CSVs (assumes you've pre-split and saved them)
     split_folder = config['paths'].get('split_folder', None)
@@ -53,7 +53,7 @@ def main(args):
         val_csv_path=val_csv_path,
         test_csv_path=test_csv_path,
         data_dir_map=pt_dirs,
-        label_dict=label_map,
+        label_dict=label_dict,
         seed=1,
         print_info=True,
         use_h5=False
