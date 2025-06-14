@@ -9,7 +9,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
 explainer_path = os.path.abspath(os.path.join(current_dir, 'src'))
 sys.path.append(explainer_path)
 
-from datasets.tgca import return_splits_custom
+from datasets.tcga import return_splits_custom
 from explainer.explainer_utils import train_prototype_module
 from explainer.prototype import ViLaPrototypeTrainer
 
