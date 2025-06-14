@@ -1,0 +1,19 @@
+dataset_name: 'tcga_renal'
+# features_fp/h5_files -> coord 
+# features_fp/pt_files -> features
+# png_patchs -> folder -> .png  
+
+paths:
+  data_dir:
+    kich: "processing_tcga_256/kich/features_fp" #h5_files #pt_files 
+    kirc: "processing_tcga_256/kirc/features_fp" 
+    kirp: "processing_tcga_256/kirp/features_fp"
+  save_dir: "processing_tcga_256/clam_tcga_renal_result" #-> 
+
+label_dict: {'KIRP': 0, 'KIRC': 1, 'KICH': 2} 
+
+# patterns: 
+  # h5_files: "/home/mvu9/processing_datasets/processing_tcga_256/*/features_fp/h5_files"  
+
+# TOP 
+# batch_size: 64 
