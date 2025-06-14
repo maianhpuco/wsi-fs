@@ -7,10 +7,8 @@ from datetime import datetime
 
 # Set up path
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
-explainer_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'externals', 'explainer'))
-dataset_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'externals'))
-sys.path.append(explainer_path)
-sys.path.append(dataset_path)
+_path = os.path.abspath(os.path.join(current_dir, '..', 'src'))
+sys.path.append(_path)
 
 from explainer.explainer_utils import train_prototype_module
 from explainer.prototype import ViLaPrototypeTrainer
