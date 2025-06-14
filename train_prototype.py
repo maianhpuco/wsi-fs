@@ -2,16 +2,16 @@ import os
 import argparse
 import yaml
 import torch
-import sys 
+import sys
+from datetime import datetime
 
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
 explainer_path = os.path.abspath(os.path.join(current_dir, 'src'))
-sys.path.append(explainer_path) 
+sys.path.append(explainer_path)
 
-# from torch.utils.data import Dataset
-from explainer.dataset import FeatureDataset 
-from explainer.explainer_utils  import train_prototype_module
-from explainer.prototype import ViLaPrototypeTrainer 
+from explainer.dataset import Generic_MIL_Dataset, return_splits_custom
+from explainer.explainer_utils import train_prototype_module
+from explainer.prototype import ViLaPrototypeTrainer
 
 def main(args):
     # Load config
@@ -19,7 +19,7 @@ def main(args):
         config = yaml.safe_load(f)
 
     proto_cfg = config['prototype_training']
-    pt_dirs = config['paths']['pt_files_dir']
+    data_cfg = config['data']
     out_path = config['paths']['prototype_out_dir']
 
     # Extract parameters
@@ -30,12 +30,36 @@ def main(args):
     epochs = proto_cfg.get('epochs', 10)
     lr = proto_cfg.get('lr', 1e-4)
     batch_size = proto_cfg.get('batch_size', 1)
+    use_h5 = data_cfg.get('use_h5', False)
 
-    # Load label map from config for flexibility
-    label_map = config.get('label_map', {'kich': 0, 'kirp': 1, 'kirc': 2})
+    # Load data configuration
+    data_dir_map = data_cfg['data_dir_map']
+    label_dict = data_cfg.get('label_dict', {'kich': 0, 'kirp': 1, 'kirc': 2})
+    train_csv_path = data_cfg['train_csv_path']
+    val_csv_path = data_cfg['val_csv_path']
+    test_csv_path = data_cfg['test_csv_path']
 
-    # Initialize dataset and model
-    dataset = FeatureDataset(pt_dirs, label_map)
+    # Validate file paths
+    for path in [train_csv_path, val_csv_path, test_csv_path]:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"CSV file not found: {path}")
+    for label, data_dir in data_dir_map.items():
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"Data directory not found for {label}: {data_dir}")
+
+    # Load datasets
+    train_dataset, val_dataset, test_dataset = return_splits_custom(
+        train_csv_path=train_csv_path,
+        val_csv_path=val_csv_path,
+        test_csv_path=test_csv_path,
+        data_dir_map=data_dir_map,
+        label_dict=label_dict,
+        seed=1,
+        print_info=True,
+        use_h5=use_h5
+    )
+
+    # Initialize model
     model = ViLaPrototypeTrainer(
         input_size=input_size,
         hidden_size=hidden_size,
@@ -45,17 +69,20 @@ def main(args):
 
     # Train
     train_prototype_module(
-        model, dataset, out_path,
-        epochs=epochs, lr=lr, batch_size=batch_size, device=args.device
+        model=model,
+        train_dataset=train_dataset,
+        val_dataset=val_dataset,
+        out_path=out_path,
+        epochs=epochs,
+        lr=lr,
+        batch_size=batch_size,
+        device=args.device
     )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', required=True, help='Path to YAML config file')
-
-    # Automatically use GPU if available
     default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
     parser.add_argument('--device', default=default_device, type=str, help='Device to use (cuda or cpu)')
-
     args = parser.parse_args()
     main(args)
