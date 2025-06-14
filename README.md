@@ -82,7 +82,5 @@ conda config --set auto_activate_base false
 
 -------- 
 conda activate jupyter_notebook_env 
-
 jupyter notebook --no-browser --ip=0.0.0.0 --port=8888
- 
-ssh -N -L 8888:localhost:8888 mvu9@
+ssh -N -L 8888:localhost:8888 mvu9@simea.ee.e.uh.edu 
