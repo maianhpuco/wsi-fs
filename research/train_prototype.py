@@ -4,7 +4,9 @@ import yaml
 import torch
 import sys 
 
-sys.path.append(os.path.join("src/externals/explainer")) 
+current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
+explainer_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'externals', 'explainer'))
+sys.path.append(explainer_path) 
 
 # from torch.utils.data import Dataset
 from dataset import FeatureDataset 
