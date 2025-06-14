@@ -9,7 +9,7 @@ explainer_path = os.path.abspath(os.path.join(current_dir, '..', 'src', 'explain
 sys.path.append(explainer_path) 
 
 # from torch.utils.data import Dataset
-from explainer.dataset import FeatureDataset 
+from dataset import FeatureDataset 
 from explainer.explainer_utils  import train_prototype_module
 from explainer.prototype import ViLaPrototypeTrainer 
 
