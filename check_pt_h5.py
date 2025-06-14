@@ -8,9 +8,9 @@ data_dir_map = {
     'kirc': "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/features_fp"
 }
 
-train_csv_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal/train.csv"
-val_csv_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal/val.csv"
-test_csv_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal/test.csv"
+train_csv_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal/fold_1/train.csv"
+val_csv_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal/fold_1/val.csv"
+test_csv_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal/fold_1/test.csv"
 
 def check_missing_files(csv_path, data_dir_map):
     df = pd.read_csv(csv_path)
