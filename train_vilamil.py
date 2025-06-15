@@ -37,12 +37,11 @@ def prepare_dataset(args):
         from src.datasets.multiple_scales.tcga import return_splits_custom
         patch_size = args.patch_size
         mag_s, mag_l = '5x', '10x'
-        tissue_type = args.tissue_type
         key_s = f"patch_{patch_size}x{patch_size}_{mag_s}"
         key_l = f"patch_{patch_size}x{patch_size}_{mag_l}"
 
-        data_dir_s = os.path.join(args.paths['data_folder_s'][tissue_type], key_s)
-        data_dir_l = os.path.join(args.paths['data_folder_l'][tissue_type], key_l)
+        data_dir_s = os.path.join(args.paths['data_folder_s'], key_s)
+        data_dir_l = os.path.join(args.paths['data_folder_l'], key_l)
 
         return return_splits_custom(
             train_csv_path=os.path.join(args.paths['split_folder'], "train.csv"),
