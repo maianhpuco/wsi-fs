@@ -216,6 +216,8 @@ def train_loop(args, epoch, model, loader, optimizer, n_classes, writer = None, 
 
     print('\n')
     for batch_idx, (data_s, coord_s, data_l, coords_l, label) in enumerate(loader):
+        print("print in train loop")
+        print( data_s, coord_s, data_l, coords_l, label)
         data_s, coord_s, data_l, coords_l, label = data_s.to(device), coord_s.to(device), data_l.to(device), coords_l.to(device), label.to(device)
         _, Y_hat, loss = model(data_s, coord_s, data_l, coords_l, label)
 
