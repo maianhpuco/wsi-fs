@@ -36,15 +36,15 @@ def prepare_dataset(args):
     if args.dataset_name == 'tcga_renal':
         from src.datasets.multiple_scales.tcga import return_splits_custom
         patch_size = args.patch_size
-        data_dir_s = os.path.join(args.paths['data_folder_s'])
-        data_dir_l = os.path.join(args.paths['data_folder_l'])
+        data_dir_s_mapping= args.paths['data_folder_s']
+        data_dir_l_mapping =args.paths['data_folder_l'] 
          
         return return_splits_custom(
             train_csv_path=os.path.join(args.paths['split_folder'], "train.csv"),
             val_csv_path=os.path.join(args.paths['split_folder'], "val.csv"),
             test_csv_path=os.path.join(args.paths['split_folder'], "test.csv"),
-            data_dir_s=data_dir_s,
-            data_dir_l=data_dir_l,
+            data_dir_s=data_dir_s_mapping,
+            data_dir_l=data_dir_l_mapping,
             label_dict=args.label_dict,
             seed=args.seed,
             use_h5=True,
