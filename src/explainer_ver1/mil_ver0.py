@@ -27,9 +27,9 @@ from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 _tokenizer = _Tokenizer()
 
 
-class ViLa_MIL_Model(nn.Module):
+class Explainer_Ver1(nn.Module):
     def __init__(self, config, num_classes=3):
-        super(ViLa_MIL_Model, self).__init__()
+        super(Explainer_Ver1, self).__init__()
         
         # Define cross-entropy loss for classification
         self.loss_ce = nn.CrossEntropyLoss()

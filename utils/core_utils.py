@@ -88,155 +88,15 @@ class EarlyStopping:
         torch.save(model.state_dict(), ckpt_name)
         self.val_loss_min = val_loss
 
-# def train(datasets, cur, args):
-#     """   
-#         train for a single fold
-#     """
-#     print('\nTraining Fold {}!'.format(cur))
-#     writer_dir = os.path.join(args.results_dir, str(cur))
-#     if not os.path.isdir(writer_dir):
-#         os.mkdir(writer_dir)
-
-#     if args.log_data:
-#         from tensorboardX import SummaryWriter
-#         writer = SummaryWriter(writer_dir, flush_secs=15)
-
-#     else:
-#         writer = None
-
-#     print('\nInit train/val/test splits...', end=' ')
-#     train_split, val_split, test_split = datasets
-    
-    # save_splits(datasets, ['train', 'val', 'test'], os.path.join(args.results_dir, 'splits_{}.csv'.format(cur)))
-    
-    # print('Done!')
-    # print("Training on {} samples".format(len(train_split)))
-    # print("Validating on {} samples".format(len(val_split)))
-    # print("Testing on {} samples".format(len(test_split)))
-
-    # print('\nInit loss function...', end=' ')
-    # if args.bag_loss == 'svm':
-    #     from topk.svm import SmoothTop1SVM
-    #     loss_fn = SmoothTop1SVM(n_classes = args.n_classes)
-    #     if device.type == 'cuda':
-    #         loss_fn = loss_fn.cuda()
-    # elif args.bag_loss == 'focal':
-    #     loss_fn = FocalLoss().cuda()
-    # else:
-    #     loss_fn = nn.CrossEntropyLoss()
-    # print('Done!')
-    
-    # print('\nInit Model...', end=' ')
-    # model_dict = {"dropout": args.drop_out, 'n_classes': args.n_classes}
-
-    # if args.model_type == 'ViLa_MIL':
-    #     import ml_collections
-    #     from models.model_ViLa_MIL import ViLa_MIL_Model
-    #     config = ml_collections.ConfigDict()
-    #     config.input_size = 1024
-    #     config.hidden_size = 192
-    #     config.text_prompt = args.text_prompt
-    #     config.prototype_number = args.prototype_number
-    #     model_dict = {'config': config, 'num_classes':args.n_classes}
-    #     model = ViLa_MIL_Model(**model_dict)
-
-    # else: # args.model_type == 'mil'
-    #     if args.n_classes > 2:
-    #         model = MIL_fc_mc(**model_dict)
-    #     else:
-    #         model = MIL_fc(**model_dict)
-
-
-    # if hasattr(model, "relocate"):
-    #     model.relocate()
-    # else:
-    #     model = model.to(torch.device('cuda:0'))
-    # print('Done!')
-    # print_network(model)
-
-    # print('\nInit optimizer ...', end=' ')
-    # optimizer = get_optim(model, args)
-    # print('Done!')
-
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=10, verbose=True)
-
-    # print('\nInit Loaders...', end=' ')
-    # train_loader = get_split_loader(train_split, training=True, testing = args.testing, weighted = args.weighted_sample, mode=args.mode)
-    # val_loader = get_split_loader(val_split,  testing = args.testing, mode=args.mode)
-    # test_loader = get_split_loader(test_split, testing = args.testing, mode=args.mode)
-    # print('Done!')
-
-    # print('\nSetup EarlyStopping...', end=' ')
-    # if args.early_stopping:
-    #     early_stopping = EarlyStopping(patience=20, stop_epoch=80, verbose=True)
-    # else:
-    #     early_stopping = None
-    # print('Done!')
-
-    # for epoch in range(args.max_epochs):
-    #     train_loop(args, epoch, model, train_loader, optimizer, args.n_classes, writer, loss_fn)
-    #     stop = validate(cur, epoch, model, val_loader, args.n_classes, 
-    #         early_stopping, writer, loss_fn, args.results_dir)
-    #     if stop: 
-    #         break
-
-    # if args.early_stopping: 
-    #     model.load_state_dict(torch.load(os.path.join(args.results_dir, "s_{}_checkpoint.pt".format(cur))))
-    # else:
-    #     torch.save(model.state_dict(), os.path.join(args.results_dir, "s_{}_checkpoint.pt".format(cur)))
-
-    # _, val_error, val_auc, _, val_f1 = summary(args.mode, model, val_loader, args.n_classes)
-    # print('Val error: {:.4f}, ROC AUC: {:.4f}, F1: {:.4f}'.format(val_error, val_auc, val_f1))
-
-    # results_dict, test_error, test_auc, acc_logger, test_f1 = summary(args.mode, model, test_loader, args.n_classes)
-    # print('Test error: {:.4f}, ROC AUC: {:.4f}, F1: {:.4f}'.format(test_error, test_auc, test_f1))
-
-    # each_class_acc = []
-    # for i in range(args.n_classes):
-    #     acc, correct, count = acc_logger.get_summary(i)
-    #     each_class_acc.append(acc)
-    #     print('class {}: acc {:.4f}, correct {}/{}'.format(i, acc, correct, count))
-
-    #     if writer:
-    #         writer.add_scalar('final/test_class_{}_acc'.format(i), acc, 0)
-
-    # if writer:
-    #     writer.add_scalar('final/val_error', val_error, 0)
-    #     writer.add_scalar('final/val_auc', val_auc, 0)
-    #     writer.add_scalar('final/test_error', test_error, 0)
-    #     writer.add_scalar('final/test_auc', test_auc, 0)
-    #     writer.close()
-    # return results_dict, test_auc, val_auc, 1-test_error, 1-val_error, each_class_acc, test_f1
-
-def train(datasets, cur, args):
+def train(model, datasets, cur, args):
     print(f"\nTraining Fold {cur}")
     writer_dir = os.path.join(args.results_dir, str(cur))
     os.makedirs(writer_dir, exist_ok=True)
     writer = SummaryWriter(writer_dir) if args.log_data else None
 
     train_set, val_set, test_set = datasets
-    save_splits(datasets, ['train', 'val', 'test'], os.path.join(args.results_dir, f'splits_{cur}.csv'))
 
-    # Loss function
-    if args.bag_loss == 'svm':
-        loss_fn = SmoothTop1SVM(n_classes=args.n_classes).cuda()
-    elif args.bag_loss == 'focal':
-        loss_fn = FocalLoss().cuda()
-    else:
-        loss_fn = nn.CrossEntropyLoss()
-
-    # Model
-    if args.model_type == 'ViLa_MIL':
-        config = ml_collections.ConfigDict()
-        config.input_size = 1024
-        config.hidden_size = 192
-        config.text_prompt = args.text_prompt
-        config.prototype_number = args.prototype_number
-        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes)
-    else:
-        model_class = MIL_fc_mc if args.n_classes > 2 else MIL_fc
-        model = model_class(dropout=args.drop_out, n_classes=args.n_classes)
-    model = model.cuda()
+    loss_fn = nn.CrossEntropyLoss()
 
     optimizer = get_optim(model, args)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=10)
