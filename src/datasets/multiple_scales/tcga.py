@@ -40,43 +40,38 @@ class Generic_MIL_Dataset(Dataset):
         return len(self.slide_data)
 
     def _resolve_subtype_path(self, slide_id, path_dict):
-        for subtype in path_dict:
-            if subtype.lower() in slide_id.lower():
-                return path_dict[subtype]
+        for key in path_dict:
+            if key.lower() in slide_id.lower():
+                return path_dict[key]
         raise ValueError(f"Cannot match slide_id '{slide_id}' to any subtype in {list(path_dict.keys())}")
-
+    
     def __getitem__(self, idx):
         row = self.slide_data.iloc[idx]
         slide_id = row['slide_id']
         label_str = row['label']
         label = self.label_dict[label_str]
 
-        try:
-            folder_s = self._resolve_subtype_path(slide_id, self.data_dir_s)
-            folder_l = self._resolve_subtype_path(slide_id, self.data_dir_l)
+        folder_s = self.data_dir_s[label_str.lower()]
+        folder_l = self.data_dir_l[label_str.lower()] 
+        
+        h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
+        
+        h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
+        print("h5 file large and small")
+        print(h5_path_l)
+        print(h5_path_s)
+        with h5py.File(h5_path_s, 'r') as f_s:
+            features_s = torch.from_numpy(f_s['features'][:])
+            coords_s = torch.from_numpy(f_s['coords'][:])
 
-            h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
-            
-            h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
-            print("h5 file large and small")
-            print(h5_path_l)
-            print(h5_path_s)
-            with h5py.File(h5_path_s, 'r') as f_s:
-                features_s = torch.from_numpy(f_s['features'][:])
-                coords_s = torch.from_numpy(f_s['coords'][:])
+        with h5py.File(h5_path_l, 'r') as f_l:
+            features_l = torch.from_numpy(f_l['features'][:])
+            coords_l = torch.from_numpy(f_l['coords'][:])
+        print(features_s, coords_s, features_l, coords_l, label)
+        
+        return features_s, coords_s, features_l, coords_l, label
 
-            with h5py.File(h5_path_l, 'r') as f_l:
-                features_l = torch.from_numpy(f_l['features'][:])
-                coords_l = torch.from_numpy(f_l['coords'][:])
-            print(features_s, coords_s, features_l, coords_l, label)
-            
-            return features_s, coords_s, features_l, coords_l, label
 
-        except Exception as e:
-            os.makedirs("logs", exist_ok=True)
-            with open("logs/skipped_samples.txt", "a") as f:
-                f.write(f"[Error loading] {slide_id}: {e}\n")
-            return None
                 
 
 
