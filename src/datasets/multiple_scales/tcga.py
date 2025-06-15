@@ -51,32 +51,27 @@ class Generic_MIL_Dataset(Dataset):
         label_str = row['label']
         label = self.label_dict[label_str]
 
-        folder_s = self.data_dir_s[label_str.lower()]
-        folder_l = self.data_dir_l[label_str.lower()]  
-        if folder_s is None or folder_l is None:
-            raise ValueError(f"Slide ID '{slide_id}' does not match any subtype in provided paths.")
+        folder_s, folder_l = None, None
+        for subtype in self.data_dir_s:
+            folder_s = self.data_dir_s[subtype]
+            folder_l = self.data_dir_l[subtype]
 
-        if self.use_h5:
-            # print("------------")
-            h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
-            h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
+        h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
+        h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
 
-            try:
-                with h5py.File(h5_path_s, 'r') as f_s:
-                    features_s = torch.from_numpy(f_s['features'][:])
-                    coords_s = torch.from_numpy(f_s['coords'][:])
-                with h5py.File(h5_path_l, 'r') as f_l:
-                    features_l = torch.from_numpy(f_l['features'][:])
-                    coords_l = torch.from_numpy(f_l['coords'][:])
-            except Exception as e:
-                log_dir = os.path.join("logs", "skipped_samples")
-                os.makedirs(log_dir, exist_ok=True)
-                log_path = os.path.join(log_dir, "skipped_samples.txt")
-                with open(log_path, "a") as f:
-                    f.write(f"{slide_id} - {e}\n")
-                raise IndexError  # Causes DataLoader to skip this item
+        try:
+            with h5py.File(h5_path_s, 'r') as f_s:
+                features_s = torch.from_numpy(f_s['features'][:])
+                coords_s = torch.from_numpy(f_s['coords'][:])
+            with h5py.File(h5_path_l, 'r') as f_l:
+                features_l = torch.from_numpy(f_l['features'][:])
+                coords_l = torch.from_numpy(f_l['coords'][:])
+            return features_s, coords_s, features_l, coords_l, label
+        except Exception as e:
+            with open("logs/skipped_samples.txt", "a") as f:
+                f.write(f"{slide_id} - {e}\n")
+            return None
 
-            return features_s, coords_s, features_l, coords_l, label 
                 
 
 
