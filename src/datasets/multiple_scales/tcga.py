@@ -62,9 +62,11 @@ class Generic_MIL_Dataset(Dataset):
             raise ValueError(f"Slide ID '{slide_id}' does not match any subtype in provided paths.")
 
         if self.use_h5:
+            print("------------")
             h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
             h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
-
+            print(h5_path_s)
+            print(h5_path_l)
             try:
                 with h5py.File(h5_path_s, 'r') as f_s:
                     features_s = torch.from_numpy(f_s['features'][:])
@@ -81,12 +83,7 @@ class Generic_MIL_Dataset(Dataset):
 
             return features_s, coords_s, features_l, coords_l, label
 
-        else:
-            pt_path_s = os.path.join(folder_s, f"{slide_id}.pt")
-            pt_path_l = os.path.join(folder_l, f"{slide_id}.pt")
-            features_s = torch.load(pt_path_s, map_location='cpu')
-            features_l = torch.load(pt_path_l, map_location='cpu')
-            return features_s, None, features_l, None, label
+        
 
 
 def return_splits_custom(
