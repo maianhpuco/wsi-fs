@@ -29,13 +29,26 @@ def collate_MIL(batch):
 	label = torch.LongTensor([item[1] for item in batch])
 	return [img, label]
 
+# def collate_tranformer(batch):
+# 	img_s = torch.cat([item[0] for item in batch], dim = 0)
+# 	coord_s = torch.cat([item[1] for item in batch], dim = 0)
+# 	img_l = torch.cat([item[2] for item in batch], dim = 0)
+# 	coord_l = torch.cat([item[3] for item in batch], dim = 0)
+# 	label = torch.LongTensor([item[4] for item in batch])
+# 	return [img_s, coord_s, img_l, coord_l, label]
+
 def collate_tranformer(batch):
-	img_s = torch.cat([item[0] for item in batch], dim = 0)
-	coord_s = torch.cat([item[1] for item in batch], dim = 0)
-	img_l = torch.cat([item[2] for item in batch], dim = 0)
-	coord_l = torch.cat([item[3] for item in batch], dim = 0)
-	label = torch.LongTensor([item[4] for item in batch])
-	return [img_s, coord_s, img_l, coord_l, label]
+    batch = [item for item in batch if item is not None]  # filter out skipped samples
+    if len(batch) == 0:
+        return None  # return None if entire batch is empty
+
+    img_s = torch.cat([item[0] for item in batch], dim=0)
+    coord_s = torch.cat([item[1] for item in batch], dim=0)
+    img_l = torch.cat([item[2] for item in batch], dim=0)
+    coord_l = torch.cat([item[3] for item in batch], dim=0)
+    labels = torch.tensor([item[4] for item in batch])
+
+    return img_s, coord_s, img_l, coord_l, labels
 
 
 def get_simple_loader(dataset, batch_size=1, num_workers=1, mode='clam'):

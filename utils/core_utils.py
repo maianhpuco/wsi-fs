@@ -212,7 +212,11 @@ def train_loop(args, epoch, model, loader, optimizer, n_classes, writer = None, 
     train_error = 0.
 
     print('\n')
-    for batch_idx, (data_s, coord_s, data_l, coords_l, label) in enumerate(loader):
+    # for batch_idx, (data_s, coord_s, data_l, coords_l, label) in enumerate(loader):
+    for batch_idx, batch in enumerate(loader):
+        if batch is None:
+            continue
+        data_s, coord_s, data_l, coord_l, label = batch
         data_s, coord_s, data_l, coords_l, label = data_s.to(device), coord_s.to(device), data_l.to(device), coords_l.to(device), label.to(device)
         _, Y_hat, loss = model(data_s, coord_s, data_l, coords_l, label)
 
