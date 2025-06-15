@@ -1,6 +1,6 @@
 dataset_name: 'tcga_renal'
 paths: 
-  data_folder_s:
+  data_folder_s: # -> replaced by current features_fp/ (folder saved in your computer)
     kich: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x
     kirc: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
     kirp: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
@@ -10,9 +10,16 @@ paths:
     kirp: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x 
 
   result_dir: "/project/hnguyen2/mvu9/wsi_fs_results/explainer_ver1_tcga_renal_results" 
-  split_folder: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal"
+  # split_folder: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal"
+  split_folder: "./splits_csv_tcga_renal"
 
-text_prompt_path: prompts/renal_prompts.csv
+patch_size: 256 
+
+
+
+
+# you rmodel cofig here 
+text_prompt_path: "./src/explainer_ver1/text_prompts/TCGA_RCC_two_scale_text_prompt.csv"
 prototype_number: 64
 max_epochs: 20
 lr: 0.001
