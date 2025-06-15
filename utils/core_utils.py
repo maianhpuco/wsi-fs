@@ -164,7 +164,10 @@ def train(model, datasets, cur, args):
                                     weighted=args.weighted_sample, mode=args.mode)
     val_loader = get_split_loader(val_set, testing=args.testing, mode=args.mode)
     test_loader = get_split_loader(test_set, testing=args.testing, mode=args.mode)
-
+    
+    print(f"[INFO] #Train samples: {len(train_set)}, #Batches: {len(train_loader)}")
+    print(f"[INFO] #Val samples: {len(val_set)}, #Batches: {len(val_loader)}")
+    print(f"[INFO] #Test samples: {len(test_set)}, #Batches: {len(test_loader)}") 
     # Set up early stopping
     early_stopping = EarlyStopping(patience=20, stop_epoch=80) if args.early_stopping else None
 
@@ -212,11 +215,7 @@ def train_loop(args, epoch, model, loader, optimizer, n_classes, writer = None, 
     train_error = 0.
 
     print('\n')
-    # for batch_idx, (data_s, coord_s, data_l, coords_l, label) in enumerate(loader):
-    for batch_idx, batch in enumerate(loader):
-        if batch is None:
-            continue
-        data_s, coord_s, data_l, coord_l, label = batch
+    for batch_idx, (data_s, coord_s, data_l, coords_l, label) in enumerate(loader):
         data_s, coord_s, data_l, coords_l, label = data_s.to(device), coord_s.to(device), data_l.to(device), coords_l.to(device), label.to(device)
         _, Y_hat, loss = model(data_s, coord_s, data_l, coords_l, label)
 
