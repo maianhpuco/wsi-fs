@@ -56,11 +56,10 @@ class Generic_MIL_Dataset(Dataset):
         folder_l = self.data_dir_l[label_str.lower()] 
         
         h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
-        
         h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
-        print("h5 file large and small")
-        print(h5_path_l)
-        print(h5_path_s)
+        # print("h5 file large and small")
+        # print(h5_path_l)
+        # print(h5_path_s)
         with h5py.File(h5_path_s, 'r') as f_s:
             features_s = torch.from_numpy(f_s['features'][:])
             coords_s = torch.from_numpy(f_s['coords'][:])
