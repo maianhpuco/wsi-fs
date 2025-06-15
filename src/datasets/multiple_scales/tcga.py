@@ -5,6 +5,7 @@ import h5py
 from torch.utils.data import Dataset
 import numpy as np
 
+
 class Generic_MIL_Dataset(Dataset):
     def __init__(self,
                  data_dir_s,
@@ -15,10 +16,10 @@ class Generic_MIL_Dataset(Dataset):
                  label_dict,
                  seed=1,
                  print_info=False,
-                 use_h5=False,
+                 use_h5=True,
                  ignore=[],
                  **kwargs):
-        self.data_dir_s = data_dir_s  # dict: {kirc: path, kirp: path, ...}
+        self.data_dir_s = data_dir_s
         self.data_dir_l = data_dir_l
         self.label_dict = label_dict
         self.ignore = ignore
@@ -38,24 +39,27 @@ class Generic_MIL_Dataset(Dataset):
     def __len__(self):
         return len(self.slide_data)
 
-    def _resolve_subtype_path(self, slide_id, path_dict, patient_id=None):
-        # Try matching with subtype via patient_id if available
+    def _resolve_subtype_path(self, slide_id, path_dict):
         for key in path_dict:
-            if key.lower() in slide_id.lower():
+            if slide_id.startswith("TCGA") and key.lower() in slide_id.lower():
                 return path_dict[key]
-            if patient_id and key.lower() in patient_id.lower():
-                return path_dict[key]
-        raise ValueError(f"Cannot match slide_id '{slide_id}' or patient_id '{patient_id}' to any subtype in {list(path_dict.keys())}")
+        raise ValueError(f"Cannot match slide_id '{slide_id}' to any subtype in {list(path_dict.keys())}")
 
     def __getitem__(self, idx):
         row = self.slide_data.iloc[idx]
         slide_id = row['slide_id']
         label_str = row['label']
         label = self.label_dict[label_str]
-        patient_id = row['patient_id']
 
-        folder_s = self._resolve_subtype_path(slide_id, self.data_dir_s, patient_id)
-        folder_l = self._resolve_subtype_path(slide_id, self.data_dir_l, patient_id)
+        # Try each path and skip if file not found
+        folder_s, folder_l = None, None
+        for subtype in self.data_dir_s:
+            if subtype.lower() in slide_id.lower():
+                folder_s = self.data_dir_s[subtype]
+                folder_l = self.data_dir_l[subtype]
+                break
+        if folder_s is None or folder_l is None:
+            raise ValueError(f"Slide ID '{slide_id}' does not match any subtype in provided paths.")
 
         if self.use_h5:
             h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
