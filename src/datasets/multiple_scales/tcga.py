@@ -73,10 +73,11 @@ class Generic_MIL_Dataset(Dataset):
         folder_l = self._resolve_subtype_path(slide_id, self.data_dir_l)
 
         if not self.use_h5:
-            pt_path_s = os.path.join(folder_s, f"{slide_id}.pt")
-            pt_path_l = os.path.join(folder_l, f"{slide_id}.pt")
+            pt_path_s = os.path.join(folder_s, f"{slide_id}.h5")
+            pt_path_l = os.path.join(folder_l, f"{slide_id}.h5")
             features_s = torch.load(pt_path_s, weights_only=True)
             features_l = torch.load(pt_path_l, weights_only=True)
+            
             return features_s, None, features_l, None, label
         else:
             h5_path_s = os.path.join(folder_s, 'h5_files', f"{slide_id}.h5")

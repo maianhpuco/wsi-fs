@@ -135,4 +135,16 @@ if __name__ == "__main__":
             print(f"{k}: {v}")
     print("##############################################")
 
-    main(args)
+    # main(args)
+    h5_path = '/path/to/your/file/TCGA-UW-A7GY-01Z-00-DX1.CD2CCA5D-C92B-409C-B5D6-1EB7C8A0B4CD.h5'
+    import h5py 
+    with h5py.File(h5_path, 'r') as f:
+        print("Keys in the H5 file:")
+        for key in f.keys():
+            print(f"  - {key}: shape={f[key].shape}, dtype={f[key].dtype}")
+
+        # Optional: inspect a sample value
+        if 'features' in f:
+            print("\nSample from 'features':", f['features'][:1])
+        if 'coords' in f:
+            print("\nSample from 'coords':", f['coords'][:5])
