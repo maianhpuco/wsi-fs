@@ -46,11 +46,22 @@ class Generic_MIL_Dataset(Dataset):
         return len(self.slide_data)
 
     def _resolve_subtype_path(self, slide_id, path_dict):
-        slide_upper = slide_id.upper()
-        for subtype in path_dict:
-            if subtype.upper() in slide_upper:
-                return path_dict[subtype]
-        raise ValueError(f"Cannot match slide_id '{slide_id}' to any subtype in {list(path_dict.keys())}")
+        # Better: use patient_id if available
+        subtype = None
+        for key in path_dict:
+            if key.lower() in slide_id.lower():
+                subtype = key
+                break
+        if subtype is None and 'patient_id' in self.slide_data.columns:
+            row = self.slide_data[self.slide_data['slide_id'] == slide_id]
+            pid = row['patient_id'].values[0]
+            for key in path_dict:
+                if key.lower() in pid.lower():
+                    subtype = key
+                    break
+        if subtype is None:
+            raise ValueError(f"Cannot match slide_id '{slide_id}' to any subtype in {list(path_dict.keys())}")
+        return path_dict[subtype]
 
     def __getitem__(self, idx):
         row = self.slide_data.iloc[idx]
