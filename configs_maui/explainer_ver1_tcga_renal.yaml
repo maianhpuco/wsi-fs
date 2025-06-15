@@ -14,8 +14,7 @@ paths:
   split_folder: "./splits_csv_tcga_renal"
 
 patch_size: 256 
-
-
+label_dict: {'KIRP': 0, 'KIRC': 1, 'KICH': 2} 
 
 model_name: Explainer_Ver1 # can replace by ViLa_MIL_Model
 # you rmodel cofig here 
