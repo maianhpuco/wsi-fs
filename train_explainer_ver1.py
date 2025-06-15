@@ -32,7 +32,7 @@ def seed_torch(seed=7):
     torch.backends.cudnn.deterministic = True
 
 
-def prepare_dataset(args):
+def prepare_dataset(args, fold_id):
     if args.dataset_name == 'tcga_renal':
         from src.datasets.multiple_scales.tcga import return_splits_custom
         patch_size = args.patch_size
@@ -40,9 +40,9 @@ def prepare_dataset(args):
         data_dir_l_mapping =args.paths['data_folder_l'] 
          
         return return_splits_custom(
-            train_csv_path=os.path.join(args.paths['split_folder'], "train.csv"),
-            val_csv_path=os.path.join(args.paths['split_folder'], "val.csv"),
-            test_csv_path=os.path.join(args.paths['split_folder'], "test.csv"),
+            train_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/train.csv"),
+            val_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/val.csv"),
+            test_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/test.csv"),
             data_dir_s=data_dir_s_mapping,
             data_dir_l=data_dir_l_mapping,
             label_dict=args.label_dict,
@@ -58,15 +58,17 @@ def main(args):
     seed_torch(args.seed)
 
     # Prepare dataset once for all folds
-    datasets = prepare_dataset(args)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    args.results_dir = os.path.join(args.results_dir, f"{args.exp_code}_s{args.seed}_{timestamp}")
-    os.makedirs(args.results_dir, exist_ok=True)
+    
 
     all_test_auc, all_val_auc, all_test_acc, all_val_acc, all_test_f1, folds = [], [], [], [], [], []
 
     for i in range(args.k_start, args.k_end + 1):
+        datasets = prepare_dataset(args, i)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        args.results_dir = os.path.join(args.results_dir, f"resuls_fold{i}_timestamp_{timestamp}")
+        os.makedirs(args.results_dir, exist_ok=True) 
+        
         print(f"\n=========== Fold {i} ===========")
         seed_torch(args.seed)
         folds.append(i)
