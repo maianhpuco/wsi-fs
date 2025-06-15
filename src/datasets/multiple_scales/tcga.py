@@ -125,9 +125,6 @@ def return_splits_custom(
     mode="transformer"
 ):
     # Helper to update path based on resolution
-    def modified_path(base, mag):
-        return base.replace("clip_rn50_features", f"clip_rn50_features_fp/patch_256x256_{mag}")
-
     # Filter rows where both 5x and 10x H5 files exist
     def filter_df(df, name):
         kept, missing = [], []
@@ -137,8 +134,8 @@ def return_splits_custom(
             label = row["label"].lower()
 
             try:
-                path_s = os.path.join(modified_path(data_dir_s[label], "5x"), f"{slide_id}.h5")
-                path_l = os.path.join(modified_path(data_dir_l[label], "10x"), f"{slide_id}.h5")
+                path_s = os.path.join(data_dir_s[label], f"{slide_id}.h5")
+                path_l = os.path.join(data_dir_l[label], f"{slide_id}.h5")
 
                 if os.path.exists(path_s) and os.path.exists(path_l):
                     kept.append(row)
