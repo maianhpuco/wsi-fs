@@ -57,28 +57,27 @@ class Generic_MIL_Dataset(Dataset):
             raise ValueError(f"Slide ID '{slide_id}' does not match any subtype in provided paths.")
 
         if self.use_h5:
-            print("------------")
+            # print("------------")
             h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
             h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
-            print(h5_path_s)
-            print(h5_path_l)
+
             try:
                 with h5py.File(h5_path_s, 'r') as f_s:
                     features_s = torch.from_numpy(f_s['features'][:])
                     coords_s = torch.from_numpy(f_s['coords'][:])
-            except Exception:
-                features_s, coords_s = None, None
-
-            try:
                 with h5py.File(h5_path_l, 'r') as f_l:
                     features_l = torch.from_numpy(f_l['features'][:])
                     coords_l = torch.from_numpy(f_l['coords'][:])
-            except Exception:
-                features_l, coords_l = None, None
+            except Exception as e:
+                log_dir = os.path.join("logs", "skipped_samples")
+                os.makedirs(log_dir, exist_ok=True)
+                log_path = os.path.join(log_dir, "skipped_samples.txt")
+                with open(log_path, "a") as f:
+                    f.write(f"{slide_id} - {e}\n")
+                raise IndexError  # Causes DataLoader to skip this item
 
-            return features_s, coords_s, features_l, coords_l, label
-
-        
+            return features_s, coords_s, features_l, coords_l, label 
+                
 
 
 def return_splits_custom(
