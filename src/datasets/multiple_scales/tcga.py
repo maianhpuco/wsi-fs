@@ -136,7 +136,7 @@ def return_splits_custom(
             try:
                 path_s = os.path.join(data_dir_s[label], f"{slide_id}.h5")
                 path_l = os.path.join(data_dir_l[label], f"{slide_id}.h5")
-
+                print(path_s)
                 if os.path.exists(path_s) and os.path.exists(path_l):
                     kept.append(row)
                 else:
