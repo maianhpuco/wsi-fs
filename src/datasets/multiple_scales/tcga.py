@@ -48,11 +48,11 @@ class Generic_MIL_Dataset(Dataset):
     def __getitem__(self, idx):
         row = self.slide_data.iloc[idx]
         slide_id = row['slide_id']
-        label_str = row['label'].lower()
+        label_str = row['label']
         label = self.label_dict[label_str]
 
-        folder_s = self.data_dir_s[label_str]
-        folder_l = self.data_dir_l[label_str]  
+        folder_s = self.data_dir_s[label_str.lower()]
+        folder_l = self.data_dir_l[label_str.lower()]  
         if folder_s is None or folder_l is None:
             raise ValueError(f"Slide ID '{slide_id}' does not match any subtype in provided paths.")
 
