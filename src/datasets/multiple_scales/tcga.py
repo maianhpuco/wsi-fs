@@ -50,13 +50,9 @@ class Generic_MIL_Dataset(Dataset):
         slide_id = row['slide_id']
         label_str = row['label']
         label = self.label_dict[label_str]
-        print("label", label)
-        # Try each path and skip if file not found
-        folder_s, folder_l = None, None
-        for subtype in self.data_dir_s:
-            folder_s = self.data_dir_s[subtype]
-            folder_l = self.data_dir_l[subtype]
-            
+
+        folder_s = self.data_dir_s[label_str]
+        folder_l = self.data_dir_l[label_str]  
         if folder_s is None or folder_l is None:
             raise ValueError(f"Slide ID '{slide_id}' does not match any subtype in provided paths.")
 
