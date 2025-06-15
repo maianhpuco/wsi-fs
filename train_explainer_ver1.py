@@ -39,7 +39,7 @@ def prepare_dataset(args, fold_id):
         data_dir_s_mapping= args.paths['data_folder_s']
         data_dir_l_mapping =args.paths['data_folder_l'] 
          
-        return return_splits_custom(
+        train_dataset, val_dataset, test_dataset = return_splits_custom(
             train_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/train.csv"),
             val_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/val.csv"),
             test_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/test.csv"),
@@ -49,6 +49,7 @@ def prepare_dataset(args, fold_id):
             seed=args.seed,
             use_h5=True,
         )
+        return train_dataset, val_dataset, test_dataset  
     else:
         raise NotImplementedError(f"[✗] Dataset '{args.dataset_name}' not supported.")
 
@@ -79,7 +80,7 @@ def main(args):
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
         model = ExplainerVer1(config=config, num_classes=args.n_classes).cuda()
-        args.reg = float(getattr(args, 'reg', 1e-5))
+        
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
         all_test_auc.append(test_auc)

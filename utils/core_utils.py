@@ -88,45 +88,108 @@ class EarlyStopping:
         torch.save(model.state_dict(), ckpt_name)
         self.val_loss_min = val_loss
 
-def train(model, datasets, cur, args):
-    args.reg = float(getattr(args, 'reg', 1e-5))
-    print(f"\nTraining Fold {cur}")
-    writer_dir = os.path.join(args.results_dir, str(cur))
-    os.makedirs(writer_dir, exist_ok=True)
-    writer = SummaryWriter(writer_dir) if args.log_data else None
+# def train(model, datasets, cur, args):
+#     args.reg = float(getattr(args, 'reg', 1e-5))
+#     print(f"\nTraining Fold {cur}")
+#     writer_dir = os.path.join(args.results_dir, str(cur))
+#     os.makedirs(writer_dir, exist_ok=True)
+#     writer = SummaryWriter(writer_dir) if args.log_data else None
 
+#     train_set, val_set, test_set = datasets
+
+#     loss_fn = nn.CrossEntropyLoss()
+
+#     optimizer = get_optim(model, args)
+#     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=10)
+
+#     # train_loader = get_split_loader(train_set, training=True, testing=args.testing,
+#     #                                 weighted=args.weighted_sample, mode=args.mode)
+#     # val_loader = get_split_loader(val_set, testing=args.testing, mode=args.mode)
+#     # test_loader = get_split_loader(test_set, testing=args.testing, mode=args.mode)
+
+#     early_stopping = EarlyStopping(patience=20, stop_epoch=80) if args.early_stopping else None
+
+#     for epoch in range(args.max_epochs):
+#         train_loop(args, epoch, model, train_loader, optimizer, args.n_classes, writer, loss_fn)
+#         stop = validate(cur, epoch, model, val_loader, args.n_classes, early_stopping, writer, loss_fn, args.results_dir)
+#         if stop:
+#             break
+
+#     ckpt_path = os.path.join(args.results_dir, f"s_{cur}_checkpoint.pt")
+#     if args.early_stopping:
+#         model.load_state_dict(torch.load(ckpt_path))
+#     else:
+#         torch.save(model.state_dict(), ckpt_path)
+
+#     _, val_error, val_auc, _, val_f1 = summary(args.mode, model, val_loader, args.n_classes)
+#     results_dict, test_error, test_auc, acc_logger, test_f1 = summary(args.mode, model, test_loader, args.n_classes)
+
+#     print(f"Val AUC: {val_auc:.4f}, F1: {val_f1:.4f}")
+#     print(f"Test AUC: {test_auc:.4f}, F1: {test_f1:.4f}")
+
+#     for i in range(args.n_classes):
+#         acc, correct, total = acc_logger.get_summary(i)
+#         print(f"Class {i}: acc {acc:.4f}, correct {correct}/{total}")
+#         if writer:
+#             writer.add_scalar(f"final/test_class_{i}_acc", acc, 0)
+
+#     if writer:
+#         writer.add_scalar("final/val_auc", val_auc, 0)
+#         writer.add_scalar("final/test_auc", test_auc, 0)
+#         writer.close()
+
+#     return results_dict, test_auc, val_auc, 1 - test_error, 1 - val_error, [acc_logger.get_summary(i)[0] for i in range(args.n_classes)], test_f1
+def train(model, datasets, cur, args):
+    # Ensure correct types
+    args.reg = float(getattr(args, 'reg', 1e-5))
+    args.lr = float(getattr(args, 'lr', 1e-4))
+    args.testing = getattr(args, 'testing', False)
+    args.mode = getattr(args, 'mode', 'transformer')
+
+    print(f"\n=========== Training Fold {cur} ===========")
+    writer_dir = os.path.join(args.results_dir, f"fold_{cur}")
+    os.makedirs(writer_dir, exist_ok=True)
+    writer = SummaryWriter(writer_dir) if getattr(args, 'log_data', False) else None
+
+    # Unpack datasets
     train_set, val_set, test_set = datasets
 
+    # Define loss and optimizer
     loss_fn = nn.CrossEntropyLoss()
-
     optimizer = get_optim(model, args)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=10)
 
+    # Prepare data loaders
     train_loader = get_split_loader(train_set, training=True, testing=args.testing,
                                     weighted=args.weighted_sample, mode=args.mode)
     val_loader = get_split_loader(val_set, testing=args.testing, mode=args.mode)
     test_loader = get_split_loader(test_set, testing=args.testing, mode=args.mode)
 
+    # Set up early stopping
     early_stopping = EarlyStopping(patience=20, stop_epoch=80) if args.early_stopping else None
 
+    # Training loop
     for epoch in range(args.max_epochs):
         train_loop(args, epoch, model, train_loader, optimizer, args.n_classes, writer, loss_fn)
         stop = validate(cur, epoch, model, val_loader, args.n_classes, early_stopping, writer, loss_fn, args.results_dir)
         if stop:
+            print(f"[x] Early stopping at epoch {epoch}")
             break
 
+    # Save or load best model
     ckpt_path = os.path.join(args.results_dir, f"s_{cur}_checkpoint.pt")
     if args.early_stopping:
         model.load_state_dict(torch.load(ckpt_path))
     else:
         torch.save(model.state_dict(), ckpt_path)
 
+    # Final evaluation
     _, val_error, val_auc, _, val_f1 = summary(args.mode, model, val_loader, args.n_classes)
     results_dict, test_error, test_auc, acc_logger, test_f1 = summary(args.mode, model, test_loader, args.n_classes)
 
-    print(f"Val AUC: {val_auc:.4f}, F1: {val_f1:.4f}")
+    # Print results
+    print(f"Val AUC:  {val_auc:.4f}, F1: {val_f1:.4f}")
     print(f"Test AUC: {test_auc:.4f}, F1: {test_f1:.4f}")
-
     for i in range(args.n_classes):
         acc, correct, total = acc_logger.get_summary(i)
         print(f"Class {i}: acc {acc:.4f}, correct {correct}/{total}")
@@ -138,8 +201,7 @@ def train(model, datasets, cur, args):
         writer.add_scalar("final/test_auc", test_auc, 0)
         writer.close()
 
-    return results_dict, test_auc, val_auc, 1 - test_error, 1 - val_error, [acc_logger.get_summary(i)[0] for i in range(args.n_classes)], test_f1
- 
+    return results_dict, test_auc, val_auc, 1 - test_error, 1 - val_error, [acc_logger.get_summary(i)[0] for i in range(args.n_classes)], test_f1  
  
 def train_loop(args, epoch, model, loader, optimizer, n_classes, writer = None, loss_fn = None):
 
