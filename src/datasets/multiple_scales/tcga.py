@@ -116,21 +116,19 @@ def return_splits_custom(
     train_csv_path,
     val_csv_path,
     test_csv_path,
-    args,
+    data_dir_s,
+    data_dir_l,
     label_dict,
     seed=1,
     print_info=False,
     use_h5=True,
     mode="transformer"
 ):
-    # Extract from args.paths
-    base_data_dir_s = args.paths['data_folder_s']  # dict: kich/kirc/kirp
-    base_data_dir_l = args.paths['data_folder_l']
-
+    # Helper to update path based on resolution
     def modified_path(base, mag):
         return base.replace("clip_rn50_features", f"clip_rn50_features_fp/patch_256x256_{mag}")
 
-    # Filter slides that exist in both small and large feature paths
+    # Filter rows where both 5x and 10x H5 files exist
     def filter_df(df, name):
         kept, missing = [], []
 
@@ -139,42 +137,18 @@ def return_splits_custom(
             label = row["label"].lower()
 
             try:
-                path_s = os.path.join(modified_path(base_data_dir_s[label], "5x"), f"{slide_id}.h5")
-                path_l = os.path.join(modified_path(base_data_dir_l[label], "10x"), f"{slide_id}.h5")
+                path_s = os.path.join(modified_path(data_dir_s[label], "5x"), f"{slide_id}.h5")
+                path_l = os.path.join(modified_path(data_dir_l[label], "10x"), f"{slide_id}.h5")
 
                 if os.path.exists(path_s) and os.path.exists(path_l):
                     kept.append(row)
                 else:
                     missing.append(row)
             except Exception as e:
-                print(f"[WARN] Slide {slide_id} error: {e}")
+                print(f"[WARN] {slide_id} → error: {e}")
                 missing.append(row)
 
         df_kept = pd.DataFrame(kept)
         if missing:
             os.makedirs("logs", exist_ok=True)
             pd.DataFrame(missing).to_csv(f"logs/missing_slides_{name}.csv", index=False)
-            print(f"[INFO] {len(missing)} missing samples in '{name}' → saved to logs/missing_slides_{name}.csv")
-        print(f"[INFO] {name.upper()}: Kept {len(df_kept)} / {len(df)} slides")
-        return df_kept
-
-    def create_dataset(df):
-        return Generic_MIL_Dataset(
-            data_dir_s=base_data_dir_s,
-            data_dir_l=base_data_dir_l,
-            patient_ids=df["patient_id"].dropna().tolist(),
-            slides=df["slide"].dropna().tolist(),
-            labels=df["label"].dropna().tolist(),
-            label_dict=label_dict,
-            seed=seed,
-            print_info=print_info,
-            use_h5=use_h5,
-            mode=mode
-        )
-
-    # Read and filter splits
-    df_train = filter_df(pd.read_csv(train_csv_path), name="train")
-    df_val = filter_df(pd.read_csv(val_csv_path), name="val")
-    df_test = filter_df(pd.read_csv(test_csv_path), name="test")
-
-    return create_dataset(df_train), create_dataset(df_val), create_dataset(df_test)
