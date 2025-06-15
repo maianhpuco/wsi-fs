@@ -10,8 +10,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
 _path = os.path.abspath(os.path.join(current_dir,'src'))
 sys.path.append(_path)
 
-from explainer.explainer_utils import train_prototype_module
-from explainer.prototype import ViLaPrototypeTrainer
+from explainer_ver1.explainer_utils import train_prototype_module
+from explainer_ver1.prototype import ViLaPrototypeTrainer
 from datasets.tcga import return_splits_custom
 
 

@@ -1,0 +1,29 @@
+dataset_name: 'tcga_renal'
+paths: 
+  data_folder_s:
+    kich: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x
+    kirc: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
+    kirp: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
+  data_folder_l: 
+    kich: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x
+    kirc: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x 
+    kirp: "project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x 
+
+  result_dir: "/project/hnguyen2/mvu9/wsi_fs_results/explainer_ver1_tcga_renal_results" 
+  split_folder: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal"
+
+text_prompt_path: prompts/renal_prompts.csv
+prototype_number: 64
+max_epochs: 20
+lr: 0.001
+label_frac: 1.0
+seed: 1
+k: 5
+k_start: 1
+k_end: 1
+
+drop_out: false
+opt: adam
+bag_loss: ce
+weighted_sample: false
+early_stopping: true 
