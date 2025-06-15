@@ -49,6 +49,8 @@ def prepare_dataset(args, fold_id):
             seed=args.seed,
             use_h5=True,
         )
+        print("check dataset size")
+        print(len(train_dataset), len(val_dataset), len(test_dataset))
         return train_dataset, val_dataset, test_dataset  
     else:
         raise NotImplementedError(f"[✗] Dataset '{args.dataset_name}' not supported.")
