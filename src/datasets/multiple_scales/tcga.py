@@ -42,35 +42,72 @@ class Generic_MIL_Dataset(Dataset):
 
     def __len__(self):
         return len(self.slide_data)
-
     def __getitem__(self, idx):
-        slide_id = self.slide_data['slide_id'].iloc[idx]
-        label_str = self.slide_data['label'].iloc[idx]
+        slide_id = self.slide_data.iloc[idx]['slide_id']
+        label_str = self.slide_data.iloc[idx]['label']
         label = self.label_dict[label_str]
 
         if not self.use_h5:
-            # Use .pt files if specified
-            pt_path_s = os.path.join(self.data_dir_s, 'pt_files', f"{slide_id}.pt")
-            pt_path_l = os.path.join(self.data_dir_l, 'pt_files', f"{slide_id}.pt")
-
+            # Use .pt files
+            pt_path_s = os.path.join(self.data_dir_s, f"{slide_id}.pt")
+            pt_path_l = os.path.join(self.data_dir_l, f"{slide_id}.pt")
             features_s = torch.load(pt_path_s, weights_only=True)
             features_l = torch.load(pt_path_l, weights_only=True)
             return features_s, None, features_l, None, label
 
         else:
-            # Use .h5 files
+            # Try to use .h5 files, but if they don't exist, fall back to returning None for coords
             h5_path_s = os.path.join(self.data_dir_s, 'h5_files', f"{slide_id}.h5")
             h5_path_l = os.path.join(self.data_dir_l, 'h5_files', f"{slide_id}.h5")
 
-            with h5py.File(h5_path_s, 'r') as f_s:
-                features_s = torch.from_numpy(f_s['features'][:])
-                coords_s = torch.from_numpy(f_s['coords'][:])
+            try:
+                with h5py.File(h5_path_s, 'r') as f_s:
+                    features_s = torch.from_numpy(f_s['features'][:])
+                    coords_s = torch.from_numpy(f_s['coords'][:])
+            except FileNotFoundError:
+                pt_path_s = os.path.join(self.data_dir_s, 'pt_files', f"{slide_id}.pt")
+                features_s = torch.load(pt_path_s, weights_only=True)
+                coords_s = None
 
-            with h5py.File(h5_path_l, 'r') as f_l:
-                features_l = torch.from_numpy(f_l['features'][:])
-                coords_l = torch.from_numpy(f_l['coords'][:])
+            try:
+                with h5py.File(h5_path_l, 'r') as f_l:
+                    features_l = torch.from_numpy(f_l['features'][:])
+                    coords_l = torch.from_numpy(f_l['coords'][:])
+            except FileNotFoundError:
+                pt_path_l = os.path.join(self.data_dir_l, 'pt_files', f"{slide_id}.pt")
+                features_l = torch.load(pt_path_l, weights_only=True)
+                coords_l = None
 
             return features_s, coords_s, features_l, coords_l, label
+ 
+    # def __getitem__(self, idx):
+    #     slide_id = self.slide_data['slide_id'].iloc[idx]
+    #     label_str = self.slide_data['label'].iloc[idx]
+    #     label = self.label_dict[label_str]
+
+    #     if not self.use_h5:
+    #         # Use .pt files if specified
+    #         pt_path_s = os.path.join(self.data_dir_s, 'pt_files', f"{slide_id}.pt")
+    #         pt_path_l = os.path.join(self.data_dir_l, 'pt_files', f"{slide_id}.pt")
+
+    #         features_s = torch.load(pt_path_s, weights_only=True)
+    #         features_l = torch.load(pt_path_l, weights_only=True)
+    #         return features_s, None, features_l, None, label
+
+    #     else:
+    #         # Use .h5 files
+    #         h5_path_s = os.path.join(self.data_dir_s, 'h5_files', f"{slide_id}.h5")
+    #         h5_path_l = os.path.join(self.data_dir_l, 'h5_files', f"{slide_id}.h5")
+
+    #         with h5py.File(h5_path_s, 'r') as f_s:
+    #             features_s = torch.from_numpy(f_s['features'][:])
+    #             coords_s = torch.from_numpy(f_s['coords'][:])
+
+    #         with h5py.File(h5_path_l, 'r') as f_l:
+    #             features_l = torch.from_numpy(f_l['features'][:])
+    #             coords_l = torch.from_numpy(f_l['coords'][:])
+
+    #         return features_s, coords_s, features_l, coords_l, label
 
     def get_features_by_slide_id(self, slide_id):
         row = self.slide_data[self.slide_data['slide_id'] == slide_id]
