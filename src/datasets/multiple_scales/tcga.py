@@ -132,7 +132,7 @@ def return_splits_custom(
         for _, row in df.iterrows():
             slide_id = row["slide"]
             label = row["label"].lower()
-            print(label)
+            # print(label)
             try:
                 path_s = os.path.join(data_dir_s[label], f"{slide_id}.h5")
                 path_l = os.path.join(data_dir_l[label], f"{slide_id}.h5")
