@@ -51,28 +51,25 @@ class Generic_MIL_Dataset(Dataset):
         label_str = row['label']
         label = self.label_dict[label_str]
 
-        folder_s, folder_l = None, None
-        for subtype in self.data_dir_s:
-            folder_s = self.data_dir_s[subtype]
-            folder_l = self.data_dir_l[subtype]
-
-        h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
-        h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
-
         try:
+            folder_s = self._resolve_subtype_path(slide_id, self.data_dir_s, row['patient_id'])
+            folder_l = self._resolve_subtype_path(slide_id, self.data_dir_l, row['patient_id'])
+            h5_path_s = os.path.join(folder_s, f"{slide_id}.h5")
+            h5_path_l = os.path.join(folder_l, f"{slide_id}.h5")
+
             with h5py.File(h5_path_s, 'r') as f_s:
                 features_s = torch.from_numpy(f_s['features'][:])
                 coords_s = torch.from_numpy(f_s['coords'][:])
             with h5py.File(h5_path_l, 'r') as f_l:
                 features_l = torch.from_numpy(f_l['features'][:])
                 coords_l = torch.from_numpy(f_l['coords'][:])
-            return features_s, coords_s, features_l, coords_l, label
-        except Exception as e:
-            with open("logs/skipped_samples.txt", "a") as f:
-                f.write(f"{slide_id} - {e}\n")
-            return None
 
-                
+            return features_s, coords_s, features_l, coords_l, label
+
+        except Exception as e:
+            print(f"[Warning] Failed to load slide: {slide_id} -> {e}")
+            raise IndexError  # this will skip the sample in DataLoader
+                    
 
 
 def return_splits_custom(
