@@ -33,3 +33,4 @@ opt: adam
 bag_loss: ce
 weighted_sample: false
 early_stopping: true 
+n_classes: 3 
