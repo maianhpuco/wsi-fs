@@ -8,8 +8,10 @@ import torch
 from datetime import datetime
 from utils.file_utils import save_pkl
 from utils.core_utils import train  # Make sure this expects model as the first arg
+# sys.path.append(base_path)
+sys.path.append(os.path.join("src"))  
 
-from models.model_ViLa_MIL import ViLa_MIL_Model
+from explainer_ver1 import ExplainerVer1
 import ml_collections
 
 # === PATH SETUP ===
@@ -79,7 +81,7 @@ def main(args):
         config.hidden_size = 192
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
-        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).cuda()
+        model = Explainer_Ver1(config=config, num_classes=args.n_classes).cuda()
 
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
