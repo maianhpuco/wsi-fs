@@ -38,9 +38,9 @@ def collate_MIL(batch):
 # 	return [img_s, coord_s, img_l, coord_l, label]
 
 def collate_tranformer(batch):
-    batch = [item for item in batch if item is not None]
-    if len(batch) == 0:
-        return None
+    # batch = [item for item in batch if item is not None]
+    # if len(batch) == 0:
+    #     return None
 
     img_s = torch.cat([item[0] for item in batch], dim=0)
     coord_s = torch.cat([item[1] for item in batch], dim=0)
