@@ -78,7 +78,7 @@ def main(args):
         config.hidden_size = 192
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
-        model = Explainer_Ver1(config=config, num_classes=args.n_classes).cuda()
+        model = ExplainerVer1(config=config, num_classes=args.n_classes).cuda()
 
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
