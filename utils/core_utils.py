@@ -89,6 +89,7 @@ class EarlyStopping:
         self.val_loss_min = val_loss
 
 def train(model, datasets, cur, args):
+    args.reg = float(getattr(args, 'reg', 1e-5))
     print(f"\nTraining Fold {cur}")
     writer_dir = os.path.join(args.results_dir, str(cur))
     os.makedirs(writer_dir, exist_ok=True)

@@ -79,7 +79,7 @@ def main(args):
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
         model = ExplainerVer1(config=config, num_classes=args.n_classes).cuda()
-
+        args.reg = float(getattr(args, 'reg', 1e-5))
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
         all_test_auc.append(test_auc)
