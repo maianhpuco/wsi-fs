@@ -136,7 +136,7 @@ if __name__ == "__main__":
     print("##############################################")
 
     # main(args)
-    h5_path = '/path/to/your/file/TCGA-UW-A7GY-01Z-00-DX1.CD2CCA5D-C92B-409C-B5D6-1EB7C8A0B4CD.h5'
+    h5_path = '/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features/TCGA-UW-A7GY-01Z-00-DX1.CD2CCA5D-C92B-409C-B5D6-1EB7C8A0B4CD.h5'
     import h5py 
     with h5py.File(h5_path, 'r') as f:
         print("Keys in the H5 file:")
