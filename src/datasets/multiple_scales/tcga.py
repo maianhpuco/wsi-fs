@@ -110,7 +110,7 @@ class Generic_MIL_Dataset(Dataset):
 
 import os
 import pandas as pd
-from datasets.dataset_generic import Generic_MIL_Dataset
+# from datasets.dataset_generic import Generic_MIL_Dataset
 
 def return_splits_custom(
     train_csv_path,
