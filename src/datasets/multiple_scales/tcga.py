@@ -110,7 +110,7 @@ class Generic_MIL_Dataset(Dataset):
 
 import os
 import pandas as pd
-# from datasets.dataset_generic import Generic_MIL_Dataset
+from datasets.dataset_generic import Generic_MIL_Dataset
 
 def return_splits_custom(
     train_csv_path,
@@ -152,3 +152,28 @@ def return_splits_custom(
         if missing:
             os.makedirs("logs", exist_ok=True)
             pd.DataFrame(missing).to_csv(f"logs/missing_slides_{name}.csv", index=False)
+            print(f"[INFO] {len(missing)} missing slides in {name} → saved to logs/missing_slides_{name}.csv")
+
+        print(f"[INFO] {name.upper()}: Kept {len(df_kept)} / {len(df)}")
+        return df_kept
+
+    def create_dataset(df):
+        return Generic_MIL_Dataset(
+            data_dir_s=data_dir_s,
+            data_dir_l=data_dir_l,
+            patient_ids=df["patient_id"].dropna().tolist(),
+            slides=df["slide"].dropna().tolist(),
+            labels=df["label"].dropna().tolist(),
+            label_dict=label_dict,
+            seed=seed,
+            print_info=print_info,
+            use_h5=use_h5,
+            mode=mode
+        )
+
+    # Load and filter
+    df_train = filter_df(pd.read_csv(train_csv_path), "train")
+    df_val   = filter_df(pd.read_csv(val_csv_path), "val")
+    df_test  = filter_df(pd.read_csv(test_csv_path), "test")
+
+    return create_dataset(df_train), create_dataset(df_val), create_dataset(df_test)
