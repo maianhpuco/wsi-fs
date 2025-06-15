@@ -48,7 +48,7 @@ class Generic_MIL_Dataset(Dataset):
     def __getitem__(self, idx):
         row = self.slide_data.iloc[idx]
         slide_id = row['slide_id']
-        label_str = row['label']
+        label_str = row['label'].lower()
         label = self.label_dict[label_str]
 
         folder_s = self.data_dir_s[label_str]
