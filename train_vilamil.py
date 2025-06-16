@@ -14,7 +14,7 @@ sys.path.append(os.path.join("src/externals_modified"))
 # from ViLaMIL_utils import * 
 from ViLaMIL_utils.core_utils import train 
 from ViLaMIL_utils.file_utils import save_pkl
-from ViLaMIL_models.model_ViLa_MIL import ViLa_MIL_Model
+from ViLaMIL_models .model_ViLa_MIL import ViLa_MIL_Model
 
 # === PATH SETUP ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -83,7 +83,7 @@ def main(args):
         config.prototype_number = args.prototype_number
         
         model_dict = {'config': config, 'num_classes':args.n_classes}
-        model = ViLa_MIL_Model(**model_dict) 
+        model = ViLa_MIL_Model(**model_dict).to(device) 
         
         
         seed_torch(args.seed)
