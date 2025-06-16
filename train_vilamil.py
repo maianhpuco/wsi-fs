@@ -12,8 +12,8 @@ import ml_collections
 sys.path.append(os.path.join("src/externals_modified")) 
 
 # from ViLaMIL_utils import * 
-from externals_modified.ViLaMIL_utils.core_utils import train 
-from externals_modified.ViLaMIL_utils.file_utils import save_pkl
+from ViLaMIL_utils.core_utils import train 
+from ViLaMIL_utils.file_utils import save_pkl
  
 from externals_modified.ViLaMIL_models.model_ViLa_MIL import ViLa_MIL_Model
 
