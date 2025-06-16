@@ -81,7 +81,7 @@ def main(args):
         config.hidden_size = 192
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
-        
+        config.device = args.device 
         model_dict = {'config': config, 'num_classes':args.n_classes}
         model = ViLa_MIL_Model(**model_dict).to(device) 
         

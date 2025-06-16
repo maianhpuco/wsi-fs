@@ -32,6 +32,7 @@ class TextEncoder(nn.Module):
 
     def forward(self, prompts, tokenized_prompts):
         x = prompts + self.positional_embedding.type(self.dtype)
+        # x = prompts + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  
         x = self.transformer(x)
         x = x.permute(1, 0, 2)  
@@ -169,30 +170,40 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
 def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
     return _no_grad_trunc_normal_(tensor, mean, std, a, b)
 
-
 class ViLa_MIL_Model(nn.Module):
     def __init__(self, config, num_classes=3):
         super(ViLa_MIL_Model, self).__init__()
+        self.device = config.device  # Store the device for later use
         self.loss_ce = nn.CrossEntropyLoss()
         self.num_classes = num_classes
         self.L = config.input_size
         self.D = config.hidden_size
         self.K = 1
+
         self.attention_V = nn.Sequential(nn.Linear(self.L, self.D), nn.Tanh())
         self.attention_U = nn.Sequential(nn.Linear(self.L, self.D), nn.Sigmoid())
         self.attention_weights = nn.Linear(self.D, self.K)
 
-        clip_model, _ = clip.load("RN50", device="cpu")
-        self.prompt_learner = PromptLearner(config.text_prompt, clip_model.float())
-        self.text_encoder = TextEncoder(clip_model.float())
+        clip_model, _ = clip.load("RN50", device='cpu')
+        clip_model.float() 
+        self.prompt_learner = PromptLearner(config.text_prompt, clip_model.float()).to(self.device)
+        self.text_encoder = TextEncoder(clip_model.float()).to(self.device)
 
-        self.norm = nn.LayerNorm(config.input_size)
-        self.cross_attention_1 = MultiheadAttention(embed_dim=config.input_size, num_heads=1)
-        self.cross_attention_2 = MultiheadAttention(embed_dim=config.input_size, num_heads=1)
+        self.norm = nn.LayerNorm(config.input_size).to(self.device)
+        self.cross_attention_1 = MultiheadAttention(embed_dim=config.input_size, num_heads=1).to(self.device)
+        self.cross_attention_2 = MultiheadAttention(embed_dim=config.input_size, num_heads=1).to(self.device)
 
-        self.learnable_image_center = nn.Parameter(torch.Tensor(*[config.prototype_number, 1, config.input_size]))
+        self.learnable_image_center = nn.Parameter(
+            torch.empty(config.prototype_number, 1, config.input_size, device=self.device)
+        )
         trunc_normal_(self.learnable_image_center, std=.02)
 
+        # Also move attention modules to device
+        self.attention_V.to(self.device)
+        self.attention_U.to(self.device)
+        self.attention_weights.to(self.device)
+ 
+ 
     def forward(self, x_s, coord_s, x_l, coords_l, label):
         device = x_s.device 
         self.learnable_image_center = self.learnable_image_center
