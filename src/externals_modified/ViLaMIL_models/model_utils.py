@@ -375,7 +375,7 @@ def multi_head_attention_forward(
 
 import torch
 from torch import Tensor
-from torch.nn.modules.linear import _LinearWithBias
+from torch.nn.modules.linear import Linear as _LinearWithBias
 from torch.nn.init import xavier_uniform_
 from torch.nn.init import constant_
 from torch.nn.init import xavier_normal_
