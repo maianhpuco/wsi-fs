@@ -194,15 +194,19 @@ class ViLa_MIL_Model(nn.Module):
         trunc_normal_(self.learnable_image_center, std=.02)
 
     def forward(self, x_s, coord_s, x_l, coords_l, label):
-        prompts = self.prompt_learner()
-        tokenized_prompts = self.prompt_learner.tokenized_prompts
-        text_features = self.text_encoder(prompts, tokenized_prompts)
+        device = x_s.device 
+        self.learnable_image_center = self.learnable_image_center.to(device) 
+        
+        # Also move prompt and tokenized prompts if needed
+        prompts = self.prompt_learner().to(device)
+        tokenized_prompts = self.prompt_learner.tokenized_prompts.to(device)
+        text_features = self.text_encoder(prompts, tokenized_prompts).to(device) 
 
-        M = x_s.float()
+        M = x_s.float().to(device)
         compents, _ = self.cross_attention_1(self.learnable_image_center, M, M) 
         compents = self.norm(compents + self.learnable_image_center)
 
-        M_high = x_l.float()
+        M_high = x_l.float().to(device)
         compents_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
         compents_high = self.norm(compents_high + self.learnable_image_center)
 
