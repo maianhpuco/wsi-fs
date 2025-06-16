@@ -28,7 +28,7 @@ _tokenizer = _Tokenizer()
 
 
 class ExplainerVer1(nn.Module):
-    def __init__(self, config, num_classes=3):
+    def __init__(self, config, num_classes=None):
         super(ExplainerVer1, self).__init__()
         
         # Define cross-entropy loss for classification
