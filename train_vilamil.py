@@ -6,14 +6,14 @@ import numpy as np
 import pandas as pd
 import torch
 from datetime import datetime
-from utils.file_utils import save_pkl
-from utils.core_utils import train  # Make sure this expects model as the first arg
+
 # sys.path.append(base_path)
-sys.path.append(os.path.join("src/externals/ViLa-MIL"))  
-
-from explainer_ver1 import ExplainerVer1
-import ml_collections
-
+sys.path.append(os.path.join("src/externals/ViLa-MIL")) 
+sys.path.append(os.path.join("src/externals_modified")) 
+from externals_modified.ViLaMIL_utils import * 
+from externals_modified.ViLaMIL_utils.core_utils import train 
+from externals_modified.ViLaMIL_utils.file_utils import save_pkl
+ 
 # === PATH SETUP ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
@@ -32,27 +32,26 @@ def seed_torch(seed=7):
     torch.backends.cudnn.deterministic = True
 
 
-def prepare_dataset(args):
+def prepare_dataset(args, fold_id):
     if args.dataset_name == 'tcga_renal':
         from src.datasets.multiple_scales.tcga import return_splits_custom
         patch_size = args.patch_size
-        mag_s, mag_l = '5x', '10x'
-        key_s = f"patch_{patch_size}x{patch_size}_{mag_s}"
-        key_l = f"patch_{patch_size}x{patch_size}_{mag_l}"
-
-        data_dir_s = os.path.join(args.paths['data_folder_s'], key_s)
-        data_dir_l = os.path.join(args.paths['data_folder_l'], key_l)
-
-        return return_splits_custom(
-            train_csv_path=os.path.join(args.paths['split_folder'], "train.csv"),
-            val_csv_path=os.path.join(args.paths['split_folder'], "val.csv"),
-            test_csv_path=os.path.join(args.paths['split_folder'], "test.csv"),
-            data_dir_s=data_dir_s,
-            data_dir_l=data_dir_l,
+        data_dir_s_mapping= args.paths['data_folder_s']
+        data_dir_l_mapping =args.paths['data_folder_l'] 
+         
+        train_dataset, val_dataset, test_dataset = return_splits_custom(
+            train_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/train.csv"),
+            val_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/val.csv"),
+            test_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/test.csv"),
+            data_dir_s=data_dir_s_mapping,
+            data_dir_l=data_dir_l_mapping,
             label_dict=args.label_dict,
             seed=args.seed,
             use_h5=True,
         )
+        print("check dataset size")
+        print(len(train_dataset), len(val_dataset), len(test_dataset))
+        return train_dataset, val_dataset, test_dataset  
     else:
         raise NotImplementedError(f"[✗] Dataset '{args.dataset_name}' not supported.")
 
@@ -62,27 +61,21 @@ def main(args):
     seed_torch(args.seed)
 
     # Prepare dataset once for all folds
-    datasets = prepare_dataset(args)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    args.results_dir = os.path.join(args.results_dir, f"{args.exp_code}_s{args.seed}_{timestamp}")
-    os.makedirs(args.results_dir, exist_ok=True)
+    
 
     all_test_auc, all_val_auc, all_test_acc, all_val_acc, all_test_f1, folds = [], [], [], [], [], []
 
     for i in range(args.k_start, args.k_end + 1):
+        datasets = prepare_dataset(args, i)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        args.results_dir = os.path.join(args.paths['results_dir'], f"resuls_fold{i}_timestamp_{timestamp}")
+        os.makedirs(args.results_dir, exist_ok=True) 
+        
         print(f"\n=========== Fold {i} ===========")
         seed_torch(args.seed)
         folds.append(i)
-
-        config = ml_collections.ConfigDict()
-        config.input_size = 1024
-        config.hidden_size = 192
-        config.text_prompt = args.text_prompt
-        config.prototype_number = args.prototype_number
-        model = Explainer_Ver1(config=config, num_classes=args.n_classes).cuda()
-
-        results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
+        results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(datasets, cur=i, args=args)
 
         all_test_auc.append(test_auc)
         all_val_auc.append(val_auc)
