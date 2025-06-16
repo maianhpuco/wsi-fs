@@ -83,7 +83,7 @@ def main(args):
         config.prototype_number = args.prototype_number
         config.device = args.device 
         model_dict = {'config': config, 'num_classes':args.n_classes}
-        model = ViLa_MIL_Model(**model_dict).to(device) 
+        model = ViLa_MIL_Model(**model_dict).to(args.device) 
         
         
         seed_torch(args.seed)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     for k, v in config.items():
         setattr(args, k, v)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seed_torch(args.seed)
 
     print("################# SETTINGS ###################")
