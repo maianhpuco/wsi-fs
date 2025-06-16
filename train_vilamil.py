@@ -8,9 +8,10 @@ import torch
 from datetime import datetime
 import ml_collections 
 # sys.path.append(base_path)
-sys.path.append(os.path.join("src/externals/ViLa-MIL")) 
+sys.path.append(os.path.join("src/externals/ViLa-MIL"))
 sys.path.append(os.path.join("src/externals_modified")) 
-from models.model_ViLa_MIL import ViLa_MIL_Model 
+
+from ViLa_MIL.models.model_ViLa_MIL import ViLa_MIL_Model
 
 from externals_modified.ViLaMIL_utils import * 
 from externals_modified.ViLaMIL_utils.core_utils import train 
