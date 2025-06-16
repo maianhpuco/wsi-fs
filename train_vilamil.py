@@ -11,12 +11,12 @@ import ml_collections
 # sys.path.append(os.path.join("src/externals/ViLa-MIL/models"))
 sys.path.append(os.path.join("src/externals_modified")) 
 
-from ViLaMIL_models.model_ViLa_MIL import ViLa_MIL_Model
-
-from externals_modified.ViLaMIL_utils import * 
+# from ViLaMIL_utils import * 
 from externals_modified.ViLaMIL_utils.core_utils import train 
 from externals_modified.ViLaMIL_utils.file_utils import save_pkl
  
+from externals_modified.ViLaMIL_models.model_ViLa_MIL import ViLa_MIL_Model
+
 # === PATH SETUP ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
