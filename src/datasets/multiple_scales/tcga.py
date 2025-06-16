@@ -32,8 +32,8 @@ class Generic_MIL_Dataset(Dataset):
             'slide_id': slides,
             'label': labels
         })
-        print("-------")
-        print(self.slide_data)
+        # print("-------")
+        # print(self.slide_data)
         if print_info:
             print(f"Loaded {len(self.slide_data)} slides.")
 
