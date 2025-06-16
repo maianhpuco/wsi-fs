@@ -6,10 +6,12 @@ import numpy as np
 import pandas as pd
 import torch
 from datetime import datetime
-
+import ml_collections 
 # sys.path.append(base_path)
 sys.path.append(os.path.join("src/externals/ViLa-MIL")) 
 sys.path.append(os.path.join("src/externals_modified")) 
+from models.model_ViLa_MIL import ViLa_MIL_Model 
+
 from externals_modified.ViLaMIL_utils import * 
 from externals_modified.ViLaMIL_utils.core_utils import train 
 from externals_modified.ViLaMIL_utils.file_utils import save_pkl
@@ -72,11 +74,23 @@ def main(args):
         args.results_dir = os.path.join(args.paths['results_dir'], f"resuls_fold{i}_timestamp_{timestamp}")
         os.makedirs(args.results_dir, exist_ok=True) 
         
+        
         print(f"\n=========== Fold {i} ===========")
+        config = ml_collections.ConfigDict()
+        config.input_size = 1024
+        config.hidden_size = 192
+        config.text_prompt = args.text_prompt
+        config.prototype_number = args.prototype_number
+        
+        model_dict = {'config': config, 'num_classes':args.n_classes}
+        model = ViLa_MIL_Model(**model_dict) 
+        
+        
         seed_torch(args.seed)
         folds.append(i)
-        results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(datasets, cur=i, args=args)
-
+        model = model = ViLa_MIL_Model(**model_dict) 
+        
+        results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
         all_test_auc.append(test_auc)
         all_val_auc.append(val_auc)
         all_test_acc.append(test_acc)
