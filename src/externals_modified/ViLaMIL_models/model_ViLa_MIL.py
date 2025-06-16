@@ -253,7 +253,8 @@ class ViLa_MIL_Model(nn.Module):
 
         loss = self.loss_ce(logits, label)
         Y_prob = F.softmax(logits, dim = 1)
-        Y_hat = torch.topk(Y_prob, 1, dim = 1)[1]
-
+        # Y_hat = torch.topk(Y_prob, 1, dim = 1)[1]
+        Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
+  
         return Y_prob, Y_hat, loss
 
