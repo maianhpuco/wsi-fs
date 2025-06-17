@@ -52,7 +52,7 @@ class ExplainerVer1c(nn.Module):
         self.K = 1
 
         # --- Prototype settings ---
-        self.prototype_number_per_class = config.prototype_number_per_class  # e.g. 10
+        self.prototype_number_per_class = config.prototype_number  # e.g. 10
         self.total_prototypes = self.prototype_number_per_class * num_classes
 
         # Attention modules
