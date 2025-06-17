@@ -41,7 +41,7 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
     return _no_grad_trunc_normal_(tensor, mean, std, a, b)
 
 
-class ViLa_MIL_Model(nn.Module):
+class ExplainerVer1c(nn.Module):
     def __init__(self, config, num_classes=3):
         super(ViLa_MIL_Model, self).__init__()
         self.device = config.device
