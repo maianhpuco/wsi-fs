@@ -20,7 +20,7 @@ model_name: Explainer_Ver1 # can replace by ViLa_MIL_Model
 # you rmodel cofig here 
 text_prompt_path: "/project/hnguyen2/mvu9/folder_04_ma/wsi-fs/src/explainer_ver1/text_prompt/TCGA_RCC_two_scale_text_prompt.csv"
 prototype_number: 10
-max_epochs: 20
+# max_epochs: 20
 lr: 0.001
 label_frac: 1.0
 seed: 1
