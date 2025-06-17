@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --job-name=explainer_v1_tcga
-#SBATCH --output=logs/explainer_v1_tcga_renal.log
+#SBATCH --job-name=ev1_tcga_renal
+#SBATCH --output=logs/ev1_tcga_renal.log
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=48:00:00
