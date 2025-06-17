@@ -74,13 +74,14 @@ def main(args):
         print(f"\n=========== Fold {i} ===========")
         seed_torch(args.seed)
         folds.append(i)
-
+        
         config = ml_collections.ConfigDict()
         config.input_size = 1024
         config.hidden_size = 192
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
-        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).cuda()
+        config.device = args.device  
+        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).to(args.device)
         
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     for k, v in config.items():
         setattr(args, k, v)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seed_torch(args.seed)
 
     print("################# SETTINGS ###################")
