@@ -81,7 +81,7 @@ def main(args):
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
         config.device = args.device  
-        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).to(args.device)
+        model = ExplainerVer1c(config=config, num_classes=args.n_classes).to(args.device)
         
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
