@@ -11,7 +11,7 @@ from utils.core_utils import train  # Make sure this expects model as the first 
 # sys.path.append(base_path)
 sys.path.append(os.path.join("src"))  
 
-from explainer_ver2 import ViLa_MIL_Model
+from explainer_ver1 import ViLa_MIL_Model
 import ml_collections
 
 # === PATH SETUP ===
