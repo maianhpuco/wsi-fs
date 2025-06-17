@@ -50,7 +50,10 @@ class ExplainerVer1c(nn.Module):
         self.L = config.input_size
         self.D = config.hidden_size
         self.K = 1
-        self.prototype_number = config.prototype_number
+
+        # --- Prototype settings ---
+        self.prototype_number_per_class = config.prototype_number_per_class  # e.g. 10
+        self.total_prototypes = self.prototype_number_per_class * num_classes
 
         # Attention modules
         self.attention_V = nn.Sequential(nn.Linear(self.L, self.D), nn.Tanh())
@@ -63,7 +66,7 @@ class ExplainerVer1c(nn.Module):
         self.prompt_learner = PromptLearner(config.text_prompt, clip_model.float()).to(self.device)
         self.text_encoder = TextEncoder(clip_model.float()).to(self.device)
 
-        # MLP for text-conditioned prototype generation: p_i = MLP(T_i)
+        # MLP for text-conditioned prototype generation
         self.prototype_mlp = nn.Sequential(
             nn.Linear(self.L, self.D),
             nn.ReLU(),
@@ -86,24 +89,27 @@ class ExplainerVer1c(nn.Module):
         # === TEXT FEATURE EXTRACTION ===
         prompts = self.prompt_learner().to(device)
         tokenized_prompts = self.prompt_learner.tokenized_prompts.to(device)
-        text_features = self.text_encoder(prompts, tokenized_prompts).to(device)  # shape: [C + extra, L]
+        text_features = self.text_encoder(prompts, tokenized_prompts).to(device)  # [num_classes, L]
 
         # === TEXT-CONDITIONED PROTOTYPES ===
-        assert self.prototype_number <= text_features.shape[0], \
-            "Prototype number exceeds available text features"
-        prototype_inputs = text_features[:self.prototype_number]  # shape: [P, L]
-        prototypes = self.prototype_mlp(prototype_inputs).unsqueeze(1)  # [P, 1, L]
+        # Repeat each class prompt N times: [num_classes * N, L]
+        text_features_expanded = text_features[:self.num_classes].repeat_interleave(
+            self.prototype_number_per_class, dim=0
+        )  # [P, L]
+
+        # Project each to prototype space
+        prototypes = self.prototype_mlp(text_features_expanded).unsqueeze(1)  # [P, 1, L]
 
         # === LOW-SCALE BRANCH ===
         M = x_s.float()
         compents, _ = self.cross_attention_1(prototypes, M, M)
         compents = self.norm(compents + prototypes)
 
-        H = compents.squeeze().float()  # shape: [P, L]
+        H = compents.squeeze().float()  # [P, L]
         A_V = self.attention_V(H)
         A_U = self.attention_U(H)
-        A = self.attention_weights(A_V * A_U)
-        A = torch.transpose(A, 1, 0)  # [1, P]
+        A = self.attention_weights(A_V * A_U)  # [P, 1]
+        A = A.T  # [1, P]
         A = F.softmax(A, dim=1)
         image_features_low = torch.mm(A, H)  # [1, L]
 
@@ -112,33 +118,37 @@ class ExplainerVer1c(nn.Module):
         compents_high, _ = self.cross_attention_1(prototypes, M_high, M_high)
         compents_high = self.norm(compents_high + prototypes)
 
-        H_high = compents_high.squeeze().float()  # shape: [P, L]
+        H_high = compents_high.squeeze().float()  # [P, L]
         A_V_high = self.attention_V(H_high)
         A_U_high = self.attention_U(H_high)
         A_high = self.attention_weights(A_V_high * A_U_high)
-        A_high = torch.transpose(A_high, 1, 0)  # [1, P]
+        A_high = A_high.T  # [1, P]
         A_high = F.softmax(A_high, dim=1)
         image_features_high = torch.mm(A_high, H_high)  # [1, L]
 
-        # === TEXT CONTEXTUALIZATION (CROSS-ATTENTION) ===
+        # === TEXT CONTEXTUALIZATION ===
         text_features_low = text_features[:self.num_classes]  # [C, L]
         image_context = torch.cat((compents.squeeze(), M), dim=0)
         text_context_features, _ = self.cross_attention_2(
-            text_features_low.unsqueeze(1), image_context, image_context)
+            text_features_low.unsqueeze(1), image_context, image_context
+        )
         text_features_low = text_context_features.squeeze() + text_features_low  # residual
 
-        text_features_high = text_features[self.num_classes:]  # [extra, L]
+        text_features_high = text_features[self.num_classes:]  # optional, may be empty
         image_context_high = torch.cat((compents_high.squeeze(), M_high), dim=0)
-        text_context_features_high, _ = self.cross_attention_2(
-            text_features_high.unsqueeze(1), image_context_high, image_context_high)
-        text_features_high = text_context_features_high.squeeze() + text_features_high
+        if text_features_high.shape[0] > 0:
+            text_context_features_high, _ = self.cross_attention_2(
+                text_features_high.unsqueeze(1), image_context_high, image_context_high
+            )
+            text_features_high = text_context_features_high.squeeze() + text_features_high
+        else:
+            text_features_high = torch.zeros_like(text_features_low)  # fallback
 
-        # === CLASSIFICATION LOGITS ===
+        # === CLASSIFICATION ===
         logits_low = image_features_low @ text_features_low.T.to(device)  # [1, C]
-        logits_high = image_features_high @ text_features_high.T.to(device)  # [1, extra]
-        logits = logits_low + logits_high[:, :self.num_classes]  # sum only over shared classes
+        logits_high = image_features_high @ text_features_low.T.to(device)  # [1, C]
+        logits = logits_low + logits_high
 
-        # === LOSS & PREDICTIONS ===
         loss = self.loss_ce(logits, label)
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
