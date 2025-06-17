@@ -109,7 +109,7 @@ class ViLa_MIL_Model(nn.Module):
         A = F.softmax(A, dim=1)  
         image_features_low = torch.mm(A, H)  
 
-        H_high = compents_high.squeeze().float()
+        H_high = compents_high.squeeze().float() # shape: [P, D]
         A_V_high = self.attention_V(H_high)  
         A_U_high = self.attention_U(H_high)  
         A_high = self.attention_weights(A_V_high * A_U_high) 
