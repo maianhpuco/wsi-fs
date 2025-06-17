@@ -16,3 +16,6 @@ sbatch_train_explainer_ver1_tcga_renal: # use wsi-fs-2 environment
 sbatch_train_explainer_ver1b_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_explainer_ver1b_tcga_renal.sbatch 	
  
+sbatch_train_explainer_ver1c_tcga_renal: # use wsi-fs-2 environment 
+	sbatch sbatch_scripts/train_explainer_ver1c_tcga_renal.sbatch 	
+ 
