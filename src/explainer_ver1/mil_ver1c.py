@@ -43,7 +43,7 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
 
 class ExplainerVer1c(nn.Module):
     def __init__(self, config, num_classes=3):
-        super(ViLa_MIL_Model, self).__init__()
+        super(ExplainerVer1c, self).__init__()
         self.device = config.device
         self.loss_ce = nn.CrossEntropyLoss()
         self.num_classes = num_classes
