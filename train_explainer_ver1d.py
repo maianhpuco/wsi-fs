@@ -11,7 +11,7 @@ from utils.core_utils import train  # Make sure this expects model as the first 
 # sys.path.append(base_path)
 sys.path.append(os.path.join("src"))  
 
-from explainer_ver1 import ExplainerVer1d 
+from explainer_ver1 import ViLa_MIL_Model
 import ml_collections
 
 # === PATH SETUP ===
@@ -80,14 +80,8 @@ def main(args):
         config.hidden_size = 192
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
-        config.device = args.device 
-        config.classnames = [
-            "clear cell renal cell carcinoma",       # KIRC
-            "papillary renal cell carcinoma",        # KIRP
-            "chromophobe renal cell carcinoma"       # KICH
-        ]
-  
-        model = ExplainerVer1d(config=config, num_classes=args.n_classes).to(args.device)
+        config.device = args.device  
+        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).to(args.device)
         
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
@@ -144,7 +138,6 @@ if __name__ == "__main__":
     print("##############################################")
 
     main(args)
-    
     # h5_path = '/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features/TCGA-UW-A7GY-01Z-00-DX1.CD2CCA5D-C92B-409C-B5D6-1EB7C8A0B4CD.h5'
     # import h5py 
     # with h5py.File(h5_path, 'r') as f:
