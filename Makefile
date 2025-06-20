@@ -10,6 +10,11 @@ train_explainer_ver1_tcga_renal:
 train_vilamil_tcga_renal: 
 	python train_vilamil.py --config configs_maui/vilamil_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20  
 
+pred_conch_tcga_renal:
+	python pred_conch.py --config configs_maui/vilamil_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20   
+
+
+
 sbatch_train_explainer_ver1_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_explainer_ver1_tcga_renal.sbatch 	
 

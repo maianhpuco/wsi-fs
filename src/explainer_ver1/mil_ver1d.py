@@ -1,152 +1,124 @@
+# coding=utf-8
+from __future__ import absolute_import, division, print_function
+import logging
+import torch
+import torch.nn as nn
+from torch.nn import functional as F
+import clip
 import os
 import sys
-import argparse
-import yaml
-import numpy as np
-import pandas as pd
-import torch
-from datetime import datetime
-from utils.file_utils import save_pkl
-from utils.core_utils import train  # Make sure this expects model as the first arg
-# sys.path.append(base_path)
-sys.path.append(os.path.join("src"))  
+import math
+import warnings
 
-from explainer_ver1 import ViLa_MIL_Model
-import ml_collections
+from os.path import join as pjoin
+from .model_utils import *
 
-# === PATH SETUP ===
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
+logger = logging.getLogger(__name__)
+from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
+_tokenizer = _Tokenizer()
 
+current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
+_path = os.path.abspath(os.path.join(current_dir, "../..", 'src/explainer'))
+sys.path.append(_path)
 
-def seed_torch(seed=7):
-    import random
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
+from explainer_ver1 import TextEncoder
 
+def _no_grad_trunc_normal_(tensor, mean, std, a, b):
+    def norm_cdf(x):
+        return (1. + math.erf(x / math.sqrt(2.))) / 2.
+    if (mean < a - 2 * std) or (mean > b + 2 * std):
+        warnings.warn("mean is more than 2 std from [a, b] in nn.init.trunc_normal_. "
+                      "The distribution of values may be incorrect.", stacklevel=2)
+    with torch.no_grad():
+        l = norm_cdf((a - mean) / std)
+        u = norm_cdf((b - mean) / std)
+        tensor.uniform_(2 * l - 1, 2 * u - 1)
+        tensor.erfinv_()
+        tensor.mul_(std * math.sqrt(2.))
+        tensor.add_(mean)
+        tensor.clamp_(min=a, max=b)
+        return tensor
 
-def prepare_dataset(args, fold_id):
-    if args.dataset_name == 'tcga_renal':
-        from src.datasets.multiple_scales.tcga import return_splits_custom
-        patch_size = args.patch_size
-        data_dir_s_mapping= args.paths['data_folder_s']
-        data_dir_l_mapping =args.paths['data_folder_l'] 
-         
-        train_dataset, val_dataset, test_dataset = return_splits_custom(
-            train_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/train.csv"),
-            val_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/val.csv"),
-            test_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/test.csv"),
-            data_dir_s=data_dir_s_mapping,
-            data_dir_l=data_dir_l_mapping,
-            label_dict=args.label_dict,
-            seed=args.seed,
-            use_h5=True,
+def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
+    return _no_grad_trunc_normal_(tensor, mean, std, a, b)
+
+class ViLa_MIL_Model(nn.Module):
+    def __init__(self, config, num_classes=3):
+        super(ViLa_MIL_Model, self).__init__()
+        self.device = config.device
+        self.loss_ce = nn.CrossEntropyLoss()
+        self.num_classes = num_classes
+        self.L = config.input_size
+        self.D = config.hidden_size
+        self.K = 1
+
+        self.attention_V = nn.Sequential(nn.Linear(self.L, self.D), nn.Tanh())
+        self.attention_U = nn.Sequential(nn.Linear(self.L, self.D), nn.Sigmoid())
+        self.attention_weights = nn.Linear(self.D, self.K)
+
+        clip_model, _ = clip.load("RN50", device='cpu')
+        clip_model.float()
+        self.clip_model = clip_model
+        self.text_encoder = TextEncoder(clip_model.float()).to(self.device)
+
+        self.classnames = config.classnames  # List of class names
+        self.tokenized_prompts = torch.cat([clip.tokenize(f"a photo of a {c}") for c in self.classnames]).to(self.device)
+
+        self.norm = nn.LayerNorm(config.input_size).to(self.device)
+        self.cross_attention_1 = MultiheadAttention(embed_dim=config.input_size, num_heads=1).to(self.device)
+        self.cross_attention_2 = MultiheadAttention(embed_dim=config.input_size, num_heads=1).to(self.device)
+
+        self.learnable_image_center = nn.Parameter(
+            torch.empty(config.prototype_number, 1, config.input_size, device=self.device)
         )
-        print(len(train_dataset))
-        return train_dataset, val_dataset, test_dataset  
-    else:
-        raise NotImplementedError(f"[✗] Dataset '{args.dataset_name}' not supported.")
+        trunc_normal_(self.learnable_image_center, std=.02)
 
+        self.attention_V.to(self.device)
+        self.attention_U.to(self.device)
+        self.attention_weights.to(self.device)
 
-def main(args):
-    args.text_prompt = np.array(pd.read_csv(args.text_prompt_path, header=None)).squeeze()
-    seed_torch(args.seed)
+    def forward(self, x_s, coord_s, x_l, coords_l, label):
+        device = x_s.device
 
-    # Prepare dataset once for all folds
-    
+        prompts = self.text_encoder.transformer.token_embedding(self.tokenized_prompts).to(device)
+        text_features = self.text_encoder(prompts, self.tokenized_prompts).to(device)
 
-    all_test_auc, all_val_auc, all_test_acc, all_val_acc, all_test_f1, folds = [], [], [], [], [], []
+        M = x_s.float()
+        compents, _ = self.cross_attention_1(self.learnable_image_center, M, M)
+        compents = self.norm(compents + self.learnable_image_center)
 
-    for i in range(args.k_start, args.k_end + 1):
-        datasets = prepare_dataset(args, i)
+        M_high = x_l.float()
+        compents_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
+        compents_high = self.norm(compents_high + self.learnable_image_center)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        args.results_dir = os.path.join(args.paths['results_dir'], f"resuls_fold{i}_timestamp_{timestamp}")
-        os.makedirs(args.results_dir, exist_ok=True) 
-        
-        print(f"\n=========== Fold {i} ===========")
-        seed_torch(args.seed)
-        folds.append(i)
-        
-        config = ml_collections.ConfigDict()
-        config.input_size = 1024
-        config.hidden_size = 192
-        config.text_prompt = args.text_prompt
-        config.prototype_number = args.prototype_number
-        config.device = args.device  
-        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).to(args.device)
-        
-        results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
+        H = compents.squeeze().float()
+        A = self.attention_weights(self.attention_V(H) * self.attention_U(H))
+        A = torch.transpose(A, 1, 0)
+        A = F.softmax(A, dim=1)
+        image_features_low = torch.mm(A, H)
 
-        all_test_auc.append(test_auc)
-        all_val_auc.append(val_auc)
-        all_test_acc.append(test_acc)
-        all_val_acc.append(val_acc)
-        all_test_f1.append(test_f1)
+        H_high = compents_high.squeeze().float()
+        A_high = self.attention_weights(self.attention_V(H_high) * self.attention_U(H_high))
+        A_high = torch.transpose(A_high, 1, 0)
+        A_high = F.softmax(A_high, dim=1)
+        image_features_high = torch.mm(A_high, H_high)
 
-        save_pkl(os.path.join(args.results_dir, f'split_{i}_results.pkl'), results)
+        text_features_low = text_features[:self.num_classes]
+        image_context = torch.cat((compents.squeeze(), M), dim=0)
+        text_context_features, _ = self.cross_attention_2(text_features_low.unsqueeze(1), image_context, image_context)
+        text_features_low = text_context_features.squeeze() + text_features_low
 
-    # Save summary
-    summary_df = pd.DataFrame({
-        'folds': folds,
-        'test_auc': all_test_auc,
-        'test_acc': all_test_acc,
-        'test_f1': all_test_f1
-    })
+        text_features_high = text_features[self.num_classes:]
+        image_context_high = torch.cat((compents_high.squeeze(), M_high), dim=0)
+        text_context_features_high, _ = self.cross_attention_2(text_features_high.unsqueeze(1), image_context_high, image_context_high)
+        text_features_high = text_context_features_high.squeeze() + text_features_high
 
-    result_df = pd.DataFrame({
-        'metric': ['mean', 'std'],
-        'test_auc': [np.mean(all_test_auc), np.std(all_test_auc)],
-        'test_f1': [np.mean(all_test_f1), np.std(all_test_f1)],
-        'test_acc': [np.mean(all_test_acc), np.std(all_test_acc)]
-    })
+        logits_low = image_features_low @ text_features_low.T.cuda()
+        logits_high = image_features_high @ text_features_high.T.cuda()
+        logits = logits_low + logits_high
 
-    args.k = args.k_end - args.k_start + 1
-    suffix = f"partial_{folds[0]}_{folds[-1]}" if len(folds) != args.k else "full"
-    summary_df.to_csv(os.path.join(args.results_dir, f"summary_{suffix}.csv"), index=False)
-    result_df.to_csv(os.path.join(args.results_dir, f"result_{suffix}.csv"), index=False)
-    print("Training complete.")
+        loss = self.loss_ce(logits, label)
+        Y_prob = F.softmax(logits, dim=1)
+        Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, required=True)
-    parser.add_argument('--k_start', type=int, required=True)
-    parser.add_argument('--k_end', type=int, required=True)
-    parser.add_argument('--max_epochs', type=int, default=42)
-    args = parser.parse_args()
-
-    with open(args.config, 'r') as f:
-        config = yaml.safe_load(f)
-    for k, v in config.items():
-        setattr(args, k, v)
-
-    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    seed_torch(args.seed)
-
-    print("################# SETTINGS ###################")
-    for k, v in vars(args).items():
-        if k != 'paths':
-            print(f"{k}: {v}")
-    print("##############################################")
-
-    main(args)
-    # h5_path = '/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features/TCGA-UW-A7GY-01Z-00-DX1.CD2CCA5D-C92B-409C-B5D6-1EB7C8A0B4CD.h5'
-    # import h5py 
-    # with h5py.File(h5_path, 'r') as f:
-    #     print("Keys in the H5 file:")
-    #     for key in f.keys():
-    #         print(f"  - {key}: shape={f[key].shape}, dtype={f[key].dtype}")
-
-    #     # Optional: inspect a sample value
-    #     if 'features' in f:
-    #         print("\nSample from 'features':", f['features'][:1])
-    #     if 'coords' in f:
-    #         print("\nSample from 'coords':", f['coords'][:5])
+        return Y_prob, Y_hat, loss
