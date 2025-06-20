@@ -86,6 +86,7 @@ jupyter notebook --no-browser --ip=0.0.0.0 --port=8888
 ssh -N -L 8888:localhost:8888 mvu9@simea.ee.e.uh.edu 
 
 
-Epoch 10/10:
-  Train Loss: 0.2411, Train Acc: 0.9132
-  Val Loss: 0.4316, Val Acc: 0.8333
+---- 
+Vision: 
+- Con 
+Foundation model: 

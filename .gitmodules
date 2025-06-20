@@ -4,3 +4,6 @@
 [submodule "src/externals/TOP"]
 	path = src/externals/TOP
 	url = https://github.com/miccaiif/TOP.git
+[submodule "src/externals/CONCH"]
+	path = src/externals/CONCH
+	url = https://github.com/MahmoodLab/CONCH.git
