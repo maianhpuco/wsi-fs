@@ -7,3 +7,6 @@
 [submodule "src/externals/CONCH"]
 	path = src/externals/CONCH
 	url = https://github.com/MahmoodLab/CONCH.git
+[submodule "src/externals/quilt1m"]
+	path = src/externals/quilt1m
+	url = git@github.com:wisdomikezogwo/quilt1m.git
