@@ -3,32 +3,40 @@ import torch.nn as nn
 import torch.nn.functional as F
 import os 
 import sys
+import pandas as pd
 
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
 _path = os.path.abspath(os.path.join(current_dir, "../..", 'src/externals/CONCH'))
 sys.path.append(_path) 
- 
-# Import CONCH model and tokenizer from the cloned repository
-from conch.model import CONCHVisionLanguageModel
-from conch.tokenizer import CONCHTokenizer
+
+from conch.open_clip_custom import create_model_from_pretrained, tokenize
 
 class CONCH_ZeroShot_Model(nn.Module):
     def __init__(self, config, num_classes=3):
         super(CONCH_ZeroShot_Model, self).__init__()
         self.device = config.device
         self.num_classes = num_classes
-        
-        # Load CONCH model from pretrained weights
-        self.conch_model = CONCHVisionLanguageModel.from_pretrained(
-            config.weight_path, device_map=self.device
+
+        # Load CONCH model and preprocessing
+        self.conch_model, self.preprocess = create_model_from_pretrained(
+            model_cfg="conch_ViT-B-16",
+            checkpoint_path=config.weight_path,
+            device=self.device,
+            hf_auth_token=os.environ.get("HF_TOKEN")
         )
-        self.tokenizer = CONCHTokenizer()
-        self.text_prompt = config.text_prompt
-        
-        # Attention mechanism for aggregating patch features
+        self.logit_scale = self.conch_model.logit_scale
+
+        # Load text prompts from CSV file path
+        if isinstance(config.text_prompt, str) and config.text_prompt.endswith(".csv"):
+            self.text_prompt = pd.read_csv(config.text_prompt, header=None)[0].tolist()
+        else:
+            self.text_prompt = config.text_prompt
+
         self.L = config.input_size
         self.D = config.hidden_size
         self.K = 1
+
+        # Attention for patch-level feature aggregation
         self.attention_V = nn.Sequential(
             nn.Linear(self.L, self.D), nn.Tanh()
         ).to(self.device)
@@ -38,35 +46,37 @@ class CONCH_ZeroShot_Model(nn.Module):
         self.attention_weights = nn.Linear(self.D, self.K).to(self.device)
 
     def encode_text(self, prompts):
-        tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True).to(self.device)
-        text_features = self.conch_model.encode_text(tokenized['input_ids'], tokenized['attention_mask'])
+        tokenized = tokenize(prompts).to(self.device)
+        text_features = self.conch_model.encode_text(tokenized)
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
         return text_features
 
-    def forward(self, x_s, coord_s, x_l, coords_l, label=None):
-        # Process low magnification patches
-        M = x_s.float()  # Shape: [batch, num_patches, input_size]
-        A_V = self.attention_V(M)
-        A_U = self.attention_U(M)
+    def encode_features(self, x):
+        x = x.float()
+        A_V = self.attention_V(x)
+        A_U = self.attention_U(x)
         A = self.attention_weights(A_V * A_U)
         A = torch.transpose(A, 1, 0)
         A = F.softmax(A, dim=1)
-        image_features_low = torch.mm(A, M)  # Aggregated low-mag features
+        feat = torch.mm(A, x)
+        feat = feat / feat.norm(dim=-1, keepdim=True)
+        return feat
 
-        # Process high magnification patches
-        M_high = x_l.float()
-        A_V_high = self.attention_V(M_high)
-        A_U_high = self.attention_U(M_high)
-        A_high = self.attention_weights(A_V_high * A_U_high)
-        A_high = torch.transpose(A_high, 1, 0)
-        A_high = F.softmax(A_high, dim=1)
-        image_features_high = torch.mm(A_high, M_high)  # Aggregated high-mag features
+    def forward(self, x_s, coord_s, x_l, coords_l, label=None):
+        # Encode multi-scale features
+        feat_low = self.encode_features(x_s)
+        feat_high = self.encode_features(x_l)
 
         # Encode text prompts
         text_features = self.encode_text(self.text_prompt)
-        
-        # Zero-shot prediction: compute logits for low and high magnification
-        logits_low = image_features_low @ text_features[:self.num_classes].T
-        logits_high = image_features_high @ text_features[self.num_classes:].T
+
+        # Use first half of text prompts for low, second half for high
+        text_low = text_features[:self.num_classes]
+        text_high = text_features[self.num_classes:]
+
+        # Zero-shot logits
+        logits_low = feat_low @ text_low.T * self.logit_scale.exp()
+        logits_high = feat_high @ text_high.T * self.logit_scale.exp()
         logits = logits_low + logits_high
 
         Y_prob = F.softmax(logits, dim=1)
