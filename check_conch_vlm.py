@@ -41,7 +41,7 @@ tokenized_prompts = tokenize(texts=prompts, tokenizer=tokenizer).to(device)
 # === Encode
 with torch.inference_mode():
     image_embedings = model.encode_image(image_tensor, proj_contrast=True, normalize=True)
-    text_embedings = model.encode_text(tokenized_prompts, proj_contrast=True, normalize=True)
+    text_embedings = model.encode_text(tokenized_prompts)
     sim_scores = (image_embedings @ text_embedings.T * model.logit_scale.exp()).softmax(dim=-1).cpu().numpy()
 
 # === Output
