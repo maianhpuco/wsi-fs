@@ -11,12 +11,11 @@ import ml_collections
 from sklearn.metrics import roc_auc_score, accuracy_score, f1_score
 
 # Set up path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
+sys.path.append(os.path.join("src"))   
+
 os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
 
-# Import CONCH model
-from src. import CONCH_ZeroShot_Model
+from explainer_ver1 import CONCH_ZeroShot_Model
 
 def seed_torch(seed=7):
     import random
