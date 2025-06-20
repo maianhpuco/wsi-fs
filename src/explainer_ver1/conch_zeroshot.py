@@ -35,7 +35,7 @@ class CONCH_ZeroShot_Model(nn.Module):
         self.L = config.input_size
         self.D = config.hidden_size
         self.K = 1
-
+            
         # Attention for patch-level feature aggregation
         self.attention_V = nn.Sequential(
             nn.Linear(self.L, self.D), nn.Tanh()
