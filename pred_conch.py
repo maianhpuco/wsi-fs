@@ -97,7 +97,7 @@ def main(args):
         config.text_prompt = args.text_prompt
         config.device = args.device
         config.prototype_number = args.prototype_number
-        config.weight_path = args.paths.get('weight_path', '')
+        config.weight_path = "hf_hub:MahmoodLab/conch" #args.paths.get('weight_path', '')
 
         model = CONCH_ZeroShot_Model(config=config, num_classes=args.n_classes).to(args.device)
 
