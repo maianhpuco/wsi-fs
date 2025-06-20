@@ -4,46 +4,48 @@ import torch
 import numpy as np
 from PIL import Image
 
-# Add CONCH module
-current_dir = os.path.dirname(os.path.abspath(__file__))
-conch_path = os.path.abspath(os.path.join(current_dir, "../../src/externals/CONCH"))
+# === Setup path ===
+conch_path = os.path.abspath("src/externals/CONCH")  # adjust if needed
 sys.path.append(conch_path)
 
 from conch.open_clip_custom import create_model_from_pretrained, tokenize
 
-# Hugging Face cache and token
-os.environ["HF_HOME"] = "/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface"
+# === HF cache and device ===
+os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
 hf_token = os.environ.get("HF_TOKEN")
-if hf_token is None:
-    raise ValueError("Please set HF_TOKEN in your environment.")
-
-# Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load model and preprocess
+# === Load CONCH ===
 model, preprocess = create_model_from_pretrained(
-    "conch_ViT-B-16",
-    "hf_hub:MahmoodLab/conch",
+    model_cfg="conch_ViT-B-16",
+    checkpoint_path="hf_hub:MahmoodLab/conch",
+    device=device,
     hf_auth_token=hf_token
 )
 model = model.to(device)
 model.eval()
 
-# === Encode Image ===
-image = Image.fromarray(np.random.randint(0, 256, (224, 224, 3), dtype=np.uint8))
-image_tensor = preprocess(image).unsqueeze(0).to(device)
+# === Create dummy image (224x224 RGB) ===
+random_array = np.random.randint(0, 256, (224, 224, 3), dtype=np.uint8)
+image = Image.fromarray(random_array)
+image_tensor = preprocess(image).unsqueeze(0).to(device)  # [1, 3, 224, 224]
 
-with torch.inference_mode():
-    image_features = model.encode_image(image_tensor, proj_contrast=True, normalize=True)
+# === Create dummy text prompts ===
+prompts = ["A WSI of tumor", "A WSI of normal tissue"]
+tokens = tokenize(prompts).to(device)
 
-print("✅ Image feature shape:", image_features.shape)
-
-# === Encode Text ===
-text_prompt = ["A WSI of clear cell renal cell carcinoma"]
-tokenized = tokenize(text_prompt).to(device)
-
+# === Encode image and text ===
 with torch.no_grad():
-    text_features = model.encode_text(tokenized)
+    image_feat = model.encode_image(image_tensor, proj_contrast=True, normalize=True)  # [1, D]
+    text_feat = model.encode_text(tokens)  # [2, D]
 
-print("✅ Text feature shape:", text_features.shape)
-print("First 5 values of text embedding:", text_features[0][:5])
+    image_feat = image_feat / image_feat.norm(dim=-1, keepdim=True)
+    text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
+
+    similarity = image_feat @ text_feat.T  # [1, 2]
+    pred = similarity.argmax(dim=1).item()
+
+# === Output ===
+print("Dummy image vs prompts similarity:", similarity.cpu().numpy())
+print("Predicted class index:", pred)
+print("Predicted prompt:", prompts[pred])
