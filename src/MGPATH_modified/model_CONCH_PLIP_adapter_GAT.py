@@ -118,11 +118,13 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         # comp_high, _ = self.cross_attention_1(learnable_center, M_high, M_high)
         # comp_high = self.norm(comp_high + learnable_center)  
         # === Cross attention: Image → Prototypes ===
-        comp_low, _ = self.cross_attention_1(self.learnable_image_center, M, M)
-        comp_low = self.norm(comp_low + self.learnable_image_center)
+        query_low = self.learnable_image_center.permute(1, 0, 2)  # [1, P, L]
+        comp_low, _ = self.cross_attention_1(query_low, M, M)
+        comp_low = self.norm(comp_low + query_low)
 
-        comp_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
-        comp_high = self.norm(comp_high + self.learnable_image_center)
+        query_high = self.learnable_image_center.permute(1, 0, 2)
+        comp_high, _ = self.cross_attention_1(query_high, M_high, M_high)
+        comp_high = self.norm(comp_high + query_high)
 
         # === Prototype attention pooling ===
         A = F.softmax(self.attention_weights(
