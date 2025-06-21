@@ -46,15 +46,17 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.num_classes = num_classes
         self.L = config['input_size']
         self.D = config['hidden_size']
-        # self.device = config['device']
-        self.device = torch.device(config['device'] if isinstance(config['device'], str) else f"cuda:{config['device']}")
+        self.device = config['device']
  
         self.K = 1
 
         # === Text encoder from PLIP ===
         self.clip_model = PLIPTextOnly(config).to(self.device)
-        self.text_encoder = PLIPTextEncoder(self.clip_model)
-        self.prompt_learner = PromptLearner(config['text_prompt'], self.clip_model, config['text_encoder_ckpt_dir'])
+        self.text_encoder = PLIPTextEncoder(self.clip_model).to(self.device)
+        self.prompt_learner = PromptLearner(
+            config['text_prompt'], 
+            self.clip_model, 
+            config['text_encoder_ckpt_dir']).to(self.device)
 
         # === Adapter to project CONCH features ===
         self.adapter = Adapter(image=True, hidden=512).to(self.device)
@@ -72,7 +74,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         trunc_normal_(self.learnable_image_center, std=.02)
 
         # === Attention Modules ===
-        self.norm = nn.LayerNorm(self.L)
+        self.norm = nn.LayerNorm(self.L).to(self.device)
         self.cross_attention_1 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True)
         self.cross_attention_2 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True)
 
@@ -81,7 +83,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.attention_weights = nn.Linear(self.D, self.K)
 
     def forward(self, x_s, coord_s, x_l, coord_l, label):
-        device = self.device
+        device = x_s.device
         print("========> device", device)
         # === Text prompt encoding ===
         prompts = self.prompt_learner().to(device)
