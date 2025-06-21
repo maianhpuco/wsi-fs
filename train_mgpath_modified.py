@@ -13,15 +13,13 @@ from utils.core_utils import train  # Make sure this expects model as the first 
 
 # sys.path.append(base_path)
 # sys.path.append(os.path.join("src/externals/ViLa-MIL/models"))
+
 sys.path.append(os.path.join("src/MGPATH_modified")) 
-# === PATH SETUP ===
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
-from MGPATH_modified import CONCH_PLIP_adapter_GAT
 
 # === PATH SETUP ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
+from MGPATH_modified import CONCH_PLIP_adapter_GAT
 
 
 def seed_torch(seed=7):
