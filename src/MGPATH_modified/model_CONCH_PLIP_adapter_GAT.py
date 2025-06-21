@@ -46,7 +46,9 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.num_classes = num_classes
         self.L = config['input_size']
         self.D = config['hidden_size']
-        self.device = config['device']
+        # self.device = config['device']
+        self.device = torch.device(config['device'] if isinstance(config['device'], str) else f"cuda:{config['device']}")
+ 
         self.K = 1
 
         # === Text encoder from PLIP ===
