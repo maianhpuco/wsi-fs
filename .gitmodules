@@ -9,7 +9,7 @@
 	url = https://github.com/MahmoodLab/CONCH.git
 [submodule "src/externals/quilt1m"]
 	path = src/externals/quilt1m
-	url = git@github.com:wisdomikezogwo/quilt1m.git
+	url = https://github.com/wisdomikezogwo/quilt1m.git
 [submodule "src/externals/MGPATH"]
 	path = src/externals/MGPATH
 	url = https://github.com/HauschildLab/MGPATH.git
