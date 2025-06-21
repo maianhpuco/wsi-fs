@@ -75,12 +75,13 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
 
         # === Attention Modules ===
         self.norm = nn.LayerNorm(self.L).to(self.device)
-        self.cross_attention_1 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True)
-        self.cross_attention_2 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True)
+        self.cross_attention_1 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True).to(self.device)
+        self.cross_attention_2 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True).to(self.device)
 
         self.attention_V = nn.Sequential(nn.Linear(self.L, self.D), nn.Tanh())
         self.attention_U = nn.Sequential(nn.Linear(self.L, self.D), nn.Sigmoid())
         self.attention_weights = nn.Linear(self.D, self.K)
+        
         # Also move attention modules to device
         self.attention_V.to(self.device)
         self.attention_U.to(self.device)
