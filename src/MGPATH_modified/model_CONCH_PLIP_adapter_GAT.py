@@ -82,7 +82,12 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
 
         # === Text prompt encoding ===
         prompts = self.prompt_learner().to(device)
-        tokenized = self.prompt_learner.tokenized_prompts.to(device)
+        tokenized = {
+            "input_ids": self.prompt_learner.tokenized_prompts["input_ids"].to(device),
+            "attention_mask": self.prompt_learner.tokenized_prompts["attention_mask"].to(device),
+        }
+
+        # tokenized = self.prompt_learner.tokenized_prompts.to(device)
         text_features, _ = self.text_encoder(prompts, tokenized['attention_mask'], tokenized['input_ids'])
         text_features = text_features.contiguous().view(1, -1, self.L).squeeze(0)
 
