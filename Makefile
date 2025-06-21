@@ -13,7 +13,7 @@ train_vilamil_tcga_renal:
 pred_conch_tcga_renal:
 	python pred_conch.py --config configs_maui/conch_tcga_renal.yaml 
 
-mgpath_modified_tcga_renal:l
+mgpath_modified_tcga_renal:
 	python train_mgpath_modified.py --config configs_maui/mgpath_modified_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 10
 
 sbatch_train_explainer_ver1_tcga_renal: # use wsi-fs-2 environment 
