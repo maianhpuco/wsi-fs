@@ -51,7 +51,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.K = 1
 
         # === Text encoder from PLIP ===
-        self.clip_model = PLIPTextOnly(config).to(self.device)
+        self.clip_model = PLIPTextOnly(config)
         self.text_encoder = PLIPTextEncoder(self.clip_model).to(self.device)
         self.prompt_learner = PromptLearner(
             config['text_prompt'], 
@@ -81,7 +81,11 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.attention_V = nn.Sequential(nn.Linear(self.L, self.D), nn.Tanh())
         self.attention_U = nn.Sequential(nn.Linear(self.L, self.D), nn.Sigmoid())
         self.attention_weights = nn.Linear(self.D, self.K)
-
+        # Also move attention modules to device
+        self.attention_V.to(self.device)
+        self.attention_U.to(self.device)
+        self.attention_weights.to(self.device)
+  
     def forward(self, x_s, coord_s, x_l, coord_l, label):
         device = x_s.device
         print("========> device", device)
