@@ -9,7 +9,7 @@ import torch
 class Adapter(torch.nn.Module):
     def __init__(
         self,
-        image=False,
+        image=True,
         hidden:int =768,
         out:int=1024
     ) -> None:
