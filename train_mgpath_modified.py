@@ -83,6 +83,7 @@ def main(args):
         config.text_prompt = args.text_prompt
         config.prototype_number = args.prototype_number
         config.device = args.device 
+        config.text_encoder_ckpt_dir = args.text_encoder_ckpt_dir 
         model_dict = {'config': config, 'num_classes':args.n_classes}
         model = CONCH_PLIP_adapter_GAT(**model_dict).to(args.device) 
         
