@@ -3,6 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+import numpy
+import torch
+
+from transformers import CLIPModel 
 
 from torch.nn import MultiheadAttention
 import sys 
@@ -11,8 +15,28 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_dir, "../"))
 
-import PLIPProjector, PLIPTextEncoder, PromptLearner 
+import PLIPTextEncoder, PromptLearner 
+import Adapter 
 
+
+
+
+# from MGPATH_modified import Adapter
+
+class PLIPProjector(torch.nn.Module):
+    def __init__(
+        self,
+    ) -> None:
+        super(PLIPProjector, self).__init__()
+        print("use PLIP Projector")
+        self.ImageMLP = Adapter(image = True, hidden=512)
+        self.TextMLP = Adapter(image = False, hidden=512)
+        self.temperature = torch.nn.Parameter(\
+                    torch.tensor([numpy.log(1/0.02)]), requires_grad=True)
+
+        self.text_model = CLIPModel.from_pretrained("vinid/plip")
+ 
+ 
 def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
     def norm_cdf(x): return (1. + math.erf(x / math.sqrt(2.))) / 2.
     with torch.no_grad():
