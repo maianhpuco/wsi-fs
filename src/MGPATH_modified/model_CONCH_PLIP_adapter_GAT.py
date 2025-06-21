@@ -80,7 +80,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
 
     def forward(self, x_s, coord_s, x_l, coord_l, label):
         device = x_s.device
-
+        print("========> device", device)
         # === Text prompt encoding ===
         prompts = self.prompt_learner().to(device)
         tokenized = {
@@ -101,19 +101,19 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
             
         if M_high.dim() == 2:
             M_high = M_high.unsqueeze(0)  # [1, num_patches, L]
-        learnable_center = self.learnable_image_center.to(x_s.device)
+        # learnable_center = self.learnable_image_center.to(x_s.device)
 
-        comp_low, _ = self.cross_attention_1(learnable_center, M, M)
-        comp_low = self.norm(comp_low + learnable_center)
+        # comp_low, _ = self.cross_attention_1(learnable_center, M, M)
+        # comp_low = self.norm(comp_low + learnable_center)
 
-        comp_high, _ = self.cross_attention_1(learnable_center, M_high, M_high)
-        comp_high = self.norm(comp_high + learnable_center)  
+        # comp_high, _ = self.cross_attention_1(learnable_center, M_high, M_high)
+        # comp_high = self.norm(comp_high + learnable_center)  
         # === Cross attention: Image → Prototypes ===
-        # comp_low, _ = self.cross_attention_1(self.learnable_image_center, M, M)
-        # comp_low = self.norm(comp_low + self.learnable_image_center)
+        comp_low, _ = self.cross_attention_1(self.learnable_image_center, M, M)
+        comp_low = self.norm(comp_low + self.learnable_image_center)
 
-        # comp_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
-        # comp_high = self.norm(comp_high + self.learnable_image_center)
+        comp_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
+        comp_high = self.norm(comp_high + self.learnable_image_center)
 
         # === Prototype attention pooling ===
         A = F.softmax(self.attention_weights(
