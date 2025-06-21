@@ -53,7 +53,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         # === Text encoder from PLIP ===
         self.clip_model = PLIPTextOnly(config).to(self.device)
         self.text_encoder = PLIPTextEncoder(self.clip_model)
-        self.prompt_learner = PromptLearner(config['text_prompt'], self.clip_model)
+        self.prompt_learner = PromptLearner(config['text_prompt'], self.clip_model, config['text_encoder_ckpt_dir'])
 
         # === Adapter to project CONCH features ===
         self.adapter = Adapter(image=True, hidden=512)
