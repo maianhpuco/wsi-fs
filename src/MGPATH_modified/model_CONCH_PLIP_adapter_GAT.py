@@ -7,7 +7,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import MultiheadAttention
 from transformers import CLIPModel
-
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false" 
 # === Import local modules ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_dir, "../"))
