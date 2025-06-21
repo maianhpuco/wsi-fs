@@ -12,7 +12,7 @@ class PromptLearner(torch.nn.Module):
         n_ctx = 16
         ctx_init = ""
         self.N = 4
-
+        self.device = next(clip_model.parameters()).device 
         dtype = clip_model.text_model.text_model.embeddings.token_embedding.weight.dtype
         ctx_dim = clip_model.text_model.text_model.embeddings.token_embedding.weight.shape[1]
 
@@ -44,7 +44,7 @@ class PromptLearner(torch.nn.Module):
             padding="max_length",
             truncation=True
         )
-        tokenized_prompts['input_ids'] = tokenized_prompts['input_ids'].repeat(self.N, 1)
+        tokenized_prompts['input_ids'] = tokenized_prompts['input_ids'].repeat(self.N, 1).to(self.device)
         tokenized_prompts['attention_mask'] = tokenized_prompts['attention_mask'].repeat(self.N, 1)
 
         with torch.no_grad():

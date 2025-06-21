@@ -22,13 +22,15 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
         tensor.uniform_(2 * l - 1, 2 * u - 1)
         tensor.erfinv_().mul_(std * math.sqrt(2.)).add_(mean).clamp_(min=a, max=b)
         return tensor
-
-
 class PLIPTextOnly(nn.Module):
     def __init__(self, config):
         super().__init__()
         print(">> Using PLIP for Text Only")
-        self.text_model = CLIPModel.from_pretrained(config['text_encoder_ckpt_dir'])
+        # Load CLIPModel directly onto the specified device
+        self.text_model = CLIPModel.from_pretrained(
+            config['text_encoder_ckpt_dir'],
+            device_map="cuda:0" if torch.cuda.is_available() else "cpu"
+        )
         self.TextMLP = Adapter(image=False, hidden=512)
         self.temperature = nn.Parameter(torch.tensor([np.log(1 / 0.02)]), requires_grad=True)
 
@@ -38,6 +40,21 @@ class PLIPTextOnly(nn.Module):
         self.TextMLP = self.TextMLP.to(device)
         self.temperature = self.temperature.to(device)
         return self
+
+# class PLIPTextOnly(nn.Module):
+#     def __init__(self, config):
+#         super().__init__()
+#         print(">> Using PLIP for Text Only")
+#         self.text_model = CLIPModel.from_pretrained(config['text_encoder_ckpt_dir'])
+#         self.TextMLP = Adapter(image=False, hidden=512)
+#         self.temperature = nn.Parameter(torch.tensor([np.log(1 / 0.02)]), requires_grad=True)
+
+#     def to(self, device):
+#         super().to(device)
+#         self.text_model = self.text_model.to(device)
+#         self.TextMLP = self.TextMLP.to(device)
+#         self.temperature = self.temperature.to(device)
+#         return self
 
 
 class CONCH_PLIP_adapter_GAT(nn.Module):
@@ -86,6 +103,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
             "input_ids": self.prompt_learner.tokenized_prompts["input_ids"].to(device),
             "attention_mask": self.prompt_learner.tokenized_prompts["attention_mask"].to(device),
         }
+        
 
         # tokenized = self.prompt_learner.tokenized_prompts.to(device)
         text_features, _ = self.text_encoder(prompts, tokenized['attention_mask'], tokenized['input_ids'])
