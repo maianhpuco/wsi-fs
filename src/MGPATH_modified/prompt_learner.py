@@ -45,7 +45,7 @@ class PromptLearner(torch.nn.Module):
             truncation=True
         )
         tokenized_prompts['input_ids'] = tokenized_prompts['input_ids'].repeat(self.N, 1).to(self.device)
-        tokenized_prompts['attention_mask'] = tokenized_prompts['attention_mask'].repeat(self.N, 1)
+        tokenized_prompts['attention_mask'] = tokenized_prompts['attention_mask'].repeat(self.N, 1).to(self.device)
 
         with torch.no_grad():
             embedding = clip_model.text_model.text_model.embeddings(
