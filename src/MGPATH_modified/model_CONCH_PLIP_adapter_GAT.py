@@ -6,8 +6,7 @@ import numpy
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import MultiheadAttention
-
-from transformers import CLIPModel, ViTModel
+from transformers import CLIPModel
 
 # === import your modules ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,21 +24,12 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
         return tensor
 
 
-class PLIPProjector(nn.Module):
+class PLIPTextOnly(nn.Module):
     def __init__(self, config):
         super().__init__()
-        print(">> Using PLIP + CONCH Projector")
-
-        # === Load PLIP CLIPModel for text encoding ===
+        print(">> Using PLIP for Text Only")
         self.text_model = CLIPModel.from_pretrained(config['text_encoder_ckpt_dir'])
-
-        # === Load CONCH ViTModel for vision encoding ===
-        self.conch_encoder = ViTModel.from_pretrained(config['image_encoder_ckpt_dir'])
-
-        # === Your Adapter heads ===
-        self.ImageMLP = Adapter(image=True, hidden=512)   # for image feature projection
-        self.TextMLP = Adapter(image=False, hidden=512)   # for text feature projection
-
+        self.TextMLP = Adapter(image=False, hidden=512)
         self.temperature = nn.Parameter(torch.tensor([numpy.log(1 / 0.02)]), requires_grad=True)
 
 
@@ -53,19 +43,20 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.device = config['device']
         self.K = 1
 
-        # === Load CLIP text + CONCH visual encoders ===
-        clip_model = PLIPProjector(config)
-
+        # === Text Encoder Setup ===
+        clip_model = PLIPTextOnly(config)
         self.text_encoder = PLIPTextEncoder(clip_model)
         self.prompt_learner = PromptLearner(config['text_prompt'], clip_model)
-        self.image_encoder = clip_model.ImageMLP
-        self.visual_encoder = clip_model.conch_encoder  # HuggingFace ViTModel
+
+        # === Adapter (to apply on CONCH features) ===
+        self.adapter = Adapter(image=True, hidden=512)
 
         for param in self.text_encoder.parameters():
             param.requires_grad = False
         for param in self.text_encoder.proj.parameters():
             param.requires_grad = True
 
+        # === Learnable Prototypes ===
         self.learnable_image_center = nn.Parameter(torch.empty(config['prototype_number'], 1, self.L))
         trunc_normal_(self.learnable_image_center, std=0.02)
 
@@ -80,39 +71,31 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
     def forward(self, x_s, coord_s, x_l, coord_l, label):
         device = x_s.device
 
-        # === Text branch ===
+        # === Text Encoding ===
         prompts = self.prompt_learner().to(device)
         tokenized = self.prompt_learner.tokenized_prompts.to(device)
         text_features, _ = self.text_encoder(prompts, tokenized['attention_mask'], tokenized['input_ids'])
         text_features = text_features.contiguous().view(1, -1, self.L).squeeze(0)
 
-        # === Image branch - low resolution ===
-        with torch.no_grad():
-            conch_feat_s = self.visual_encoder(pixel_values=x_s.squeeze(0).float(), return_dict=True).last_hidden_state
-        M = self.image_encoder(conch_feat_s)
+        # === Image (CONCH) Features — Apply Adapter ===
+        M = self.adapter(x_s.squeeze(0).float())      # low-res
+        M_high = self.adapter(x_l.squeeze(0).float()) # high-res
 
+        # === Prototype Cross Attention ===
         comp_low, _ = self.cross_attention_1(self.learnable_image_center, M, M)
         comp_low = self.norm(comp_low + self.learnable_image_center)
-
-        # === Image branch - high resolution ===
-        with torch.no_grad():
-            conch_feat_l = self.visual_encoder(pixel_values=x_l.squeeze(0).float(), return_dict=True).last_hidden_state
-        M_high = self.image_encoder(conch_feat_l)
 
         comp_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
         comp_high = self.norm(comp_high + self.learnable_image_center)
 
-        # === Attention for low resolution ===
-        A = F.softmax(self.attention_weights(
-            self.attention_V(comp_low.squeeze()) * self.attention_U(comp_low.squeeze())), dim=0).T
+        # === Attention-based Aggregation ===
+        A = F.softmax(self.attention_weights(self.attention_V(comp_low.squeeze()) * self.attention_U(comp_low.squeeze())), dim=0).T
         image_features_low = A @ comp_low.squeeze()
 
-        # === Attention for high resolution ===
-        A_high = F.softmax(self.attention_weights(
-            self.attention_V(comp_high.squeeze()) * self.attention_U(comp_high.squeeze())), dim=0).T
+        A_high = F.softmax(self.attention_weights(self.attention_V(comp_high.squeeze()) * self.attention_U(comp_high.squeeze())), dim=0).T
         image_features_high = A_high @ comp_high.squeeze()
 
-        # === Cross-attention to text embeddings ===
+        # === Cross-attention to text ===
         text_low = text_features[:self.num_classes]
         context_low = torch.cat([comp_low.squeeze(), M], dim=0)
         refined_text_low, _ = self.cross_attention_2(text_low.unsqueeze(1), context_low, context_low)
@@ -123,7 +106,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         refined_text_high, _ = self.cross_attention_2(text_high.unsqueeze(1), context_high, context_high)
         text_high = refined_text_high.squeeze() + text_high
 
-        # === Logits and classification ===
+        # === Classify ===
         logits_low = image_features_low @ text_low.T
         logits_high = image_features_high @ text_high.T
         logits = logits_low + logits_high
