@@ -94,7 +94,12 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         # === Image feature projection (CONCH -> Adapter) ===
         M = self.adapter(x_s.squeeze(0).float())      # Low-res features
         M_high = self.adapter(x_l.squeeze(0).float()) # High-res features
-
+        if M.dim() == 2:
+            M = M.unsqueeze(0)  # [1, num_patches, L] 
+            
+        if M_high.dim() == 2:
+            M_high = M_high.unsqueeze(0)  # [1, num_patches, L]
+            
         # === Cross attention: Image → Prototypes ===
         comp_low, _ = self.cross_attention_1(self.learnable_image_center, M, M)
         comp_low = self.norm(comp_low + self.learnable_image_center)
