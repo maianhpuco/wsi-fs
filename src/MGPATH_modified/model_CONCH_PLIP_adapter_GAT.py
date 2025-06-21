@@ -2,13 +2,13 @@ import os
 import sys
 import math
 import torch
-import numpy
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import MultiheadAttention
 from transformers import CLIPModel
 
-# === import your modules ===
+# === Import local modules ===
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_dir, "../"))
 from MGPATH_modified import PLIPTextEncoder, PromptLearner, Adapter
@@ -30,7 +30,14 @@ class PLIPTextOnly(nn.Module):
         print(">> Using PLIP for Text Only")
         self.text_model = CLIPModel.from_pretrained(config['text_encoder_ckpt_dir'])
         self.TextMLP = Adapter(image=False, hidden=512)
-        self.temperature = nn.Parameter(torch.tensor([numpy.log(1 / 0.02)]), requires_grad=True)
+        self.temperature = nn.Parameter(torch.tensor([np.log(1 / 0.02)]), requires_grad=True)
+
+    def to(self, device):
+        super().to(device)
+        self.text_model = self.text_model.to(device)
+        self.TextMLP = self.TextMLP.to(device)
+        self.temperature = self.temperature.to(device)
+        return self
 
 
 class CONCH_PLIP_adapter_GAT(nn.Module):
@@ -43,14 +50,15 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.device = config['device']
         self.K = 1
 
-        # === Text Encoder Setup ===
-        clip_model = PLIPTextOnly(config)
-        self.text_encoder = PLIPTextEncoder(clip_model)
-        self.prompt_learner = PromptLearner(config['text_prompt'], clip_model)
+        # === Text encoder from PLIP ===
+        self.clip_model = PLIPTextOnly(config).to(self.device)
+        self.text_encoder = PLIPTextEncoder(self.clip_model)
+        self.prompt_learner = PromptLearner(config['text_prompt'], self.clip_model)
 
-        # === Adapter (to apply on CONCH features) ===
+        # === Adapter to project CONCH features ===
         self.adapter = Adapter(image=True, hidden=512)
 
+        # === Freeze most of text encoder ===
         for param in self.text_encoder.parameters():
             param.requires_grad = False
         for param in self.text_encoder.proj.parameters():
@@ -60,6 +68,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         self.learnable_image_center = nn.Parameter(torch.empty(config['prototype_number'], 1, self.L))
         trunc_normal_(self.learnable_image_center, std=0.02)
 
+        # === Attention Modules ===
         self.norm = nn.LayerNorm(self.L)
         self.cross_attention_1 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True)
         self.cross_attention_2 = MultiheadAttention(embed_dim=self.L, num_heads=1, batch_first=True)
@@ -71,31 +80,33 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
     def forward(self, x_s, coord_s, x_l, coord_l, label):
         device = x_s.device
 
-        # === Text Encoding ===
+        # === Text prompt encoding ===
         prompts = self.prompt_learner().to(device)
         tokenized = self.prompt_learner.tokenized_prompts.to(device)
         text_features, _ = self.text_encoder(prompts, tokenized['attention_mask'], tokenized['input_ids'])
         text_features = text_features.contiguous().view(1, -1, self.L).squeeze(0)
 
-        # === Image (CONCH) Features — Apply Adapter ===
-        M = self.adapter(x_s.squeeze(0).float())      # low-res
-        M_high = self.adapter(x_l.squeeze(0).float()) # high-res
+        # === Image feature projection (CONCH -> Adapter) ===
+        M = self.adapter(x_s.squeeze(0).float())      # Low-res features
+        M_high = self.adapter(x_l.squeeze(0).float()) # High-res features
 
-        # === Prototype Cross Attention ===
+        # === Cross attention: Image → Prototypes ===
         comp_low, _ = self.cross_attention_1(self.learnable_image_center, M, M)
         comp_low = self.norm(comp_low + self.learnable_image_center)
 
         comp_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
         comp_high = self.norm(comp_high + self.learnable_image_center)
 
-        # === Attention-based Aggregation ===
-        A = F.softmax(self.attention_weights(self.attention_V(comp_low.squeeze()) * self.attention_U(comp_low.squeeze())), dim=0).T
+        # === Prototype attention pooling ===
+        A = F.softmax(self.attention_weights(
+            self.attention_V(comp_low.squeeze()) * self.attention_U(comp_low.squeeze())), dim=0).T
         image_features_low = A @ comp_low.squeeze()
 
-        A_high = F.softmax(self.attention_weights(self.attention_V(comp_high.squeeze()) * self.attention_U(comp_high.squeeze())), dim=0).T
+        A_high = F.softmax(self.attention_weights(
+            self.attention_V(comp_high.squeeze()) * self.attention_U(comp_high.squeeze())), dim=0).T
         image_features_high = A_high @ comp_high.squeeze()
 
-        # === Cross-attention to text ===
+        # === Cross-attend prototypes with text ===
         text_low = text_features[:self.num_classes]
         context_low = torch.cat([comp_low.squeeze(), M], dim=0)
         refined_text_low, _ = self.cross_attention_2(text_low.unsqueeze(1), context_low, context_low)
@@ -106,11 +117,12 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         refined_text_high, _ = self.cross_attention_2(text_high.unsqueeze(1), context_high, context_high)
         text_high = refined_text_high.squeeze() + text_high
 
-        # === Classify ===
+        # === Compute logits ===
         logits_low = image_features_low @ text_low.T
         logits_high = image_features_high @ text_high.T
         logits = logits_low + logits_high
 
+        # === Loss and prediction ===
         loss = self.loss_ce(logits, label)
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
