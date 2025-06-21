@@ -64,9 +64,10 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
             param.requires_grad = True
 
         # === Learnable Prototypes ===
-        self.learnable_image_center = nn.Parameter(torch.empty(config['prototype_number'], 1, self.L))
-        trunc_normal_(self.learnable_image_center, std=0.02)
-        self.learnable_image_center = self.learnable_image_center.to(self.device)
+        self.learnable_image_center = nn.Parameter(
+            torch.empty(config.prototype_number, 1, config.input_size, device=self.device)
+        )
+        trunc_normal_(self.learnable_image_center, std=.02)
 
         # === Attention Modules ===
         self.norm = nn.LayerNorm(self.L)
