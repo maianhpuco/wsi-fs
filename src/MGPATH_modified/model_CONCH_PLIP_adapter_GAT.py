@@ -134,8 +134,8 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         A_high = F.softmax(self.attention_weights(
             self.attention_V(comp_high.squeeze()) * self.attention_U(comp_high.squeeze())), dim=0).T
         image_features_high = A_high @ comp_high.squeeze()
-        print("------")
-        print(">>>>> text features", text_features.shape)
+        # print("------")
+        # print(">>>>> text features", text_features.shape)
         # === Cross-attend prototypes with text ===
         text_low = text_features[:self.num_classes]
         context_low = torch.cat([comp_low, M], dim=1)
