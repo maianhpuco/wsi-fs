@@ -1,13 +1,22 @@
 dataset_name: 'tcga_renal'
 paths: 
-  data_folder_s: # -> replaced by current features_fp/ (folder saved in your computer)
-    kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x
-    kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
-    kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
-  data_folder_l: 
-    kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x
-    kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x 
-    kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x 
+  # data_folder_s: # -> replaced by current features_fp/ (folder saved in your computer)
+  #   kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x
+  #   kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
+  #   kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_5x 
+  # data_folder_l: 
+  #   kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x
+  #   kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x 
+  #   kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features" # will me modified to clip_rn50_features_fp/patch_256x256_10x 
+data_folder_s:
+  kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features_fp/patch_256x256_5x"
+  kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features_fp/patch_256x256_5x"
+  kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features_fp/patch_256x256_5x"
+
+data_folder_l:
+  kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features_fp/patch_256x256_10x"
+  kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features_fp/patch_256x256_10x"
+  kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features_fp/patch_256x256_10x"
 
   results_dir: "/project/hnguyen2/mvu9/wsi_fs_results/explainer_ver2_tcga_renal_results" 
   # split_folder: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal"
