@@ -280,12 +280,11 @@ def return_splits_custom(
 
         print(f"[INFO] {name.upper()}: Kept {len(df_kept)} / {len(df)}")
 
-        for label in ['kich', 'kirc', 'kirp']:
-            count_s = len(missing_s[label])
-            count_l = len(missing_l[label])
-            print(f"\n[SUMMARY - {name.upper()} | {label.upper()}]")
-            print(f"  data_dir_s: {count_s} missing file(s)")
-            print(f"  data_dir_l: {count_l} missing file(s)")
+        # for label in ['kich', 'kirc', 'kirp']:
+        #     count_s = len(missing_s[label])
+        #     count_l = len(missing_l[label])
+        #     print(f"\n[SUMMARY - {name.upper()} | {label.upper()}]")
+        #     print(f"  data_dir_s: {count_s} missing file(s)","  data_dir_l: {count_l} missing file(s)")
 
         return df_kept
 
