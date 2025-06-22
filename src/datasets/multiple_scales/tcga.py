@@ -132,8 +132,8 @@ def return_splits_custom(
         print(df.head())
 
         # Count total rows per label
-        label_counts = df["label"].value_counts()
-        print(f"[INFO] Label counts in {name}:\n{label_counts}")
+        # label_counts = df["label"].value_counts()
+        # print(f"[INFO] Label counts in {name}:\n{label_counts}")
 
         # Count distinct slide IDs per label
         unique_slide_counts = df.groupby("label")["slide"].nunique()
