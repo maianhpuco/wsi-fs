@@ -4,16 +4,43 @@ dataset_name: 'tcga_renal'
 # png_patchs -> folder -> .png  
 
 paths:
-  data_dir:
-    kich: "processing_tcga_256/kich/features_fp" #h5_files #pt_files 
-    kirc: "processing_tcga_256/kirc/features_fp" 
-    kirp: "processing_tcga_256/kirp/features_fp"
-  save_dir: "processing_tcga_256/clam_tcga_renal_result" #-> 
+  data_dir_s:
+    kich: "kich_clip_rn50_features/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features/" #h5_files #pt_files 
+    kirc: "kirc_clip_rn50_features/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/clip_rn50_features/" 
+    kirp: "kirp_clip_rn50_features/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/clip_rn50_features/"
+  
 
+  results_dir: "processing_tcga_256/top_tcga_renal_result"
+  split_folder: "splits_csv_tcga_renal"
+
+# Training parameters
+epochs: 10
+batch_size: 1
+lr_TB: 0.001
+lr_IB: 0.001
+num_shot: -1
+
+# MIL_CLIP settings
+bagLevel_n_ctx: 16
+instanceLevel_n_ctx: 16
+all_ctx_trainable: false
+csc: true
+pooling_strategy: "learnablePrompt"
+NegBagBreakProb: 0.0
+NegBagBreakProP: 1.0
+p_drop_out: 0.5
+p_bag_drop_out: 0.5
+weight_lossA: 0.0
+
+# Other settings
+device: "0"
+modeldevice: "0"
+workers: 0
+comment: "TOP_TCGA_Renal"
+save_intv: 1
+log_iter: 200
+
+patch_size: 256
 label_dict: {'KIRP': 0, 'KIRC': 1, 'KICH': 2} 
 
-# patterns: 
-  # h5_files: "/home/mvu9/processing_datasets/processing_tcga_256/*/features_fp/h5_files"  
-
-# TOP 
-# batch_size: 64 
+seed: 42
