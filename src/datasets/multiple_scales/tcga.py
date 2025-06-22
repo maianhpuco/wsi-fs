@@ -127,7 +127,19 @@ def return_splits_custom(
     # Filter rows where both 5x and 10x H5 files exist
     def filter_df(df, name):
         kept, missing = [], []
+        print(f"[INFO] Filtering {name} dataset...")
+        print(f"[INFO] Total slides in {name}: {len(df)}")
+        print(df.head())
 
+        # Count total rows per label
+        label_counts = df["label"].value_counts()
+        print(f"[INFO] Label counts in {name}:\n{label_counts}")
+
+        # Count distinct slide IDs per label
+        unique_slide_counts = df.groupby("label")["slide"].nunique()
+        print(f"[INFO] Unique slide IDs per label in {name}:\n{unique_slide_counts}")
+
+        
         for _, row in df.iterrows():
             slide_id = row["slide"]
             label = row["label"].lower()
