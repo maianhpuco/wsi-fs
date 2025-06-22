@@ -54,7 +54,10 @@ class ViLa_MIL_Model(nn.Module):
     def __init__(self, config, num_classes=3):
         super(ViLa_MIL_Model, self).__init__()
         self.device = config.device  # Store the device for later use
-        self.loss_ce = nn.CrossEntropyLoss()
+        # Add class weighting for imbalanced dataset (TCGA Renal: KIRP, KIRC, KICH)
+        # Based on typical TCGA renal distribution, KICH is usually underrepresented
+        class_weights = torch.tensor([1.0, 1.0, 2.0], device=config.device)  # Give more weight to KICH (class 2)
+        self.loss_ce = nn.CrossEntropyLoss(weight=class_weights)
         self.num_classes = num_classes
         self.L = config.input_size
         self.D = config.hidden_size
@@ -79,17 +82,14 @@ class ViLa_MIL_Model(nn.Module):
         trunc_normal_(self.learnable_image_center, std=.02)
 
         # TOP-style instance-level prompt learning for text prototypes
-        # Define pathological tissue-level prompts (instance-level prototypes)
+        # Define renal cell carcinoma-specific text prototypes
         instance_prompt_names = [
-            "Squamous epithelium", "Columnar epithelium", "Glandular epithelium",
-            "Adipose tissue", "Fibrous connective tissue", "Cartilage",
-            "Carcinoma", "Sarcoma", "Lymphoma"
+            "papillary renal cell carcinoma with papillary architecture",
+            "clear cell renal carcinoma with clear cytoplasm", 
+            "chromophobe renal cell carcinoma with eosinophilic cytoplasm"
         ]
         
         # Instance-level prompt learner for text prototypes (simplified TOP approach)
-        # Use existing CLIP model instead of TOP's PromptLearner to avoid version conflicts
-        clip_model, _ = clip.load("RN50", device='cpu')
-        
         # Simple learnable text prototypes (inspired by TOP but using direct parameters)
         self.text_prototype_embeddings = nn.Parameter(
             torch.randn(len(instance_prompt_names), config.input_size, device=self.device)
