@@ -110,7 +110,8 @@ class Generic_MIL_Dataset(Dataset):
 import os
 import pandas as pd
 # from datasets.dataset_generic import Generic_MIL_Dataset
-
+from collections import defaultdict
+ 
 def return_splits_custom(
     train_csv_path,
     val_csv_path,
@@ -123,38 +124,42 @@ def return_splits_custom(
     use_h5=True,
     mode="transformer"
 ):
-    # Helper to update path based on resolution
-    # Filter rows where both 5x and 10x H5 files exist
+    from collections import defaultdict
+
     def filter_df(df, name):
         kept, missing = [], []
+        missing_s, missing_l = defaultdict(list), defaultdict(list)
+
         print(f"[INFO] Filtering {name} dataset...")
         print(f"[INFO] Total slides in {name}: {len(df)}")
-        # print(df.head())
 
-        # Count total rows per label
-        # label_counts = df["label"].value_counts()
-        # print(f"[INFO] Label counts in {name}:\n{label_counts}")
-
-        # Count distinct slide IDs per label
+        # Count unique slide IDs per label
         unique_slide_counts = df.groupby("label")["slide"].nunique()
         print(f"[INFO] Unique slide IDs per label in {name}:\n{unique_slide_counts}")
 
-        
         for _, row in df.iterrows():
             slide_id = row["slide"]
             label = row["label"].lower()
-            # print(label)
             try:
                 path_s = os.path.join(data_dir_s[label], f"{slide_id}.h5")
                 path_l = os.path.join(data_dir_l[label], f"{slide_id}.h5")
-                # print(path_s)
-                if os.path.exists(path_s) and os.path.exists(path_l):
+
+                exists_s = os.path.exists(path_s)
+                exists_l = os.path.exists(path_l)
+
+                if exists_s and exists_l:
                     kept.append(row)
                 else:
                     missing.append(row)
+                    if not exists_s:
+                        missing_s[label].append(slide_id)
+                    if not exists_l:
+                        missing_l[label].append(slide_id)
             except Exception as e:
                 print(f"[WARN] {slide_id} → error: {e}")
                 missing.append(row)
+                missing_s[label].append(slide_id)
+                missing_l[label].append(slide_id)
 
         df_kept = pd.DataFrame(kept)
         if missing:
@@ -163,7 +168,62 @@ def return_splits_custom(
             print(f"[INFO] {len(missing)} missing slides in {name} → saved to logs/missing_slides_{name}.csv")
 
         print(f"[INFO] {name.upper()}: Kept {len(df_kept)} / {len(df)}")
+
+        # === Summary of missing files ===
+        for label in ['kich', 'kirc', 'kirp']:
+            print(f"\n[SUMMARY - {name.upper()} | {label.upper()}]")
+
+            print(f"  data_dir_s: missing {len(missing_s[label])} file(s)")
+            for slide in missing_s[label]:
+                print(f"    - {slide}.h5")
+
+            print(f"  data_dir_l: missing {len(missing_l[label])} file(s)")
+            for slide in missing_l[label]:
+                print(f"    - {slide}.h5")
+
         return df_kept
+    
+    # Helper to update path based on resolution
+    # Filter rows where both 5x and 10x H5 files exist
+    # def filter_df(df, name):
+    #     kept, missing = [], []
+    #     print(f"[INFO] Filtering {name} dataset...")
+    #     print(f"[INFO] Total slides in {name}: {len(df)}")
+    #     # print(df.head())
+
+    #     # Count total rows per label
+    #     # label_counts = df["label"].value_counts()
+    #     # print(f"[INFO] Label counts in {name}:\n{label_counts}")
+
+    #     # Count distinct slide IDs per label
+    #     unique_slide_counts = df.groupby("label")["slide"].nunique()
+    #     print(f"[INFO] Unique slide IDs per label in {name}:\n{unique_slide_counts}")
+
+        
+    #     for _, row in df.iterrows():
+    #         slide_id = row["slide"]
+    #         label = row["label"].lower()
+    #         # print(label)
+    #         try:
+    #             path_s = os.path.join(data_dir_s[label], f"{slide_id}.h5")
+    #             path_l = os.path.join(data_dir_l[label], f"{slide_id}.h5")
+    #             # print(path_s)
+    #             if os.path.exists(path_s) and os.path.exists(path_l):
+    #                 kept.append(row)
+    #             else:
+    #                 missing.append(row)
+    #         except Exception as e:
+    #             print(f"[WARN] {slide_id} → error: {e}")
+    #             missing.append(row)
+
+    #     df_kept = pd.DataFrame(kept)
+    #     if missing:
+    #         os.makedirs("logs", exist_ok=True)
+    #         pd.DataFrame(missing).to_csv(f"logs/missing_slides_{name}.csv", index=False)
+    #         print(f"[INFO] {len(missing)} missing slides in {name} → saved to logs/missing_slides_{name}.csv")
+
+    #     print(f"[INFO] {name.upper()}: Kept {len(df_kept)} / {len(df)}")
+    #     return df_kept
 
     def create_dataset(df):
         return Generic_MIL_Dataset(
