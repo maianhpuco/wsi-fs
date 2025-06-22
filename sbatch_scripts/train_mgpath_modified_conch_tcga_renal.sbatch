@@ -2,10 +2,10 @@
 
 #SBATCH --job-name=mg_conch_tcga_renal
 #SBATCH --output=logs/mg_conch_tcga_renal.log
-#SBATCH --mem=32G
+#SBATCH --nodelist=compute-0-4
+#SBATCH --mem=24G
 #SBATCH --cpus-per-task=4
-#SBATCH --time=48:00:00
-#SBATCH --gres=gpu:1
+#SBATCH --time=1-00:00:00  # 1 day
 
 echo "Starting Explainer v1 training for TCGA-Renal"
 
