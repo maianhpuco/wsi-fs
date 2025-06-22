@@ -129,7 +129,7 @@ def return_splits_custom(
         kept, missing = [], []
         print(f"[INFO] Filtering {name} dataset...")
         print(f"[INFO] Total slides in {name}: {len(df)}")
-        print(df.head())
+        # print(df.head())
 
         # Count total rows per label
         # label_counts = df["label"].value_counts()
