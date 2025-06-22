@@ -137,12 +137,14 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
 
         # === Cross-attend prototypes with text ===
         text_low = text_features[:self.num_classes]
-        context_low = torch.cat([comp_low.squeeze(), M], dim=0)
+        context_low = torch.cat([comp_low, M], dim=1)
+        # context_low = torch.cat([comp_low.squeeze(), M], dim=0)
         refined_text_low, _ = self.cross_attention_2(text_low.unsqueeze(1), context_low, context_low)
         text_low = refined_text_low.squeeze() + text_low
 
         text_high = text_features[self.num_classes:]
-        context_high = torch.cat([comp_high.squeeze(), M_high], dim=0)
+        context_high = torch.cat([comp_high, M], dim=1)
+        # context_high = torch.cat([comp_high.squeeze(), M_high], dim=0)
         refined_text_high, _ = self.cross_attention_2(text_high.unsqueeze(1), context_high, context_high)
         text_high = refined_text_high.squeeze() + text_high
 
