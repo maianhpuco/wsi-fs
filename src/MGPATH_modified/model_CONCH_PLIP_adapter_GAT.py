@@ -154,8 +154,8 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         # context_high = torch.cat([comp_high.squeeze(), M_high], dim=0)
         # refined_text_high, _ = self.cross_attention_2(text_high.unsqueeze(1), context_high, context_high)
         # text_high = refined_text_high.squeeze() + text_high
-        # text_low = text_low.squeeze(0)
-        # text_high = text_high.squeeze(0)
+        text_low = text_low.squeeze(0)
+        text_high = text_high.squeeze(0)
  
         # === Compute logits ===
         logits_low = image_features_low @ text_low.T
