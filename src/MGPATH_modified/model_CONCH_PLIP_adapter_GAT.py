@@ -134,7 +134,8 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         A_high = F.softmax(self.attention_weights(
             self.attention_V(comp_high.squeeze()) * self.attention_U(comp_high.squeeze())), dim=0).T
         image_features_high = A_high @ comp_high.squeeze()
-
+        print("------")
+        print(">>>>> text features", text_features.shape)
         # === Cross-attend prototypes with text ===
         text_low = text_features[:self.num_classes]
         context_low = torch.cat([comp_low, M], dim=1)
@@ -145,7 +146,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         # refined_text_low, _ = self.cross_attention_2(text_low.unsqueeze(1), context_low, context_low)
         # text_low = refined_text_low.squeeze() + text_low
 
-        text_high = text_features[self.num_classes:]
+        text_high = text_features[:self.num_classes]
         context_high = torch.cat([comp_high, M], dim=1)
         text_high = text_high.unsqueeze(0)
         refined_text_high, _ = self.cross_attention_2(text_high, context_high, context_high)
@@ -156,7 +157,10 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
         # text_high = refined_text_high.squeeze() + text_high
         text_low = text_low.squeeze(0)
         text_high = text_high.squeeze(0)
- 
+        
+        print(text_low.shape)
+        print(text_high.shape)
+        
         # === Compute logits ===
         logits_low = image_features_low @ text_low.T
         logits_high = image_features_high @ text_high.T
