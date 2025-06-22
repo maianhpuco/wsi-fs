@@ -271,12 +271,12 @@ def return_splits_custom(
         if missing_s:
             pd.DataFrame([(k, v) for k, lst in missing_s.items() for v in lst],
                          columns=["label", "slide"]).to_csv(f"logs/missing_slides_{name}_s.csv", index=False)
-            # print(f"[INFO] Saved data_dir_s missing slides → logs/missing_slides_{name}_s.csv")
+            print(f"[INFO] Saved data_dir_s missing slides → logs/missing_slides_{name}_s.csv")
 
         if missing_l:
             pd.DataFrame([(k, v) for k, lst in missing_l.items() for v in lst],
                          columns=["label", "slide"]).to_csv(f"logs/missing_slides_{name}_l.csv", index=False)
-            # print(f"[INFO] Saved data_dir_l missing slides → logs/missing_slides_{name}_l.csv")
+            print(f"[INFO] Saved data_dir_l missing slides → logs/missing_slides_{name}_l.csv")
 
         print(f"[INFO] {name.upper()}: Kept {len(df_kept)} / {len(df)}")
 
@@ -284,7 +284,7 @@ def return_splits_custom(
             count_s = len(missing_s[label])
             count_l = len(missing_l[label])
             print(f"\n[SUMMARY - {name.upper()} | {label.upper()}]")
-            print(f"  data_dir_s: {count_s} missing file(s)","  data_dir_l: {count_l} missing file(s)")
+            print(f"  data_dir_s: {count_s} missing file(s)",f"  data_dir_l: {count_l} missing file(s)")
 
         return df_kept
 
