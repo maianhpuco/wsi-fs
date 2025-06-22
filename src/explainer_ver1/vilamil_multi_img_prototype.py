@@ -67,8 +67,8 @@ class ViLa_MIL_Model_MultiProto(nn.Module):
 
         # Cross-attention and normalization layers
         self.norm = nn.LayerNorm(config.input_size).to(self.device)
-        self.cross_attention_1 = MultiheadAttention(embed_dim=config.input_size, num_heads=1).to(self.device)
-        self.cross_attention_2 = MultiheadAttention(embed_dim=config.input_size, num_heads=1).to(self.device)
+        self.cross_attention_1 = nn.MultiheadAttention(embed_dim=config.input_size, num_heads=1, batch_first=True).to(self.device)
+        self.cross_attention_2 = nn.MultiheadAttention(embed_dim=config.input_size, num_heads=1, batch_first=True).to(self.device)
 
         # Class-specific prototypes (learnable)
         self.class_prototypes = nn.ParameterList([
@@ -118,13 +118,13 @@ class ViLa_MIL_Model_MultiProto(nn.Module):
             H_c = compents[c].unsqueeze(0)
             A = self.attention_weights(self.attention_V(H_c) * self.attention_U(H_c))
             A = F.softmax(A, dim=1)
-            feat = torch.mm(A, H_c)
+            feat = torch.matmul(A, H_c)
             image_features_low.append(feat.squeeze(0))
 
             H_h = compents_high[c].unsqueeze(0)
             A_h = self.attention_weights(self.attention_V(H_h) * self.attention_U(H_h))
             A_h = F.softmax(A_h, dim=1)
-            feat_h = torch.mm(A_h, H_h)
+            feat_h = torch.matmul(A_h, H_h)
             image_features_high.append(feat_h.squeeze(0))
 
         image_features_low = torch.stack(image_features_low, dim=0)
@@ -143,8 +143,8 @@ class ViLa_MIL_Model_MultiProto(nn.Module):
         text_features_high = text_context_features_high.squeeze() + text_features_high
 
         # Classification logits
-        logits_low = image_features_low @ text_features_low.T.cuda()
-        logits_high = image_features_high @ text_features_high.T.cuda()
+        logits_low = image_features_low @ text_features_low.T
+        logits_high = image_features_high @ text_features_high.T
         logits = logits_low + logits_high
 
         # Compute loss and predictions
