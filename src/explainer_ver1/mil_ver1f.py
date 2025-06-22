@@ -78,18 +78,32 @@ class ViLa_MIL_Model(nn.Module):
         )
         trunc_normal_(self.learnable_image_center, std=.02)
 
-        # Text prototype parameters
-        self.learnable_text_prototypes = nn.Parameter(
-            torch.empty(self.num_classes, config.input_size, device=self.device)
-        )
-        trunc_normal_(self.learnable_text_prototypes, std=.02)
+        # TOP-style instance-level prompt learning for text prototypes
+        # Define pathological tissue-level prompts (instance-level prototypes)
+        instance_prompt_names = [
+            "Squamous epithelium", "Columnar epithelium", "Glandular epithelium",
+            "Adipose tissue", "Fibrous connective tissue", "Cartilage",
+            "Carcinoma", "Sarcoma", "Lymphoma"
+        ]
         
-        # Text prototype attention mechanism
-        self.text_proto_attention = nn.Sequential(
-            nn.Linear(config.input_size, config.hidden_size),
-            nn.Tanh(),
-            nn.Linear(config.hidden_size, 1)
+        # Instance-level prompt learner for text prototypes (TOP approach)
+        import sys
+        import os
+        top_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'externals', 'TOP')
+        sys.path.append(top_path)
+        from models.learnable_prompt import PromptLearner as TOP_PromptLearner
+        self.instance_prompt_learner = TOP_PromptLearner(
+            n_ctx=16,
+            ctx_init=[f"a histopathological image of {name}, which is a tissue type commonly found in medical imaging. * * * * * * * * * *" for name in instance_prompt_names],
+            all_ctx_trainable=True,
+            csc=True,
+            classnames=[f"Prototype {i}" for i in range(len(instance_prompt_names))],
+            clip_model='RN50',
+            p_drop_out=0.1
         ).to(self.device)
+        
+        # Text projection for instance-prototype similarity
+        self.text_proto_projection = nn.Linear(config.input_size, config.input_size).to(self.device)
 
         # Also move attention modules to device
         self.attention_V.to(self.device)
@@ -107,12 +121,36 @@ class ViLa_MIL_Model(nn.Module):
         text_features = self.text_encoder(prompts, tokenized_prompts).to(device) 
 
         M = x_s.float()
+        M_high = x_l.float()
+        
+        # TOP-style text prototype integration
+        # Generate instance-level text features (text prototypes)
+        instance_prompts = self.instance_prompt_learner()
+        instance_text_features = self.text_encoder(instance_prompts, self.instance_prompt_learner.tokenized_prompts)
+        instance_text_features = instance_text_features / instance_text_features.norm(dim=-1, keepdim=True)
+        
+        # Compute text-image prototype similarity for low resolution features
+        M_proj = self.text_proto_projection(M)
+        text_proto_similarity_low = M_proj @ instance_text_features.t()  # [N_patches, N_prototypes]
+        text_proto_weights_low = F.softmax(text_proto_similarity_low, dim=-1)
+        text_enhanced_features_low = text_proto_weights_low @ instance_text_features  # [N_patches, embed_dim]
+        
+        # Compute text-image prototype similarity for high resolution features  
+        M_high_proj = self.text_proto_projection(M_high)
+        text_proto_similarity_high = M_high_proj @ instance_text_features.t()  # [N_patches, N_prototypes]
+        text_proto_weights_high = F.softmax(text_proto_similarity_high, dim=-1)
+        text_enhanced_features_high = text_proto_weights_high @ instance_text_features  # [N_patches, embed_dim]
+        
+        # Image prototype processing with text enhancement
         compents, _ = self.cross_attention_1(self.learnable_image_center, M, M) 
         compents = self.norm(compents + self.learnable_image_center)
+        # Enhance with text prototypes
+        compents = compents + text_enhanced_features_low.mean(0, keepdim=True).unsqueeze(0)
 
-        M_high = x_l.float()
         compents_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
         compents_high = self.norm(compents_high + self.learnable_image_center)
+        # Enhance with text prototypes
+        compents_high = compents_high + text_enhanced_features_high.mean(0, keepdim=True).unsqueeze(0)
 
         H = compents.squeeze().float()
         A_V = self.attention_V(H)  
@@ -140,13 +178,6 @@ class ViLa_MIL_Model(nn.Module):
         text_context_features_high, _ = self.cross_attention_2(text_features_high.unsqueeze(1), image_context_high, image_context_high)
         text_features_high = text_context_features_high.squeeze() + text_features_high
 
-        # Text prototype enhancement
-        proto_weights = F.softmax(self.text_proto_attention(self.learnable_text_prototypes).squeeze(), dim=0)
-        enhanced_text_prototypes = torch.sum(proto_weights.unsqueeze(1) * self.learnable_text_prototypes, dim=0)
-        
-        # Incorporate text prototypes into final features
-        text_features_low = text_features_low + enhanced_text_prototypes.unsqueeze(0)
-        text_features_high = text_features_high + enhanced_text_prototypes.unsqueeze(0)
 
         logits_low = image_features_low @ text_features_low.T.cuda()
         logits_high = image_features_high @ text_features_high.T.cuda()
