@@ -1,3 +1,6 @@
 [submodule "src/externals/ViLa-MIL"]
 	path = src/externals/ViLa-MIL
 	url = https://github.com/Jiangbo-Shi/ViLa-MIL
+[submodule "src/externals/TOP"]
+	path = src/externals/TOP
+	url = https://github.com/miccaiif/TOP
