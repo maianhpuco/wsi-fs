@@ -89,7 +89,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
   
     def forward(self, x_s, coord_s, x_l, coord_l, label):
         device = x_s.device
-        print("========> device", device)
+        # print("========> device", device)
         # === Text prompt encoding ===
         prompts = self.prompt_learner().to(device)
         tokenized = {
