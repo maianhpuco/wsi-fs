@@ -11,11 +11,12 @@ class Adapter(torch.nn.Module):
         self,
         image=True,
         hidden:int =768,
-        out:int=1024
+        out:int=1024,
+        feature_dim:int = 1024,
     ) -> None:
         super(Adapter, self).__init__()
         if image:
-            self.linear1 = torch.nn.Linear(1024, out)
+            self.linear1 = torch.nn.Linear(feature_dim, out)
         else:
             self.linear1 = torch.nn.Linear(hidden, out)
         self.gelu = torch.nn.GELU()

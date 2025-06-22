@@ -59,7 +59,7 @@ class CONCH_PLIP_adapter_GAT(nn.Module):
             config['text_encoder_ckpt_dir']).to(self.device)
 
         # === Adapter to project CONCH features ===
-        self.adapter = Adapter(image=True, hidden=512).to(self.device)
+        self.adapter = Adapter(image=True, hidden=512, feature_dim=config['feature_dim']).to(self.device)
 
         # === Freeze most of text encoder ===
         for param in self.text_encoder.parameters():

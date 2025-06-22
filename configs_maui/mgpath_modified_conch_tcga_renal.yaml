@@ -38,5 +38,6 @@ n_classes: 3
 log_data: false
 reg: 1e-5
 
+feature_dim: 512
 text_encoder_ckpt_dir: '/project/hnguyen2/mvu9/pretrained_checkpoints/PLIP'
 # image_encoder_ckpt_dir: /project/hnguyen2/mvu9/pretrained_checkpoints/conch_checkpoints
