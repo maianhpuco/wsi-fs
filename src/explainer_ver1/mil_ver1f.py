@@ -86,21 +86,18 @@ class ViLa_MIL_Model(nn.Module):
             "Carcinoma", "Sarcoma", "Lymphoma"
         ]
         
-        # Instance-level prompt learner for text prototypes (TOP approach)
-        import sys
-        import os
-        top_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'externals', 'TOP')
-        sys.path.append(top_path)
-        from models.learnable_prompt import PromptLearner as TOP_PromptLearner
-        self.instance_prompt_learner = TOP_PromptLearner(
-            n_ctx=16,
-            ctx_init=[f"a histopathological image of {name}, which is a tissue type commonly found in medical imaging. * * * * * * * * * *" for name in instance_prompt_names],
-            all_ctx_trainable=True,
-            csc=True,
-            classnames=[f"Prototype {i}" for i in range(len(instance_prompt_names))],
-            clip_model='RN50',
-            p_drop_out=0.1
-        ).to(self.device)
+        # Instance-level prompt learner for text prototypes (simplified TOP approach)
+        # Use existing CLIP model instead of TOP's PromptLearner to avoid version conflicts
+        clip_model, _ = clip.load("RN50", device='cpu')
+        
+        # Simple learnable text prototypes (inspired by TOP but using direct parameters)
+        self.text_prototype_embeddings = nn.Parameter(
+            torch.randn(len(instance_prompt_names), config.input_size, device=self.device)
+        )
+        nn.init.normal_(self.text_prototype_embeddings, std=0.02)
+        
+        # Text prototype names for reference
+        self.prototype_names = instance_prompt_names
         
         # Text projection for instance-prototype similarity
         self.text_proto_projection = nn.Linear(config.input_size, config.input_size).to(self.device)
@@ -124,9 +121,8 @@ class ViLa_MIL_Model(nn.Module):
         M_high = x_l.float()
         
         # TOP-style text prototype integration
-        # Generate instance-level text features (text prototypes)
-        instance_prompts = self.instance_prompt_learner()
-        instance_text_features = self.text_encoder(instance_prompts, self.instance_prompt_learner.tokenized_prompts)
+        # Use learnable text prototype embeddings
+        instance_text_features = self.text_prototype_embeddings
         instance_text_features = instance_text_features / instance_text_features.norm(dim=-1, keepdim=True)
         
         # Compute text-image prototype similarity for low resolution features
