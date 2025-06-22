@@ -173,13 +173,13 @@ def return_splits_custom(
         for label in ['kich', 'kirc', 'kirp']:
             print(f"\n[SUMMARY - {name.upper()} | {label.upper()}]")
 
-            print(f"  data_dir_s: missing {len(missing_s[label])} file(s)")
-            for slide in missing_s[label]:
-                print(f"    - {slide}.h5")
+            # print(f"  data_dir_s: missing {len(missing_s[label])} file(s)")
+            # for slide in missing_s[label]:
+            #     print(f"    - {slide}.h5")
 
-            print(f"  data_dir_l: missing {len(missing_l[label])} file(s)")
-            for slide in missing_l[label]:
-                print(f"    - {slide}.h5")
+            # print(f"  data_dir_l: missing {len(missing_l[label])} file(s)")
+            # for slide in missing_l[label]:
+            #     print(f"    - {slide}.h5")
 
         return df_kept
     
