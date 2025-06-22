@@ -19,17 +19,19 @@ mgpath_modified_tcga_renal:
 train_vilamil_tcga_renal:
 	python train_explainer_ver1b.py --config configs_maui/explainer_ver1b_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 100
 
+
+
+# ==================== SBATCH COMMANDS ==================== 
 sbatch_train_explainer_ver1_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_explainer_ver1_tcga_renal.sbatch 	
-
 sbatch_train_explainer_ver1b_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_explainer_ver1b_tcga_renal.sbatch 	
+
+# sbatch_train_explainer_ver1c_tcga_renal: # use wsi-fs-2 environment 
+# 	sbatch sbatch_scripts/train_explainer_ver1c_tcga_renal.sbatch 	
  
-sbatch_train_explainer_ver1c_tcga_renal: # use wsi-fs-2 environment 
-	sbatch sbatch_scripts/train_explainer_ver1c_tcga_renal.sbatch 	
- 
-sbatch_train_explainer_ver1d_tcga_renal: # use wsi-fs-2 environment 
-	sbatch sbatch_scripts/train_explainer_ver1d_tcga_renal.sbatch 	
+# sbatch_train_explainer_ver1d_tcga_renal: # use wsi-fs-2 environment 
+# 	sbatch sbatch_scripts/train_explainer_ver1d_tcga_renal.sbatch 	
 # modify mg path
 sbatch_train_mgpath_modified_conch_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_mgpath_modified_conch_tcga_renal.sbatch 	
@@ -37,3 +39,5 @@ sbatch_train_mgpath_modified_clip_tcga_renal: # use wsi-fs-2 environment
 	sbatch sbatch_scripts/train_mgpath_modified_clip_tcga_renal.sbatch 
 sbatch_train_mgpath_modified_quilt_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_mgpath_modified_quilt_tcga_renal.sbatch 		
+sbatch_train_vilamil_multi_img_prototype_tcga_renal: # use wsi-fs-2 environment 
+	sbatch sbatch_scripts/train_vilamil_multi_img_prototype_tcga_renal.sbatch 	

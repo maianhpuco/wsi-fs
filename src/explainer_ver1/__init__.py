@@ -7,3 +7,4 @@ from .mil_ver1b import ViLa_MIL_Model
 from .mil_ver1c import ExplainerVer1c 
 from .mil_ver1d import ViLa_MIL_Model  as ExplainerVer1d 
 from .conch_zeroshot import CONCH_ZeroShot_Model
+from .vilamil_multi_img_prototype import ViLa_MIL_Model_MultiProto 
