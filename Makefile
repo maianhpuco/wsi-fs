@@ -41,6 +41,8 @@ sbatch_train_mgpath_modified_conch_tcga_renal: # use wsi-fs-2 environment
 
 sbatch_train_mgpath_modified_quilt_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_mgpath_modified_quilt_tcga_renal.sbatch 		
-	
+
 sbatch_train_vilamil_multi_img_prototype_tcga_renal: # use wsi-fs-2 environment 
 	sbatch sbatch_scripts/train_vilamil_multi_img_prototype_tcga_renal.sbatch 
+
+train_all: sbatch_train_mgpath_modified_clip_tcga_renal sbatch_train_mgpath_modified_conch_tcga_renal sbatch_train_mgpath_modified_quilt_tcga_renal sbatch_train_vilamil_multi_img_prototype_tcga_renal 
