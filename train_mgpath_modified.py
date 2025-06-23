@@ -55,7 +55,7 @@ def prepare_dataset(args, fold_id):
         print("check dataset size")
         print(len(train_dataset), len(val_dataset), len(test_dataset))
         #  Debug shape of first example
-        x_s, coord_s, x_l, coord_l, label, _ = train_dataset[0]
+        x_s, coord_s, x_l, coord_l, label = train_dataset[0]
         print("-----Shape of example from train_dataset:")
         print(f"x_s: {x_s.shape}, x_l: {x_l.shape}, label: {label}") 
         return train_dataset, val_dataset, test_dataset  
