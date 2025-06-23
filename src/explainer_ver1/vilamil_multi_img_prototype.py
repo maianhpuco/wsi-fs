@@ -94,6 +94,12 @@ class ViLa_MIL_Model_MultiProto(nn.Module):
         M = x_s.float()       # Low resolution patch features
         M_high = x_l.float()  # High resolution patch features
 
+        # Ensure M and M_high are 3D for MultiheadAttention
+        if M.dim() == 2:
+            M = M.unsqueeze(0)
+        if M_high.dim() == 2:
+            M_high = M_high.unsqueeze(0)
+
         # Cross-attention using class-specific prototypes
         compents_list = []
         compents_high_list = []
@@ -134,13 +140,13 @@ class ViLa_MIL_Model_MultiProto(nn.Module):
         text_features_low = text_features[:self.num_classes]
         text_features_high = text_features[self.num_classes:]
 
-        image_context = torch.cat((compents, M), dim=0)
-        text_context_features, _ = self.cross_attention_2(text_features_low.unsqueeze(1), image_context, image_context)
-        text_features_low = text_context_features.squeeze() + text_features_low
+        image_context = torch.cat((compents.unsqueeze(0), M), dim=1)
+        text_context_features, _ = self.cross_attention_2(text_features_low.unsqueeze(0), image_context, image_context)
+        text_features_low = text_context_features.squeeze(0) + text_features_low
 
-        image_context_high = torch.cat((compents_high, M_high), dim=0)
-        text_context_features_high, _ = self.cross_attention_2(text_features_high.unsqueeze(1), image_context_high, image_context_high)
-        text_features_high = text_context_features_high.squeeze() + text_features_high
+        image_context_high = torch.cat((compents_high.unsqueeze(0), M_high), dim=1)
+        text_context_features_high, _ = self.cross_attention_2(text_features_high.unsqueeze(0), image_context_high, image_context_high)
+        text_features_high = text_context_features_high.squeeze(0) + text_features_high
 
         # Classification logits
         logits_low = image_features_low @ text_features_low.T

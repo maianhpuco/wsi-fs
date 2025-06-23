@@ -2,7 +2,6 @@
 
 #SBATCH --job-name=mg_conch_tcga_renal
 #SBATCH --output=logs/mg_conch_tcga_renal.log
-#SBATCH --nodelist=compute-0-4
 #SBATCH --mem=24G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=1-00:00:00  # 1 day
