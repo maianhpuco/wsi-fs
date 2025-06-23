@@ -13,3 +13,6 @@
 [submodule "src/externals/MGPATH"]
 	path = src/externals/MGPATH
 	url = https://github.com/HauschildLab/MGPATH.git
+[submodule "src/externals/MSCPT"]
+	path = src/externals/MSCPT
+	url = https://github.com/Hanminghao/MSCPT.git
