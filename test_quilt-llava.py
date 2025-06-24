@@ -99,7 +99,7 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
         return None
 
 if __name__ == "__main__":
-    img_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/png_patches/patch_256x256_5x/TCGA-UW-A7GY-11Z-00-DX1.7410A3EA-BFFD-4744-8DB2-66A409C0BFA9/30179_43105.png"
+    img_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/png_patches/patch_256x256_5x/TCGA-UW-A7GY-11Z-00-DX1.7410A3EA-BFFD-4744-8DB2-66A409C0BFA9/28131_48225.png"
     result = run_quilt_llava(img_path)
     if result:
         print("✅ Generated explanation:")
