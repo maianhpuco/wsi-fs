@@ -1,21 +1,32 @@
-import torch
-import sys
 import os
+import sys
+import torch
 from PIL import Image
 
-# Add Quilt-LLaVA submodule to path
+# Add the Quilt-LLaVA submodule to the Python path
 sys.path.append("src/externals/quilt-llava")
 
+# Import required functions and modules from Quilt-LLaVA
 from llava.model.builder import load_pretrained_model
 from llava.mm_utils import process_images, tokenizer_image_token
 
 def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is there any abnormality?"):
-    # Local model directory that already contains model config, weights, tokenizer, vision tower
-    local_model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b"
+    """
+    Run inference using the locally saved Quilt-LLaVA model on a given image.
 
-    # Load model from local path
-    tokenizer, model, processor, context_len = load_pretrained_model(
-        model_path=local_model_path,
+    Args:
+        image_path (str): Path to the input image (e.g., pathology patch).
+        prompt (str): Text prompt to guide the model's response.
+
+    Returns:
+        str: Generated explanation text from the model.
+    """
+    # Path to the local directory containing the full Quilt-LLaVA model
+    model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b"
+
+    # Load model, tokenizer, and image processor
+    tokenizer, model, image_processor, context_len = load_pretrained_model(
+        model_path=model_path,
         model_base=None,
         model_name="llava",
         load_8bit=False,
@@ -24,21 +35,22 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
         device="cuda"
     )
 
-    # Load and preprocess image
+    # Load and preprocess the input image
     image = Image.open(image_path).convert("RGB")
-    image_tensor = process_images([image], processor, model.config).to(model.device, torch.float16)
+    image_tensor = process_images([image], image_processor, model.config).to(model.device, dtype=torch.float16)
 
-    # Format prompt with image token
-    prompt = tokenizer_image_token(prompt, tokenizer, model.config)
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    # Tokenize the prompt with image tokens
+    formatted_prompt = tokenizer_image_token(prompt, tokenizer, model.config)
+    inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
     inputs.update({"images": image_tensor})
 
-    # Generate response
+    # Generate a response
     output_ids = model.generate(**inputs, max_new_tokens=200)
     response = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+
     return response
 
-# Example usage
 if __name__ == "__main__":
     img_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/png_patches/patch_256x256_5x/TCGA-UW-A7GY-11Z-00-DX1.7410A3EA-BFFD-4744-8DB2-66A409C0BFA9/30179_43105.png"
-    print(run_quilt_llava(img_path))
+    result = run_quilt_llava(img_path)
+    print(result)
