@@ -175,9 +175,22 @@ class ViLa_MIL_Model(nn.Module):
         text_features_high = text_context_features_high.squeeze() + text_features_high
 
 
-        logits_low = image_features_low @ text_features_low.T.cuda()
-        logits_high = image_features_high @ text_features_high.T.cuda()
-        logits = logits_low + logits_high
+        # Use instance text prototypes for final classification (TOP approach)
+        # Combine both the original text features and instance text prototypes
+        combined_text_features_low = torch.cat([text_features_low, instance_text_features], dim=0)
+        combined_text_features_high = torch.cat([text_features_high, instance_text_features], dim=0)
+        
+        logits_low = image_features_low @ combined_text_features_low.T
+        logits_high = image_features_high @ combined_text_features_high.T
+        
+        # Average the logits from both text feature sets
+        logits_original_low = image_features_low @ text_features_low.T
+        logits_original_high = image_features_high @ text_features_high.T
+        logits_instance_low = image_features_low @ instance_text_features.T
+        logits_instance_high = image_features_high @ instance_text_features.T
+        
+        # Combine logits: use instance text prototypes as primary classifier
+        logits = (logits_instance_low + logits_instance_high) + 0.5 * (logits_original_low + logits_original_high)
 
         loss = self.loss_ce(logits, label)
         Y_prob = F.softmax(logits, dim = 1)
