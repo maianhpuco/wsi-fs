@@ -1,0 +1,79 @@
+# MSCPT Configuration for CONCH base model on RCC dataset
+# Generated from command line: python train_mscpt_nam.py --seed 1 --num_shots 8 --base_model conch --dataset_name "RCC" --dataset "my_data" --model_name mscpt_conch --total_epochs 1 --n_tpro 2 --n_vpro 2 --data_dir "/Users/nam.le/Desktop/research/MSCPT/dataset/image" --feat_data_dir "/Users/nam.le/Desktop/research/MSCPT/dataset/pt_file"
+
+# Basic Training Control
+seed: 1
+num_shots: 8
+total_epochs: 1
+batch_size: 1
+num_workers: 4
+lr: 1e-4
+use_gpu: true
+device_ids: [0]
+
+# Dataset Configuration
+dataset: "my_data"
+dataset_name: "RCC"
+data_dir: "/Users/nam.le/Desktop/research/MAV/wsi-fs/data_sample_nam/image"
+feat_data_dir: "/Users/nam.le/Desktop/research/MAV/wsi-fs/data_sample_nam/pt_file"
+csv_dir: "/Users/nam.le/Desktop/research/MAV/wsi-fs/src/externals/MSCPT/tcga_rcc.csv"
+task: "RCC_subtyping"
+target_size: 224
+
+# Model Configuration
+model_name: "mscpt_conch"
+base_model: "conch"
+trainer_perc: 32
+
+# MSCPT-specific parameters
+n_set: 5
+n_tpro: 2
+n_vpro: 2
+n_high: 10
+n_topk: 5
+
+# GPT directory for description files
+gpt_dir: "/Users/nam.le/Desktop/research/MAV/wsi-fs/src/externals/MSCPT/train_data/gpt"
+
+# Working directory for MSCPT (relative to wsi-fs directory)
+working_dir: "/Users/nam.le/Desktop/research/MAV/wsi-fs/src/externals/MSCPT"
+
+# Training parameters
+loss: "ce"
+weight_decay: 1e-5
+patience: 10 # For CONCH base model
+gc: 1 # Gradient Accumulation
+
+# Data augmentation
+aug_prob: 0.5
+no_augment: false
+
+# Logging
+log_dir: "lightning_logs"
+logger_name: "mscpt_rcc"
+
+# Paths for results
+txt_result_path: "./result/conch/RCC"
+heatmap_path: "./heatmap/conch/RCC/mscpt_conch"
+
+# Label dictionary for RCC subtyping
+label_dicts:
+  CHRCC: 0
+  CCRCC: 1
+  PRCC: 2
+
+# Image normalization
+mean_sen: [0.485, 0.456, 0.406]
+std_sen: [0.229, 0.224, 0.225]
+
+# Trainer settings
+num_sanity_val_steps: 0
+accelerator: "gpu"
+devices: [0]
+
+# Optional ablation study parameters (set to false by default)
+ISGPT: false
+CGP: false
+aggregation: "mean"
+linear_aggregation: "mean"
+coop_scale: -1
