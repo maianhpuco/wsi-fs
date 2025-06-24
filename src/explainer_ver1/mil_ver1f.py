@@ -154,16 +154,16 @@ class ViLa_MIL_Model(nn.Module):
         ]
         
         # Instance-level prompt learner for text prototypes (following TOP approach)
-        # Use the first prompt of each class as ctx_init for TOP's PromptLearner
+        # TOP's PromptLearner expects prompts with * as learnable context placeholders
         ctx_init_prompts = [
-            instance_prompt_names[0],   # First KIRP prompt
-            instance_prompt_names[20],  # First KIRC prompt  
-            instance_prompt_names[40]   # First KICH prompt
+            "* * * * * * * * * * * * * * * * papillary renal cell carcinoma",     # KIRP with 16 learnable tokens
+            "* * * * * * * * * * * * * * * * clear cell renal carcinoma",         # KIRC with 16 learnable tokens
+            "* * * * * * * * * * * * * * * * chromophobe renal cell carcinoma"    # KICH with 16 learnable tokens
         ]
         
         self.instance_prompt_learner = PromptLearner(
             n_ctx=16, 
-            ctx_init=ctx_init_prompts,  # Use representative prompts for initialization
+            ctx_init=ctx_init_prompts,  # Use prompts with * placeholders for learnable context
             all_ctx_trainable=True, 
             csc=True,  # Use class-specific context for instance-level
             classnames=["KIRP", "KIRC", "KICH"],  # 3 RCC subtypes
