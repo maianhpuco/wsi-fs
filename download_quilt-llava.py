@@ -1,35 +1,46 @@
 import os
 import sys
-from PIL import Image
 import torch
 
-# Add Quilt-LLaVA to path
+# Add Quilt-LLaVA submodule path
 sys.path.append("src/externals/quilt-llava")
 
-# Import Quilt-LLaVA-specific loader
+# Import loader
 from llava.model.builder import load_pretrained_model
 
 def download_quilt_llava(destination_path):
     """
-    Download the Quilt-LLaVA model and processor using its internal loading logic.
+    Download the Quilt-LLaVA model, tokenizer, and image processor to a local directory.
     """
-    model_name = "llava"  # required by Quilt-LLaVA
-    model_path = "wisdomik/Quilt-Llava-v1.5-7b"
+    # Quilt-LLaVA HF model ID
+    model_id = "wisdomik/Quilt-Llava-v1.5-7b"
+    model_name = "llava"
 
-    # Make sure destination directory exists
     os.makedirs(destination_path, exist_ok=True)
 
-    print(f"Downloading model and tokenizer to: {destination_path}")
+    print(f"🚀 Downloading '{model_id}' to cache dir: {destination_path}")
 
-    # Download and cache to specified location
-    tokenizer, model, image_processor = load_pretrained_model(
-        model_path=target_dir,
+    # Use builder with cache_dir
+    tokenizer, model, image_processor, context_len = load_pretrained_model(
+        model_path=model_id,
         model_base=None,
-        model_name="llava"
+        model_name=model_name,
+        load_8bit=False,
+        load_4bit=False,
+        device_map="auto",
+        device="cuda",  # or "cpu" if needed
+        cache_dir=destination_path  # <-- Save everything here
     )
- 
 
-    print("Quilt-LLaVA download complete.")
+    print("\n✅ Download complete!")
+    print(f"📦 Model saved in: {destination_path}")
+    print(f"🧠 Context length: {context_len}")
+    print(f"🧾 Tokenizer vocab size: {len(tokenizer)}")
+    print(f"📸 Image processor: {image_processor.__class__.__name__}")
+
+    # Optional: save dummy output to test it's working
+    torch.save(model.state_dict(), os.path.join(destination_path, "check_loaded_model.pt"))
+    print("💾 Dummy model checkpoint saved.")
 
 if __name__ == "__main__":
     target_dir = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b"
