@@ -1,44 +1,26 @@
 import os
-import sys
-import torch
+from huggingface_hub import snapshot_download
 
-# Add Quilt-LLaVA submodule path
-sys.path.append("src/externals/quilt-llava")
-
-# Import loader from submodule
-from llava.model.builder import load_pretrained_model
-
-def download_quilt_llava(destination_path):
+def download_quilt_llava(local_dir):
     """
-    Download the Quilt-LLaVA model, tokenizer, and image processor to a local directory.
+    Download the full Quilt-LLaVA model repository from Hugging Face
+    to a specified local directory using snapshot_download.
+
+    Args:
+        local_dir (str): Target directory to store the full model.
     """
-    model_id = "wisdomik/Quilt-Llava-v1.5-7b"
-    model_name = "llava"
+    print(f"Downloading Quilt-LLaVA to: {local_dir}")
 
-    os.makedirs(destination_path, exist_ok=True)
-
-    print(f"Downloading '{model_id}' into Transformers cache (default location).")
-
-    # NOTE: load_pretrained_model does not support cache_dir explicitly
-    tokenizer, model, image_processor, context_len = load_pretrained_model(
-        model_path=model_id,
-        model_base=None,
-        model_name=model_name,
-        load_8bit=False,
-        load_4bit=False,
-        device_map="auto",
-        device="cuda"
+    snapshot_download(
+        repo_id="wisdomik/Quilt-Llava-v1.5-7b",
+        local_dir=local_dir,
+        local_dir_use_symlinks=False
     )
 
-    print("Download complete.")
-    print(f"Model context length: {context_len}")
-    print(f"Tokenizer vocab size: {len(tokenizer)}")
-    print(f"Image processor: {image_processor.__class__.__name__}")
-
-    # Optional: Save dummy state dict to confirm it's loaded
-    torch.save(model.state_dict(), os.path.join(destination_path, "check_loaded_model.pt"))
-    print("Saved model checkpoint (dummy) to verify model loading.")
+    print("✅ Download complete.")
+    print(f"Model files are saved at: {local_dir}")
 
 if __name__ == "__main__":
     target_dir = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b"
+    os.makedirs(target_dir, exist_ok=True)
     download_quilt_llava(target_dir)
