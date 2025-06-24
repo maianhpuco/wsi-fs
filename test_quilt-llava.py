@@ -3,28 +3,30 @@ import sys
 import torch
 from PIL import Image
 
-# Add the Quilt-LLaVA submodule to the Python path
+# Add Quilt-LLaVA submodule to path
 sys.path.append("src/externals/quilt-llava")
 
-# Import required functions and modules from Quilt-LLaVA
+# Import model loading and utility functions
 from llava.model.builder import load_pretrained_model
 from llava.mm_utils import process_images, tokenizer_image_token
 
 def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is there any abnormality?"):
     """
-    Run inference using the locally saved Quilt-LLaVA model on a given image.
+    Run Quilt-LLaVA locally on a given image and prompt.
 
     Args:
-        image_path (str): Path to the input image (e.g., pathology patch).
-        prompt (str): Text prompt to guide the model's response.
+        image_path (str): Path to the image.
+        prompt (str): Prompt string.
 
     Returns:
-        str: Generated explanation text from the model.
+        str: Generated explanation.
     """
+    # Path to locally downloaded snapshot from HuggingFace
     model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b"
 
     try:
-        tokenizer, model, image_processor, context_len = load_pretrained_model(
+        # Load model, tokenizer, and processor
+        tokenizer, model, processor, context_len = load_pretrained_model(
             model_path=model_path,
             model_base=None,
             model_name="llava",
@@ -34,53 +36,56 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
             device="cuda"
         )
     except Exception as e:
-        print(f"Error loading model: {e}")
+        print(f"❌ Error loading model: {e}")
         return None
 
-    # Ensure vision tower is loaded
     try:
+        # Initialize vision tower if necessary
         vision_tower = model.get_vision_tower()
         if hasattr(vision_tower, "load_model") and not vision_tower.is_loaded:
             vision_tower.load_model()
-        vision_tower.to(device=model.device, dtype=torch.float16)
+        vision_tower.to(dtype=torch.float16, device=model.device)
+
+        # Use the image processor from the vision tower
         image_processor = vision_tower.image_processor
     except Exception as e:
-        print(f"Error loading vision tower: {e}")
+        print(f"❌ Error initializing vision tower: {e}")
         return None
 
-    # Load and preprocess the image
     try:
+        # Load and preprocess the image
         image = Image.open(image_path).convert("RGB")
-        image_tensor = process_images([image], image_processor, model.config).to(model.device, dtype=torch.float16)
+        image_tensor = process_images([image], image_processor, model.config).to(model.device, torch.float16)
     except Exception as e:
-        print(f"Error processing image: {e}")
+        print(f"❌ Error processing image: {e}")
         return None
 
-    # Format the prompt
     try:
+        # Tokenize prompt and prepare inputs
         formatted_prompt = tokenizer_image_token(prompt, tokenizer, model.config)
         if isinstance(formatted_prompt, list):
             formatted_prompt = "".join(formatted_prompt)
+
         inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
         inputs.update({"images": image_tensor})
     except Exception as e:
-        print(f"Error preparing inputs: {e}")
+        print(f"❌ Error preparing prompt/tokenizer input: {e}")
         return None
 
-    # Generate prediction
     try:
+        # Generate response
         output_ids = model.generate(**inputs, max_new_tokens=200)
         response = tokenizer.decode(output_ids[0], skip_special_tokens=True)
         return response
     except Exception as e:
-        print(f"Error during generation: {e}")
+        print(f"❌ Error during generation: {e}")
         return None
 
 if __name__ == "__main__":
     img_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/png_patches/patch_256x256_5x/TCGA-UW-A7GY-11Z-00-DX1.7410A3EA-BFFD-4744-8DB2-66A409C0BFA9/30179_43105.png"
     result = run_quilt_llava(img_path)
     if result:
-        print("Generated explanation:")
+        print("✅ Generated explanation:")
         print(result)
     else:
-        print("Inference failed.")
+        print("❌ Inference failed.")
