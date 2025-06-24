@@ -2,6 +2,9 @@ import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq
 from PIL import Image
 import os
+import sys
+import os
+sys.path.append("src/externals/quilt-llava") 
 
 def run_quilt_llava(image_path, prompt="### Explain this pathology patches in detail, is there any abnormality?"):
     model_id = "wisdomik/Quilt-Llava-v1.5-7b"
