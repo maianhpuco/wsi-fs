@@ -18,8 +18,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
 _path = os.path.abspath(os.path.join(current_dir, "../..", 'src/explainer'))
 sys.path.append(_path) 
 
-from explainer_ver1 import PromptLearner 
-from explainer_ver1 import TextEncoder
+# Use TOP's PromptLearner and TextEncoder
+sys.path.append(os.path.abspath(os.path.join(current_dir, "../..", 'src/externals/TOP/models')))
+from learnable_prompt import PromptLearner, TextEncoder
 
  
  
@@ -69,7 +70,8 @@ class ViLa_MIL_Model(nn.Module):
 
         clip_model, _ = clip.load("RN50", device='cpu')
         clip_model.float() 
-        self.prompt_learner = PromptLearner(config.text_prompt, clip_model.float()).to(self.device)
+        
+        # Only use TextEncoder for instance-level text prototypes
         self.text_encoder = TextEncoder(clip_model.float()).to(self.device)
 
         self.norm = nn.LayerNorm(config.input_size).to(self.device)
@@ -82,29 +84,90 @@ class ViLa_MIL_Model(nn.Module):
         trunc_normal_(self.learnable_image_center, std=.02)
 
         # TOP-style instance-level prompt learning for text prototypes
-        # Define comprehensive TCGA renal cell carcinoma-specific text prototypes
+        # Define comprehensive TCGA renal cell carcinoma-specific text prototypes - 20 per class
         instance_prompt_names = [
-            # Papillary RCC (KIRP) - multiple detailed descriptions
+            # Papillary RCC (KIRP) - 20 extensive detailed descriptions
             "papillary renal cell carcinoma with papillary growth pattern and fibrovascular cores",
             "PRCC with complex architectural features and nuclei arranged in layers", 
             "papillary structures with multiple papillary formations and pinkish coloration",
             "KIRP with papillary architecture and varied architectural patterns",
+            "papillary carcinoma with tubular and papillary growth patterns",
+            "PRCC with foamy macrophages and inflammatory infiltrates",
+            "papillary RCC with nuclear pseudoinclusions and psammoma bodies",
+            "KIRP with heterogeneous cytoplasm and basement membrane thickening",
+            "papillary carcinoma with nested growth pattern and clear cytoplasm",
+            "PRCC with oncocytic features and eosinophilic cytoplasm",
+            "papillary RCC type 1 with small uniform nuclei and scanty cytoplasm",
+            "KIRP type 2 with large nuclei and abundant eosinophilic cytoplasm",
+            "papillary carcinoma with microcystic and solid growth patterns",
+            "PRCC with cholesterol clefts and hemosiderin deposits",
+            "papillary RCC with collecting duct-like features and high nuclear grade",
+            "KIRP with extensive fibrosis and desmoplastic stroma",
+            "papillary carcinoma with signet ring cell morphology",
+            "PRCC with rhabdoid features and aggressive behavior",
+            "papillary RCC with warty dysplasia and multifocal growth",
+            "KIRP with adenomatous hyperplasia and microscopic foci",
             
-            # Clear Cell RCC (KIRC) - multiple detailed descriptions  
+            # Clear Cell RCC (KIRC) - 20 extensive detailed descriptions  
             "clear cell renal carcinoma with clear cytoplasm and round nuclei",
             "CCRCC with prominent nucleoli and rich vascularity",
             "clear cell carcinoma with pale yellowish color and homogeneous texture",
             "KIRC with irregular blood vessels and intratumoral septa",
+            "clear cell RCC with glycogen-rich cytoplasm and delicate capillary network",
+            "CCRCC with solid and alveolar growth patterns",
+            "clear cell carcinoma with hemorrhage and necrosis",
+            "KIRC with nuclear pleomorphism and high-grade features",
+            "clear cell RCC with cystic degeneration and calcification",
+            "CCRCC with sarcomatoid differentiation and spindle cells",
+            "clear cell carcinoma with VHL gene mutation and hypoxia markers",
+            "KIRC with extensive clear cell morphology and lipid accumulation",
+            "clear cell RCC with tubular growth pattern and basement membrane",
+            "CCRCC with multilocular cystic features and benign behavior",
+            "clear cell carcinoma with rhabdoid differentiation and poor prognosis",
+            "KIRC with granular cell change and eosinophilic transformation",
+            "clear cell RCC with papillary features and mixed morphology",
+            "CCRCC with collecting duct admixture and transitional zones",
+            "clear cell carcinoma with oncocytoma-like features and hybrid tumors",
+            "KIRC with extensive fibrosis and treatment-related changes",
             
-            # Chromophobe RCC (KICH) - multiple detailed descriptions
+            # Chromophobe RCC (KICH) - 20 extensive detailed descriptions
             "chromophobe renal cell carcinoma with eosinophilic cytoplasm and perinuclear halos",
             "CRCC with perinuclear vacuolization and multiple nucleoli", 
             "chromophobe carcinoma with pale tan coloration and distinct cell borders",
-            "KICH with binucleation and finely granular chromatin"
+            "KICH with binucleation and finely granular chromatin",
+            "chromophobe RCC with plant-like cell borders and prominent nucleoli",
+            "CRCC with solid and nested growth patterns",
+            "chromophobe carcinoma with oncocytic features and abundant mitochondria",
+            "KICH with minimal nuclear pleomorphism and uniform cells",
+            "chromophobe RCC with hyalinized stroma and fibrosis",
+            "CRCC with typical and eosinophilic variant morphology",
+            "chromophobe carcinoma with BHD syndrome association and multifocal growth",
+            "KICH with renal oncocytosis and bilateral involvement",
+            "chromophobe RCC with hybrid oncocytic features and intermediate morphology",
+            "CRCC with papillary growth pattern and architectural overlap",
+            "chromophobe carcinoma with sarcomatoid transformation and dedifferentiation",
+            "KICH with extensive calcification and ossification",
+            "chromophobe RCC with cystic degeneration and multicystic appearance",
+            "CRCC with inflammatory infiltrate and reactive changes",
+            "chromophobe carcinoma with clear cell change and morphological variation",
+            "KICH with neuroendocrine differentiation and synaptophysin expression"
         ]
         
         # Instance-level prompt learner for text prototypes (following TOP approach)
-        self.instance_prompt_learner = PromptLearner(instance_prompt_names, clip_model.float()).to(self.device)
+        # Group the 60 prompts into 3 classes (20 prompts per class)
+        kirp_prompts = instance_prompt_names[0:20]   # First 20 for KIRP
+        kirc_prompts = instance_prompt_names[20:40]  # Next 20 for KIRC  
+        kich_prompts = instance_prompt_names[40:60]  # Last 20 for KICH
+        
+        self.instance_prompt_learner = PromptLearner(
+            n_ctx=16, 
+            ctx_init=[kirp_prompts, kirc_prompts, kich_prompts],  # List of prompt lists for each class
+            all_ctx_trainable=True, 
+            csc=True,  # Use class-specific context for instance-level
+            classnames=["KIRP", "KIRC", "KICH"],  # 3 RCC subtypes
+            clip_model='RN50', 
+            p_drop_out=0.1
+        ).to(self.device)
         
         # Text prototype names for reference
         self.prototype_names = instance_prompt_names
@@ -121,11 +184,6 @@ class ViLa_MIL_Model(nn.Module):
     def forward(self, x_s, coord_s, x_l, coords_l, label):
         device = x_s.device 
         self.learnable_image_center = self.learnable_image_center
-        
-        # Also move prompt and tokenized prompts if needed
-        prompts = self.prompt_learner().to(device)
-        tokenized_prompts = self.prompt_learner.tokenized_prompts.to(device)
-        text_features = self.text_encoder(prompts, tokenized_prompts).to(device) 
 
         M = x_s.float()
         M_high = x_l.float()
@@ -138,14 +196,15 @@ class ViLa_MIL_Model(nn.Module):
         instance_text_features = instance_text_features / instance_text_features.norm(dim=-1, keepdim=True)
         
         # Compute text-image prototype similarity for low resolution features
+        # TOP's PromptLearner outputs 3 class-specific text prototypes
         M_proj = self.text_proto_projection(M)
-        text_proto_similarity_low = M_proj @ instance_text_features.t()  # [N_patches, N_prototypes]
+        text_proto_similarity_low = M_proj @ instance_text_features.t()  # [N_patches, 3_classes]
         text_proto_weights_low = F.softmax(text_proto_similarity_low, dim=-1)
         text_enhanced_features_low = text_proto_weights_low @ instance_text_features  # [N_patches, embed_dim]
         
         # Compute text-image prototype similarity for high resolution features  
         M_high_proj = self.text_proto_projection(M_high)
-        text_proto_similarity_high = M_high_proj @ instance_text_features.t()  # [N_patches, N_prototypes]
+        text_proto_similarity_high = M_high_proj @ instance_text_features.t()  # [N_patches, 3_classes]
         text_proto_weights_high = F.softmax(text_proto_similarity_high, dim=-1)
         text_enhanced_features_high = text_proto_weights_high @ instance_text_features  # [N_patches, embed_dim]
         
@@ -178,34 +237,16 @@ class ViLa_MIL_Model(nn.Module):
         A_high = F.softmax(A_high, dim=1)  
         image_features_high = torch.mm(A_high, H_high)  
 
-        text_features_low = text_features[:self.num_classes]
-        image_context = torch.cat((compents.squeeze(), M), dim=0)
-        text_context_features, _ = self.cross_attention_2(text_features_low.unsqueeze(1), image_context, image_context)
-        text_features_low = text_context_features.squeeze() + text_features_low
-
-        text_features_high = text_features[self.num_classes:]
-        image_context_high = torch.cat((compents_high.squeeze(), M_high), dim=0)
-        text_context_features_high, _ = self.cross_attention_2(text_features_high.unsqueeze(1), image_context_high, image_context_high)
-        text_features_high = text_context_features_high.squeeze() + text_features_high
-
-
-        # Use instance text prototypes for final classification (TOP approach)
-        # Aggregate multiple text prototypes per class (4 prototypes per class, 3 classes)
-        instance_text_features_reshaped = instance_text_features.view(3, 4, -1)  # [3 classes, 4 prototypes per class, feature_dim]
+        # Use only instance text prototypes for final classification
+        # TOP's PromptLearner with csc=True outputs one text feature per class (3 total)
+        class_text_features = instance_text_features  # [3 classes, feature_dim] already aggregated by TOP
         
-        # Average prototypes within each class to get class-level text features
-        class_text_features = instance_text_features_reshaped.mean(dim=1)  # [3 classes, feature_dim]
+        # Compute logits using only class-specific text prototypes
+        logits_low = image_features_low @ class_text_features.T
+        logits_high = image_features_high @ class_text_features.T
         
-        # Compute logits using class-aggregated text prototypes
-        logits_instance_low = image_features_low @ class_text_features.T
-        logits_instance_high = image_features_high @ class_text_features.T
-        
-        # Also compute logits with original text features
-        logits_original_low = image_features_low @ text_features_low.T
-        logits_original_high = image_features_high @ text_features_high.T
-        
-        # Combine logits: use instance text prototypes as primary classifier
-        logits = (logits_instance_low + logits_instance_high) + 0.3 * (logits_original_low + logits_original_high)
+        # Combine logits from both scales
+        logits = logits_low + logits_high
 
         loss = self.loss_ce(logits, label)
         Y_prob = F.softmax(logits, dim = 1)
