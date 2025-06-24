@@ -23,11 +23,11 @@ def download_quilt_llava(destination_path):
 
     # Download and cache to specified location
     tokenizer, model, image_processor = load_pretrained_model(
-        model_path=model_path,
+        model_path=target_dir,
         model_base=None,
-        model_name=model_name,
-        cache_dir=destination_path
+        model_name="llava"
     )
+ 
 
     print("Quilt-LLaVA download complete.")
 
