@@ -22,7 +22,7 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
         str: Generated explanation text from the model.
     """
     # Path to the local directory containing the full Quilt-LLaVA model
-    model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b/check_loaded_model.pt"
+    model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b/"
 
     # Load model, tokenizer, and image processor
     tokenizer, model, image_processor, context_len = load_pretrained_model(
