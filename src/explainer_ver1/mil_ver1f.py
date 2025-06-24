@@ -154,14 +154,16 @@ class ViLa_MIL_Model(nn.Module):
         ]
         
         # Instance-level prompt learner for text prototypes (following TOP approach)
-        # Group the 60 prompts into 3 classes (20 prompts per class)
-        kirp_prompts = instance_prompt_names[0:20]   # First 20 for KIRP
-        kirc_prompts = instance_prompt_names[20:40]  # Next 20 for KIRC  
-        kich_prompts = instance_prompt_names[40:60]  # Last 20 for KICH
+        # Use the first prompt of each class as ctx_init for TOP's PromptLearner
+        ctx_init_prompts = [
+            instance_prompt_names[0],   # First KIRP prompt
+            instance_prompt_names[20],  # First KIRC prompt  
+            instance_prompt_names[40]   # First KICH prompt
+        ]
         
         self.instance_prompt_learner = PromptLearner(
             n_ctx=16, 
-            ctx_init=[kirp_prompts, kirc_prompts, kich_prompts],  # List of prompt lists for each class
+            ctx_init=ctx_init_prompts,  # Use representative prompts for initialization
             all_ctx_trainable=True, 
             csc=True,  # Use class-specific context for instance-level
             classnames=["KIRP", "KIRC", "KICH"],  # 3 RCC subtypes
