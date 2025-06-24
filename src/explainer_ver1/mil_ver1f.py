@@ -82,11 +82,25 @@ class ViLa_MIL_Model(nn.Module):
         trunc_normal_(self.learnable_image_center, std=.02)
 
         # TOP-style instance-level prompt learning for text prototypes
-        # Define renal cell carcinoma-specific text prototypes
+        # Define comprehensive TCGA renal cell carcinoma-specific text prototypes
         instance_prompt_names = [
-            "papillary renal cell carcinoma with papillary architecture",
-            "clear cell renal carcinoma with clear cytoplasm", 
-            "chromophobe renal cell carcinoma with eosinophilic cytoplasm"
+            # Papillary RCC (KIRP) - multiple detailed descriptions
+            "papillary renal cell carcinoma with papillary growth pattern and fibrovascular cores",
+            "PRCC with complex architectural features and nuclei arranged in layers", 
+            "papillary structures with multiple papillary formations and pinkish coloration",
+            "KIRP with papillary architecture and varied architectural patterns",
+            
+            # Clear Cell RCC (KIRC) - multiple detailed descriptions  
+            "clear cell renal carcinoma with clear cytoplasm and round nuclei",
+            "CCRCC with prominent nucleoli and rich vascularity",
+            "clear cell carcinoma with pale yellowish color and homogeneous texture",
+            "KIRC with irregular blood vessels and intratumoral septa",
+            
+            # Chromophobe RCC (KICH) - multiple detailed descriptions
+            "chromophobe renal cell carcinoma with eosinophilic cytoplasm and perinuclear halos",
+            "CRCC with perinuclear vacuolization and multiple nucleoli", 
+            "chromophobe carcinoma with pale tan coloration and distinct cell borders",
+            "KICH with binucleation and finely granular chromatin"
         ]
         
         # Instance-level prompt learner for text prototypes (following TOP approach)
@@ -176,21 +190,22 @@ class ViLa_MIL_Model(nn.Module):
 
 
         # Use instance text prototypes for final classification (TOP approach)
-        # Combine both the original text features and instance text prototypes
-        combined_text_features_low = torch.cat([text_features_low, instance_text_features], dim=0)
-        combined_text_features_high = torch.cat([text_features_high, instance_text_features], dim=0)
+        # Aggregate multiple text prototypes per class (4 prototypes per class, 3 classes)
+        instance_text_features_reshaped = instance_text_features.view(3, 4, -1)  # [3 classes, 4 prototypes per class, feature_dim]
         
-        logits_low = image_features_low @ combined_text_features_low.T
-        logits_high = image_features_high @ combined_text_features_high.T
+        # Average prototypes within each class to get class-level text features
+        class_text_features = instance_text_features_reshaped.mean(dim=1)  # [3 classes, feature_dim]
         
-        # Average the logits from both text feature sets
+        # Compute logits using class-aggregated text prototypes
+        logits_instance_low = image_features_low @ class_text_features.T
+        logits_instance_high = image_features_high @ class_text_features.T
+        
+        # Also compute logits with original text features
         logits_original_low = image_features_low @ text_features_low.T
         logits_original_high = image_features_high @ text_features_high.T
-        logits_instance_low = image_features_low @ instance_text_features.T
-        logits_instance_high = image_features_high @ instance_text_features.T
         
         # Combine logits: use instance text prototypes as primary classifier
-        logits = (logits_instance_low + logits_instance_high) + 0.5 * (logits_original_low + logits_original_high)
+        logits = (logits_instance_low + logits_instance_high) + 0.3 * (logits_original_low + logits_original_high)
 
         loss = self.loss_ce(logits, label)
         Y_prob = F.softmax(logits, dim = 1)
