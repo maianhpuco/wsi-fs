@@ -1,28 +1,45 @@
-from transformers import AutoModel
 import torch
+import pickle
+import os
+import sys
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Add TITAN submodule path to Python path
+TITAN_SRC_PATH = os.path.abspath("src/externals/TITAN")
+sys.path.append(TITAN_SRC_PATH)
 
-model = AutoModel.from_pretrained(
-    "MahmoodLab/TITAN",
-    trust_remote_code=True
-).to(device)
+# TITAN-specific imports
+from modeling_titan import TITANForReportGeneration, TITANConfig
+from transformers import AutoTokenizer
 
-# Load example features from HuggingFace Hub
-from huggingface_hub import hf_hub_download
-import h5py
+# === Path setup ===
+TITAN_MODEL_PATH = "/project/hnguyen2/mvu9/pretrained_checkpoints/TITAN"
+FEATURE_PKL_PATH = os.path.join(TITAN_MODEL_PATH, "TCGA_TITAN_features.pkl")
 
-demo_h5_path = hf_hub_download(
-    "MahmoodLab/TITAN",
-    filename="TCGA_demo_features/TCGA-PC-A5DK-01Z-00-DX1.C2D3BC09-411F-46CF-811B-FDBA7C2A295B.h5",
-)
-file = h5py.File(demo_h5_path, 'r')
-features = torch.from_numpy(file['features'][:]).to(device)
-coords = torch.from_numpy(file['coords'][:]).to(device)
-patch_size_lv0 = file['coords'].attrs['patch_size_level0']
+# === Load tokenizer (optional, depending on TITAN usage) ===
+tokenizer = AutoTokenizer.from_pretrained(TITAN_MODEL_PATH)
 
-with torch.autocast('cuda', torch.float16), torch.inference_mode():
-    slide_embedding = model.encode_slide_from_patch_features(features, coords, patch_size_lv0)
-    report = model.generate_report(slide_embedding)
+# === Load TITAN model from config and weights ===
+config = TITANConfig.from_pretrained(TITAN_MODEL_PATH)
+model = TITANForReportGeneration.from_pretrained(
+    TITAN_MODEL_PATH, config=config
+).eval().cuda()
 
-print("📝 Report:\n", report)
+# === Load precomputed TCGA slide features ===
+with open(FEATURE_PKL_PATH, "rb") as f:
+    slide_features_dict = pickle.load(f)
+
+# === Select a sample slide ===
+sample_slide_id = list(slide_features_dict.keys())[0]
+slide_feature = slide_features_dict[sample_slide_id]  # shape: [n_patches, feature_dim]
+
+# === Convert features to torch tensor ===
+slide_tensor = torch.tensor(slide_feature).unsqueeze(0).cuda()  # shape: [1, n_patches, d]
+
+# === Generate pathology report ===
+with torch.no_grad():
+    generated_report = model.generate_report(slide_tensor)
+
+# === Output ===
+print(f"\nSlide ID: {sample_slide_id}")
+print("Generated Report:\n")
+print(generated_report)
