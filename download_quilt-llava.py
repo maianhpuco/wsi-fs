@@ -17,7 +17,7 @@ def download_quilt_llava(local_dir):
         local_dir_use_symlinks=False
     )
 
-    print("✅ Download complete.")
+    print("Download complete.")
     print(f"Model files are saved at: {local_dir}")
 
 if __name__ == "__main__":
