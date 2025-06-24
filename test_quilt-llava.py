@@ -61,13 +61,30 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
         return None
 
     try:
-        # Tokenize prompt and prepare inputs
-        formatted_prompt = tokenizer_image_token(prompt, tokenizer, model.config)
-        if isinstance(formatted_prompt, list):
-            formatted_prompt = "".join(formatted_prompt)
+        # Get prompt token IDs directly (already tokenized)
+        input_ids = tokenizer_image_token(prompt, tokenizer, model.config)
 
-        inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
-        inputs.update({"images": image_tensor})
+        # Convert to tensor and move to device
+        if isinstance(input_ids, list):
+            input_ids = torch.tensor([input_ids], dtype=torch.long, device=model.device)
+
+        # Prepare attention mask
+        attention_mask = torch.ones_like(input_ids)
+
+        # Final input dictionary
+        inputs = {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "images": image_tensor
+        }
+ 
+        # Tokenize prompt and prepare inputs
+        # formatted_prompt = tokenizer_image_token(prompt, tokenizer, model.config)
+        # if isinstance(formatted_prompt, list):
+        #     formatted_prompt = "".join(formatted_prompt)
+
+        # inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
+        # inputs.update({"images": image_tensor})
     except Exception as e:
         print(f"❌ Error preparing prompt/tokenizer input: {e}")
         return None
