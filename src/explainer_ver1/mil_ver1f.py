@@ -155,13 +155,19 @@ class ViLa_MIL_Model(nn.Module):
         ]
         
         # Instance-level prompt learner for text prototypes (following TOP approach)
-        # Use simple initialization to avoid tensor size mismatch
+        # Use representative prompts for each class as ctx_init
+        ctx_init_prompts = [
+            "A WSI of KIRP with papillary growth pattern and fibrovascular cores",
+            "A WSI of KIRC with clear cytoplasm and round nuclei", 
+            "A WSI of KICH with eosinophilic cytoplasm and perinuclear halos"
+        ]
+        
         self.instance_prompt_learner = PromptLearner(
             n_ctx=16, 
-            ctx_init="",  # Empty string for random initialization
+            ctx_init=ctx_init_prompts,  # Use class-specific TCGA renal prompts
             all_ctx_trainable=True, 
             csc=True,  # Use class-specific context for instance-level
-            classnames=["KIRP", "KIRC", "KICH"],  # 3 RCC subtypes - uniform length
+            classnames=["KIRP", "KIRC", "KICH"],  # 3 RCC subtypes
             clip_model='RN50', 
             p_drop_out=0.1
         ).to(self.device)
