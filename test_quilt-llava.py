@@ -40,9 +40,15 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
     image_tensor = process_images([image], image_processor, model.config).to(model.device, dtype=torch.float16)
 
     # Tokenize the prompt with image tokens
-    formatted_prompt = tokenizer_image_token(prompt, tokenizer, model.config)
-    inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
-    inputs.update({"images": image_tensor})
+    # Since tokenizer_image_token may return token IDs, we pass the prompt directly and handle image tokens separately
+    input_ids = tokenizer_image_token(prompt, tokenizer, model.config, return_tensors="pt").to(model.device)
+
+    # Prepare inputs for the model
+    inputs = {
+        "input_ids": input_ids,
+        "images": image_tensor,
+        "attention_mask": torch.ones_like(input_ids, device=model.device)  # Create attention mask
+    }
 
     # Generate a response
     output_ids = model.generate(**inputs, max_new_tokens=200)
