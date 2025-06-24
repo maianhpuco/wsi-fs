@@ -19,3 +19,6 @@
 [submodule "src/externals/quilt-llava"]
 	path = src/externals/quilt-llava
 	url = https://github.com/aldraus/quilt-llava.git
+[submodule "src/externals/TITAN"]
+	path = src/externals/TITAN
+	url = https://github.com/MahmoodLab/TITAN.git
