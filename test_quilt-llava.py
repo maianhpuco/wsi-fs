@@ -1,29 +1,32 @@
 import torch
-from transformers import AutoProcessor, AutoModelForVision2Seq
-from PIL import Image
-import os
 import sys
 import os
-sys.path.append("src/externals/quilt-llava") 
+sys.path.append("src/externals/quilt-llava")
+ 
+from PIL import Image
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import process_images, tokenizer_image_token
 
-def run_quilt_llava(image_path, prompt="### Explain this pathology patches in detail, is there any abnormality?"):
-    model_id = "wisdomik/Quilt-Llava-v1.5-7b"
+def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is there any abnormality?"):
+    model_path = "wisdomik/Quilt-Llava-v1.5-7b"  # or local path
 
-    # Load model + processor
-    processor = AutoProcessor.from_pretrained(model_id)
-    model = AutoModelForVision2Seq.from_pretrained(
-        model_id,
-        torch_dtype=torch.float16,
-        device_map="auto"
+    # Load model, tokenizer, processor
+    tokenizer, model, processor = load_pretrained_model(
+        model_path, model_base=None, model_name="llava"
     )
 
     # Load and preprocess image
     image = Image.open(image_path).convert("RGB")
-    inputs = processor(prompt, images=image, return_tensors="pt").to(model.device, torch.float16)
+    image_tensor = process_images([image], processor, model.config).to(model.device, torch.float16)
 
-    # Generate
-    outputs = model.generate(**inputs, max_new_tokens=200)
-    response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
+    # Prepend image token
+    prompt = tokenizer_image_token(prompt, tokenizer, model.config)
+
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    inputs.update({"images": image_tensor})
+
+    output_ids = model.generate(**inputs, max_new_tokens=200)
+    response = tokenizer.decode(output_ids[0], skip_special_tokens=True)
     return response
 
 # Example usage
