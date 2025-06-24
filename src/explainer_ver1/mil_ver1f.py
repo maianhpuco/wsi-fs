@@ -89,12 +89,8 @@ class ViLa_MIL_Model(nn.Module):
             "chromophobe renal cell carcinoma with eosinophilic cytoplasm"
         ]
         
-        # Instance-level prompt learner for text prototypes (simplified TOP approach)
-        # Simple learnable text prototypes (inspired by TOP but using direct parameters)
-        self.text_prototype_embeddings = nn.Parameter(
-            torch.randn(len(instance_prompt_names), config.input_size, device=self.device)
-        )
-        nn.init.normal_(self.text_prototype_embeddings, std=0.02)
+        # Instance-level prompt learner for text prototypes (following TOP approach)
+        self.instance_prompt_learner = PromptLearner(instance_prompt_names, clip_model.float()).to(self.device)
         
         # Text prototype names for reference
         self.prototype_names = instance_prompt_names
@@ -121,8 +117,10 @@ class ViLa_MIL_Model(nn.Module):
         M_high = x_l.float()
         
         # TOP-style text prototype integration
-        # Use learnable text prototype embeddings
-        instance_text_features = self.text_prototype_embeddings
+        # Encode instance-level text prototypes through text encoder
+        instance_prompts = self.instance_prompt_learner().to(device)
+        instance_tokenized_prompts = self.instance_prompt_learner.tokenized_prompts.to(device)
+        instance_text_features = self.text_encoder(instance_prompts, instance_tokenized_prompts).to(device)
         instance_text_features = instance_text_features / instance_text_features.norm(dim=-1, keepdim=True)
         
         # Compute text-image prototype similarity for low resolution features
@@ -140,13 +138,15 @@ class ViLa_MIL_Model(nn.Module):
         # Image prototype processing with text enhancement
         compents, _ = self.cross_attention_1(self.learnable_image_center, M, M) 
         compents = self.norm(compents + self.learnable_image_center)
-        # Enhance with text prototypes
-        compents = compents + text_enhanced_features_low.mean(0, keepdim=True).unsqueeze(0)
+        # Enhance with properly encoded text prototypes
+        text_enhancement_low = text_enhanced_features_low.mean(0, keepdim=True).unsqueeze(0)
+        compents = compents + text_enhancement_low
 
         compents_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
         compents_high = self.norm(compents_high + self.learnable_image_center)
-        # Enhance with text prototypes
-        compents_high = compents_high + text_enhanced_features_high.mean(0, keepdim=True).unsqueeze(0)
+        # Enhance with properly encoded text prototypes
+        text_enhancement_high = text_enhanced_features_high.mean(0, keepdim=True).unsqueeze(0)
+        compents_high = compents_high + text_enhancement_high
 
         H = compents.squeeze().float()
         A_V = self.attention_V(H)  
