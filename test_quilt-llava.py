@@ -21,10 +21,8 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
     Returns:
         str: Generated explanation text from the model.
     """
-    # Path to the local directory containing the full Quilt-LLaVA model
-    model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b/"
+    model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Quilt-Llava-v1.5-7b"
 
-    # Load model, tokenizer, and image processor
     try:
         tokenizer, model, image_processor, context_len = load_pretrained_model(
             model_path=model_path,
@@ -39,12 +37,18 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
         print(f"Error loading model: {e}")
         return None
 
-    # Verify model and vision tower
-    if not hasattr(model, 'vision_tower') or model.vision_tower is None:
-        print("Error: Model does not have a vision tower or vision tower is None.")
+    # Ensure vision tower is loaded
+    try:
+        vision_tower = model.get_vision_tower()
+        if hasattr(vision_tower, "load_model") and not vision_tower.is_loaded:
+            vision_tower.load_model()
+        vision_tower.to(device=model.device, dtype=torch.float16)
+        image_processor = vision_tower.image_processor
+    except Exception as e:
+        print(f"Error loading vision tower: {e}")
         return None
 
-    # Load and preprocess the input image
+    # Load and preprocess the image
     try:
         image = Image.open(image_path).convert("RGB")
         image_tensor = process_images([image], image_processor, model.config).to(model.device, dtype=torch.float16)
@@ -52,41 +56,18 @@ def run_quilt_llava(image_path, prompt="### Explain this pathology patch, is the
         print(f"Error processing image: {e}")
         return None
 
-    # Debug: Check image tensor shape
-    print(f"Image tensor shape: {image_tensor.shape}")
-
-    # Tokenize the prompt with image tokens
+    # Format the prompt
     try:
-        input_ids = tokenizer_image_token(prompt, tokenizer, model.config, return_tensors="pt").to(model.device)
+        formatted_prompt = tokenizer_image_token(prompt, tokenizer, model.config)
+        if isinstance(formatted_prompt, list):
+            formatted_prompt = "".join(formatted_prompt)
+        inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
+        inputs.update({"images": image_tensor})
     except Exception as e:
-        print(f"Error tokenizing prompt: {e}")
+        print(f"Error preparing inputs: {e}")
         return None
 
-    # Debug: Check input_ids shape
-    print(f"Input IDs shape: {input_ids.shape}")
-
-    # Ensure input_ids is 2D
-    if len(input_ids.shape) == 1:
-        input_ids = input_ids.unsqueeze(0)  # Add batch dimension if missing
-    print(f"Adjusted Input IDs shape: {input_ids.shape}")
-
-    # Prepare attention mask
-    attention_mask = torch.ones_like(input_ids, device=model.device)
-
-    # Prepare inputs for the model
-    inputs = {
-        "input_ids": input_ids,
-        "attention_mask": attention_mask,
-        "images": image_tensor,
-    }
-
-    # Debug: Print input details
-    print(f"Inputs keys: {inputs.keys()}")
-    print(f"Input IDs: {input_ids}")
-    print(f"Attention mask shape: {attention_mask.shape}")
-    print(f"Images shape: {image_tensor.shape}")
-
-    # Generate a response
+    # Generate prediction
     try:
         output_ids = model.generate(**inputs, max_new_tokens=200)
         response = tokenizer.decode(output_ids[0], skip_special_tokens=True)
@@ -99,6 +80,7 @@ if __name__ == "__main__":
     img_path = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/png_patches/patch_256x256_5x/TCGA-UW-A7GY-11Z-00-DX1.7410A3EA-BFFD-4744-8DB2-66A409C0BFA9/30179_43105.png"
     result = run_quilt_llava(img_path)
     if result:
+        print("Generated explanation:")
         print(result)
     else:
         print("Inference failed.")
