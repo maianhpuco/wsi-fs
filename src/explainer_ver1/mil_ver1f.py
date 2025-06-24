@@ -154,17 +154,11 @@ class ViLa_MIL_Model(nn.Module):
             "A WSI of KICH with neuroendocrine differentiation and synaptophysin expression"
         ]
         
-        # Instance-level prompt learner for text prototypes (following TOP approach)
-        # Use representative prompts for each class as ctx_init
-        ctx_init_prompts = [
-            "A WSI of KIRP with papillary growth pattern and fibrovascular cores",
-            "A WSI of KIRC with clear cytoplasm and round nuclei", 
-            "A WSI of KICH with eosinophilic cytoplasm and perinuclear halos"
-        ]
+        instancePrompt_ctx_init = [i + ' * * * * * * * * * *' for i in instance_prompt_names]
         
         self.instance_prompt_learner = PromptLearner(
-            n_ctx=16, 
-            ctx_init=ctx_init_prompts,  # Use class-specific TCGA renal prompts
+            n_ctx=10,  # Reduced to match number of asterisks
+            ctx_init=instancePrompt_ctx_init,  # Use pathological prompts with asterisk format
             all_ctx_trainable=True, 
             csc=True,  # Use class-specific context for instance-level
             classnames=["KIRP", "KIRC", "KICH"],  # 3 RCC subtypes
