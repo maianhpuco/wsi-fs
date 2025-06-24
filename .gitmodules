@@ -16,3 +16,6 @@
 [submodule "src/externals/MSCPT"]
 	path = src/externals/MSCPT
 	url = https://github.com/Hanminghao/MSCPT.git
+[submodule "src/externals/quilt-llava"]
+	path = src/externals/quilt-llava
+	url = https://github.com/aldraus/quilt-llava.git
