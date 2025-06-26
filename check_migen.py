@@ -61,7 +61,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Hardcoded model + tokenizer config
-    args.ann_path = '/project/hnguyen2/mvu9/datasets/PathText/TCGA-BRCR'
+    args.ann_path = '/project/hnguyen2/mvu9/datasets/PathText/TCGA-BRCA'
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.d_model = 512
     args.d_ff = 512
