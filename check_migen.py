@@ -132,4 +132,5 @@ if __name__ == '__main__':
     args.eos_idx = 0
     args.pad_idx = 0
     args.threshold = 0.5
+    args.n_classes = 3
     main(args)
