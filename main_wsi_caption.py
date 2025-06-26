@@ -90,7 +90,7 @@ def parse_agrs():
     
     # debug
     parser.add_argument("--checkpoint_dir", type=str, default='')
-    parser.add_argument("--mode", type=str, default='Test')
+    parser.add_argument("--mode", type=str, default='Train')
     parser.add_argument("--debug", type=str, default='False')
     parser.add_argument("--local_rank", type=int, default=-1)
     
