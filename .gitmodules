@@ -25,3 +25,6 @@
 [submodule "src/externals/wsi_caption"]
 	path = src/externals/wsi_caption
 	url = https://github.com/cpystan/Wsi-Caption
+[submodule "src/externals/wsi_vqa"]
+	path = src/externals/wsi_vqa
+	url = https://github.com/cpystan/WSI-VQA
