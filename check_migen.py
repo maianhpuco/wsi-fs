@@ -99,4 +99,5 @@ if __name__ == '__main__':
     args.text_extractor = 'bioclinicalbert'
     args.slide_path = os.path.join("/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files/TCGA-UW-A7GP-11Z-00-DX1.C89DD837-4B77-4CB5-8FAB-DF9315892B9B.pt")
     args.checkpoint_path = os.path.join("/project/hnguyen2/mvu9/pretrained_checkpoints/wsi-vqa/W2T_resnet.pth")
+    
     main(args)
