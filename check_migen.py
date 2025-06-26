@@ -7,7 +7,7 @@ import sys
 # from dataloader import return_splits_custom 
 
 sys.path.append("src/externals/wsi_caption")
-sys.path.append("src/externals_modify") 
+sys.path.append("src/externals_modified") 
 from wsi_caption_tokenizer_origin import Tokenizer
 # from modules.tokenizers import Tokenizer
 from models.r2gen import R2GenModel
