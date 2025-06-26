@@ -148,7 +148,7 @@ def main(args):
     if args.mode == 'Train':
         trainer.train()
     else:
-        trainer.test()
+        trainer.test(rank=0)
 
 
 if __name__ == '__main__':
