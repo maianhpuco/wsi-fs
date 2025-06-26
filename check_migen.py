@@ -56,7 +56,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature_path', type=str, required=True, help='Path to the .pt WSI feature file')
+    # parser.add_argument('--feature_path', type=str, required=True, help='Path to the .pt WSI feature file')
     # parser.add_argument('--slide_id', type=str, required=True, help='Slide ID for logging only')
     args = parser.parse_args()
 
