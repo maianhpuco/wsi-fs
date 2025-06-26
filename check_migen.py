@@ -8,9 +8,35 @@ import numpy as np
 sys.path.append("src/externals/wsi_vqa")
 
 from models.r2gen import VQA_model
-from modules.text_extractor import create_text_extractor
+# from modules.text_extractor import create_text_extractor
 from transformers import BertTokenizerFast, AutoTokenizer
+import torch
+from transformers import AutoModel
 
+def create_text_extractor(model_name: str, device=torch.device('cpu'), override_image_size=None):
+    if model_name == 'bioclinicalbert':
+        print(f"Loading Bio_ClinicalBERT from local path.")
+        model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/bioclinicalbert"
+        model = AutoModel.from_pretrained(model_path)
+        return model.to(device)
+    
+    elif model_name == 'pubmedbert':
+        print(f"Loading PubMedBERT from local path.")
+        model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/pubmedbert"
+        model = AutoModel.from_pretrained(model_path)
+        return model.to(device)
+
+    elif model_name == 'scratch':
+        class ScratchTextExtractor(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+            def encode_text(self, token_ids, attention_mask=None):
+                return token_ids
+        return ScratchTextExtractor()
+
+    else:
+        raise RuntimeError(f'Model config for {model_name} not found.')
+  
 # === Build Tokenizer ===
 def Build_Tokenizer(args):
     if args.text_extractor == 'bioclinicalbert':
