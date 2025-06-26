@@ -3,6 +3,7 @@ import torch
 import argparse
 import numpy as np
 import sys
+import glob
 
 sys.path.append("src/externals/wsi_caption")
 sys.path.append("src/externals_modified") 
@@ -32,35 +33,30 @@ def generate_caption(model, feature_tensor, tokenizer, args):
     return caption
 
 def main(args):
-    # Tokenizer and model
+    # Initialize tokenizer and model with random weights
     tokenizer = Tokenizer(args)
     model = R2GenModel(args, tokenizer).to(args.device)
+    print("Initialized model without checkpoint (random weights).")
 
-    print(f"Loading model from: {args.checkpoint_path}")
-    state_dict = torch.load(args.checkpoint_path, map_location=args.device)['state_dict']
-    model.load_state_dict(state_dict)
-
-    # Load pre-extracted feature
-    feature_path = args.feature_path
-    feature_tensor = torch.load(feature_path, map_location=args.device)  # shape [N, d_vf]
+    # Load any available .pt feature file
+    args.feature_path = glob.glob("*.pt")[0]
+    print(f"Using feature file: {args.feature_path}")
+    feature_tensor = torch.load(args.feature_path, map_location=args.device)
     if len(feature_tensor.shape) == 2:
-        feature_tensor = feature_tensor.unsqueeze(0)  # make it [1, N, d_vf]
+        feature_tensor = feature_tensor.unsqueeze(0)
 
-    print(f"Loaded features from {feature_path} with shape {feature_tensor.shape}")
+    print(f"Loaded feature shape: {feature_tensor.shape}")
 
-    # Generate caption
+    # Run forward pass
     caption = generate_caption(model, feature_tensor, tokenizer, args)
-    # print(f"\nSlide ID: {args.slide_id}")
     print("Generated caption:")
     print(caption)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # parser.add_argument('--feature_path', type=str, required=True, help='Path to the .pt WSI feature file')
-    # parser.add_argument('--slide_id', type=str, required=True, help='Slide ID for logging only')
     args = parser.parse_args()
 
-    # Hardcoded model + tokenizer config
+    # Hardcoded config
     args.ann_path = '/project/hnguyen2/mvu9/datasets/PathText/TCGA-BRCA'
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.d_model = 512
@@ -78,8 +74,5 @@ if __name__ == '__main__':
     args.drop_prob_lm = 0.5
     args.use_bn = True
     args.dataset_name = 'BRCA'
-    args.checkpoint_path = '/project/hnguyen2/mvu9/pretrained_checkpoints/mi-gen/model_best.pth'
-    import glob 
-    args.feature_path = glob.glob("*.pt")[0]
-    print(f"Using feature file: {args.feature_path}")
+
     main(args)
