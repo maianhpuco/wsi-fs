@@ -1,154 +1,135 @@
 import os
 import torch
 import argparse
-import yaml
-import sys
 import numpy as np
+import yaml
+import sys 
+from dataloader import return_splits_custom 
 
-sys.path.append("src/externals/wsi_vqa")
+sys.path.append("src/externals/wsi_caption")
+sys.path.append("src/externals_modify") 
+from wsi_caption_tokenizer_origin import Tokenizer
+# from modules.tokenizers import Tokenizer
+from models.r2gen import R2GenModel
 
-from models.r2gen import VQA_model
-# from modules.text_extractor import create_text_extractor
-from transformers import BertTokenizerFast, AutoTokenizer
-import torch
-from transformers import AutoModel
+def load_wsi_feature_from_dataset(args):
+    """
+    Use your MIL dataset and config to retrieve a test sample feature.
+    """
+    from src.datasets.single_scale.tcga import return_splits_custom
+ 
+    dataset_name = args.dataset_name.lower()
 
-def create_text_extractor(model_name: str, device=torch.device('cpu'), override_image_size=None):
-    if model_name == 'bioclinicalbert':
-        print(f"Loading Bio_ClinicalBERT from local path.")
-        model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/bioclinicalbert"
-        model = AutoModel.from_pretrained(model_path)
-        return model.to(device)
-    
-    elif model_name == 'pubmedbert':
-        print(f"Loading PubMedBERT from local path.")
-        model_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/pubmedbert"
-        model = AutoModel.from_pretrained(model_path)
-        return model.to(device)
+    if dataset_name in ['tcga_renal', 'tcga_lung']:
+        # Parse YAML config
+        with open(args.config_path, 'r') as f:
+            config = yaml.safe_load(f)
 
-    elif model_name == 'scratch':
-        class ScratchTextExtractor(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-            def encode_text(self, token_ids, attention_mask=None):
-                return token_ids
-        return ScratchTextExtractor()
+        data_dir_map = config['data_dir_map']
+        label_dict = {label: idx for idx, label in enumerate(data_dir_map.keys())}
 
+        split_folder = config['split_dir']
+        fold = args.fold  # which fold to use
+        fold_dir = os.path.join(split_folder, f"fold_{fold}")
+        train_csv_path = os.path.join(fold_dir, "train.csv")
+        val_csv_path = os.path.join(fold_dir, "val.csv")
+        test_csv_path = os.path.join(fold_dir, "test.csv")
+
+        _, _, test_dataset = return_splits_custom(
+            train_csv_path,
+            val_csv_path,
+            test_csv_path,
+            data_dir_map=data_dir_map,
+            label_dict=label_dict,
+            seed=42,
+            print_info=False,
+            use_h5=False
+        )
+
+        # Load feature for the given slide_id
+        feature_tensor = test_dataset.get_features_by_slide_id(args.slide_id)
+        return feature_tensor.unsqueeze(0)  # shape [1, N, d_vf]
     else:
-        raise RuntimeError(f'Model config for {model_name} not found.')
-  
-# === Build Tokenizer ===
-def Build_Tokenizer(args):
-    if args.text_extractor == 'bioclinicalbert':
-        model_path = '/project/hnguyen2/mvu9/pretrained_checkpoints/bioclinicalbert'
-        tokenizer = BertTokenizerFast.from_pretrained(model_path, tokenizer_class=AutoTokenizer)
+        raise NotImplementedError(f"Dataset {dataset_name} not supported yet.")
 
-    elif args.text_extractor == 'pubmedbert':
-        model_path = '/project/hnguyen2/mvu9/pretrained_checkpoints/pubmedbert'
-        tokenizer = BertTokenizerFast.from_pretrained(model_path, tokenizer_class=AutoTokenizer)
-
-    elif args.text_extractor == 'llama':
-        from transformers import LlamaTokenizer
-        tokenizer = LlamaTokenizer.from_pretrained("/output/path")
-
-    else:
-        from modules.tokenizers import Tokenizer
-        tokenizer = Tokenizer(args)
-
-    # Combine transformer tokenizer with your custom tokenizer
-    from modules.tokenizers import Tokenizer, MixedTokenizer
-    tokenizer_a = Tokenizer(args)
-    return MixedTokenizer(tokenizer, tokenizer_a)
-
-# === Caption Generation ===
 @torch.no_grad()
 def generate_caption(model, feature_tensor, tokenizer, args):
     model.eval()
 
-    question = "What is the histologic subtype?"
-    question_ids = tokenizer.encode_input(question)
-    question_ids = torch.tensor(question_ids).unsqueeze(0).to(args.device)  # [1, T]
-    question_mask = (question_ids > 0).long()
-
-    feature_tensor = feature_tensor.to(args.device)
-    memory = model.encoder(feature_tensor, question_ids, question_mask)
+    att_mask = torch.ones(feature_tensor.shape[:2], dtype=torch.long).to(args.device)
+    memory = model._encode(None, feature_tensor.to(args.device), att_mask)
 
     seq = torch.full((1, 1), args.bos_idx, dtype=torch.long).to(args.device)
     state = []
+    mask = att_mask.unsqueeze(1)
 
     for _ in range(args.max_seq_length):
-        logits, state = model.decoder(seq[:, -1], memory, state)
-        next_token = torch.argmax(logits, dim=-1)
-        seq = torch.cat([seq, next_token.unsqueeze(1)], dim=1)
-        if next_token.item() == args.eos_idx:
+        logit, state = model.core(seq[:, -1], None, None, memory, state, mask)
+        logit = torch.log_softmax(logit, dim=-1)
+        _, next_word = torch.max(logit, dim=-1)
+        seq = torch.cat([seq, next_word.unsqueeze(1)], dim=1)
+        if next_word.item() == args.eos_idx:
             break
 
-    caption_ids = seq.squeeze(0).tolist()[1:]  # remove <bos>
-    caption = tokenizer.decode(caption_ids)
+    caption = tokenizer.decode(seq.squeeze(0).tolist())
     return caption
 
-# === Load Features ===
-def load_feature(args):
-    slide_path = args.slide_path
-    if not os.path.exists(slide_path):
-        raise FileNotFoundError(f"Slide feature not found: {slide_path}")
-    feat = torch.load(slide_path)
-    feat = feat.unsqueeze(0)  # [1, N, d_vf]
-    return feat
-
-# === Main ===
 def main(args):
-    tokenizer = Build_Tokenizer(args)
-    text_extractor = create_text_extractor(args.text_extractor, override_image_size=None)
-    model = VQA_model(args, tokenizer, text_extractor).to(args.device)
 
-    print(f"Loading model from: {args.checkpoint_path}")
-    checkpoint = torch.load(args.checkpoint_path, map_location=args.device)['state_dict']
-    model.load_state_dict(checkpoint, strict=False)
-
-    feature_tensor = load_feature(args)
-    caption = generate_caption(model, feature_tensor, tokenizer, args)
+    # Tokenizer and model
+    tokenizer = Tokenizer(args)
+    model = R2GenModel(args, tokenizer).to(args.device)
     
-    print(f"\nSlide ID: {args.slide_id}")
-    print("Generated caption:", caption)
+    
+    print(f"Loading model from: {args.checkpoint_path}")
+    
+    state_dict = torch.load(
+        args.checkpoint_path, 
+        map_location=args.device)['state_dict']
+    model.load_state_dict(state_dict)
 
-# === Entry Point ===
+    # Load feature from dataset
+    feature_tensor = load_wsi_feature_from_dataset(args, config)
+
+    # Generate caption
+    caption = generate_caption(model, feature_tensor, tokenizer, args)
+    print(f"\nSlide ID: {args.slide_id}")
+    print("Generated caption:")
+    print(caption)
+
+
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, required=True)
-    parser.add_argument('--fold', type=int, default=0)
+    # parser.add_argument('--slide_id', type=str, required=True, help='Slide ID to generate caption for')
+    parser.add_argument('--config', type=str, required=True, help='Path to YAML config file')
+    # parser.add_argument('--dataset_name', type=str, required=True, help='e.g. tcga_renal')
+    parser.add_argument('--fold', type=int, default=0, help='Fold number')
+    
     args = parser.parse_args()
-
-    # Load YAML
-    with open(args.config, 'r') as f:
+    slide_id =  'TCGA-UW-A7GY-11Z-00-DX1.7410A3EA-BFFD-4744-8DB2-66A409C0BFA9'
+    # === Load and inject config ===
+    config_path = args.config
+    with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
-    for k, v in config.items():
-        setattr(args, k, v)
 
-    # Device
+    for key, value in config.items():
+        setattr(args, key, value)  # shallow merge (top-level only)
+
+    # === Setup device and seed ===
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Model parameters
+    
+    args.anno_path = '/project/hnguyen2/mvu9/datasets/PathText/TCGA-KICH'
+    # Set model args (hardcoded)
     args.d_model = 512
     args.d_ff = 512
     args.d_vf = 1024
     args.num_heads = 4
     args.num_layers = 3
     args.dropout = 0.1
-    args.max_seq_length = 60
-    args.bos_idx = 1243
+    args.max_seq_length = 600
+    args.bos_idx = 0
     args.eos_idx = 0
     args.pad_idx = 0
-    args.threshold = 1.0
-    args.text_extractor = 'bioclinicalbert'
-
-    args.ann_path = '/project/hnguyen2/mvu9/folder_04_ma/wsi-fs/src/externals/wsi_vqa/dataset/WSI_captions'
-    # Hardcoded inputs
-    args.slide_id = 'TCGA-UW-A7GP-11Z-00-DX1.C89DD837-4B77-4CB5-8FAB-DF9315892B9B'
-    args.slide_path = os.path.join(
-        "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files",
-        f"{args.slide_id}.pt"
-    )
-    args.checkpoint_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/wsi-vqa/W2T_resnet.pth"
-
+    
     main(args)
