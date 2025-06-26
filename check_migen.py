@@ -86,7 +86,7 @@ if __name__ == '__main__':
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.d_model = 512
     args.d_ff = 512
-    args.d_vf = 1024
+    args.d_vf = 1764 #1024
     args.num_heads = 4
     args.num_layers = 3
     args.dropout = 0.1
