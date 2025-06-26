@@ -119,7 +119,7 @@ if __name__ == '__main__':
     # === Setup device and seed ===
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    args.anno_path = '/project/hnguyen2/mvu9/datasets/PathText/TCGA-KICH'
+    args.ann_path = '/project/hnguyen2/mvu9/datasets/PathText/TCGA-KICH'
     # Set model args (hardcoded)
     args.d_model = 512
     args.d_ff = 512
