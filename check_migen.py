@@ -68,16 +68,52 @@ def generate_caption(model, feature_tensor, tokenizer, args):
     return caption
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--slide_id', type=str, required=True, help='Slide ID to generate caption for')
-    parser.add_argument('--config_path', type=str, required=True, help='Path to the YAML config')
-    parser.add_argument('--checkpoint_path', type=str, required=True, help='Trained model checkpoint')
-    parser.add_argument('--dataset_name', type=str, required=True, help='Dataset name (e.g., tcga_renal)')
-    parser.add_argument('--fold', type=int, default=0, help='Fold number to use (default: 0)')
-    parser.add_argument('--device', type=str, default='cuda')
-    args = parser.parse_args()
 
-    # Hardcoded model args
+    # Tokenizer and model
+    tokenizer = Tokenizer(args)
+    model = R2GenModel(args, tokenizer).to(args.device)
+    
+    
+    print(f"Loading model from: {args.checkpoint_path}")
+    
+    state_dict = torch.load(
+        args.checkpoint_path, 
+        map_location=args.device)['state_dict']
+    model.load_state_dict(state_dict)
+
+    # Load feature from dataset
+    feature_tensor = load_wsi_feature_from_dataset(args, config)
+
+    # Generate caption
+    caption = generate_caption(model, feature_tensor, tokenizer, args)
+    print(f"\nSlide ID: {args.slide_id}")
+    print("Generated caption:")
+    print(caption)
+
+
+    
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    # parser.add_argument('--slide_id', type=str, required=True, help='Slide ID to generate caption for')
+    parser.add_argument('--config', type=str, required=True, help='Path to YAML config file')
+    # parser.add_argument('--dataset_name', type=str, required=True, help='e.g. tcga_renal')
+    parser.add_argument('--fold', type=int, default=0, help='Fold number')
+    
+    args = parser.parse_args()
+    slide_id =  'TCGA-UW-A7GY-11Z-00-DX1.7410A3EA-BFFD-4744-8DB2-66A409C0BFA9'
+    # === Load and inject config ===
+    config_path = args.config
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    for key, value in config.items():
+        setattr(args, key, value)  # shallow merge (top-level only)
+
+    # === Setup device and seed ===
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    
+    # Set model args (hardcoded)
     args.d_model = 512
     args.d_ff = 512
     args.d_vf = 1024
@@ -88,22 +124,3 @@ def main():
     args.bos_idx = 0
     args.eos_idx = 0
     args.pad_idx = 0
-
-    tokenizer = Tokenizer(args)
-
-    print(f"Loading model from {args.checkpoint_path}")
-    model = R2GenModel(args, tokenizer).to(args.device)
-    checkpoint = torch.load(args.checkpoint_path, map_location=args.device)['state_dict']
-    model.load_state_dict(checkpoint)
-
-    # Load feature from dataset via slide_id
-    feature_tensor = load_wsi_feature_from_dataset(args)
-
-    # Generate and print caption
-    caption = generate_caption(model, feature_tensor, tokenizer, args)
-    print(f"\nSlide ID: {args.slide_id}")
-    print("Generated caption:")
-    print(caption)
-
-if __name__ == '__main__':
-    main()

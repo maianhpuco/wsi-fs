@@ -51,3 +51,5 @@ train_all: sbatch_train_mgpath_modified_clip_tcga_renal sbatch_train_mgpath_modi
 
 
 # export HF_HOME=/project/hnguyen2/mvu9/model_cache
+run_migen:
+	python checl_migen.py --config configs_maui/migen_tcga_renal.yaml --fold 1 
