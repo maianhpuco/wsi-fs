@@ -19,7 +19,7 @@ def generate_caption(model, feature_tensor, tokenizer, args):
 
     att_feats = torch.cat([model.prompt, feature_tensor.to(args.device)], dim=1)
     fc_feats = torch.sum(att_feats, dim=1)
-    memory = model.encoder_decoder(fc_feats, att_feats, mode='encode')
+    memory = model.encoder_decoder(fc_feats, att_feats, mode='train')
 
     seq = torch.full((1, 1), args.bos_idx, dtype=torch.long).to(args.device)
     state = []
