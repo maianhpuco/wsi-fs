@@ -77,6 +77,7 @@ if __name__ == '__main__':
     args.n_classes = 2
     args.drop_prob_lm = 0.5
     args.use_bn = True
+    args.dataset_name = 'BRCA'
     args.checkpoint_path = '/project/hnguyen2/mvu9/pretrained_checkpoints/mi-gen/model_best.pth'
     import glob 
     args.feature_path = glob.glob("*.pt")[0]
