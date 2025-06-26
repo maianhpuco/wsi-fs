@@ -125,7 +125,7 @@ if __name__ == '__main__':
     # Set model args (hardcoded)
     args.d_model = 512
     args.d_ff = 512
-    args.d_vf = 1024
+    args.d_vf = 512
     args.num_heads = 4
     args.num_layers = 3
     args.dropout = 0.1
