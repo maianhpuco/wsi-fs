@@ -134,7 +134,7 @@ if __name__ == '__main__':
     args.eos_idx = 0
     args.pad_idx = 0
     args.threshold = 0.5
-    args.n_classes = 3
+    args.n_classes = 2
     args.drop_prob_lm = 0.5 
     args.checkpoint_path = '/project/hnguyen2/mvu9/pretrained_checkpoints/mi-gen/model_best.pth'
     args.use_bn = True  # or True, depending on your model's needs
