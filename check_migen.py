@@ -5,7 +5,7 @@ import yaml
 import sys
 import numpy as np
 
-sys.path.append("src/externals/wsi_caption")
+sys.path.append("src/externals/wsi_vqa")
 
 from modules.tokenizers import Build_Tokenizer
 from models.r2gen import VQA_model
