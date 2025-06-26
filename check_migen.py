@@ -50,14 +50,14 @@ def main(args):
 
     # Generate caption
     caption = generate_caption(model, feature_tensor, tokenizer, args)
-    print(f"\nSlide ID: {args.slide_id}")
+    # print(f"\nSlide ID: {args.slide_id}")
     print("Generated caption:")
     print(caption)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--feature_path', type=str, required=True, help='Path to the .pt WSI feature file')
-    parser.add_argument('--slide_id', type=str, required=True, help='Slide ID for logging only')
+    # parser.add_argument('--slide_id', type=str, required=True, help='Slide ID for logging only')
     args = parser.parse_args()
 
     # Hardcoded model + tokenizer config
@@ -78,5 +78,7 @@ if __name__ == '__main__':
     args.drop_prob_lm = 0.5
     args.use_bn = True
     args.checkpoint_path = '/project/hnguyen2/mvu9/pretrained_checkpoints/mi-gen/model_best.pth'
-
+    import glob 
+    args.feature_path = glob.glob("*.pt")[0]
+    print(f"Using feature file: {args.feature_path}")
     main(args)
