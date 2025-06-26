@@ -3,6 +3,9 @@ import torch
 import argparse
 import numpy as np
 import yaml
+import sys 
+sys.path.append("src/externals/wsi_caption")
+ 
 from modules.tokenizers import Tokenizer
 from models.r2gen import R2GenModel
 from dataloader import return_splits_custom
@@ -67,7 +70,7 @@ def generate_caption(model, feature_tensor, tokenizer, args):
     caption = tokenizer.decode(seq.squeeze(0).tolist())
     return caption
 
-def main():
+def main(args):
 
     # Tokenizer and model
     tokenizer = Tokenizer(args)
@@ -124,3 +127,5 @@ if __name__ == '__main__':
     args.bos_idx = 0
     args.eos_idx = 0
     args.pad_idx = 0
+    
+    main(args)
