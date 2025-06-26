@@ -9,8 +9,8 @@ class Tokenizer(object):
         self.threshold = args.threshold
         #self.dataset_name = args.dataset_name
         self.dataset_name = 'BRCA'
-        if self.dataset_name == 'BRCA':
-            self.clean_report = self.clean_report_brca
+        # if self.dataset_name == 'BRCA':
+        self.clean_report = self.clean_report_brca
 
        
         self.token2idx, self.idx2token = self.create_vocabulary()
