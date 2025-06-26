@@ -7,7 +7,8 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-target_path = os.path.abspath(os.path.join(current_dir, '../../src/external/wsi_caption/modules'))
+# target_path = os.path.abspath(os.path.join(current_dir, '../../src/external/wsi_caption/modules'))
+target_path = os.path.abspath(os.path.join(current_dir, '../../src/externals/wsi_caption/modules'))
 sys.path.append(target_path)
 from datasets import TcgaImageDataset
 
