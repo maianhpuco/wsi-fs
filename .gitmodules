@@ -22,3 +22,6 @@
 [submodule "src/externals/TITAN"]
 	path = src/externals/TITAN
 	url = https://github.com/MahmoodLab/TITAN.git
+[submodule "src/externals/wsi_caption"]
+	path = src/externals/wsi_caption
+	url = https://github.com/cpystan/Wsi-Caption
