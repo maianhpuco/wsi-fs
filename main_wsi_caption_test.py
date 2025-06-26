@@ -1,5 +1,9 @@
 import torch
 import sys
+
+sys.path.append("src/externals_modified/wsi_caption")
+from dataloaders import R2DataLoader 
+
 sys.path.append("src/externals/wsi_caption")
 
 import os
@@ -9,7 +13,7 @@ import random
 import warnings
 
 from modules.tokenizers import Tokenizer
-from modules.dataloaders import R2DataLoader
+# from modules.dataloaders import R2DataLoader
 from modules.metrics import compute_scores
 from modules.optimizers import build_optimizer, build_lr_scheduler
 from modules.trainer import Trainer
