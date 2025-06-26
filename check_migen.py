@@ -134,4 +134,6 @@ if __name__ == '__main__':
     args.threshold = 0.5
     args.n_classes = 3
     args.drop_prob_lm = 0.5 
+    args.use_bn = True  # or True, depending on your model's needs
+
     main(args)
