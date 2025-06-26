@@ -63,7 +63,8 @@ run_caption_test:
 	python main_wsi_caption_test.py  --image_dir /project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files \
 	--ann_path /project/hnguyen2/mvu9/datasets/PathText/TCGA-KICH \
 	--split_path kich_split.csv \
-	--checkpoint_dir ./results/BRCA
+	--checkpoint_dir ./results/BRCA \
+	--mode Test
 
 #/project/hnguyen2/mvu9/folder_04_ma/wsi-fs/src/externals/wsi_caption/ocr/dataset_csv/splits_0.csv 
 #--config configs_maui/migen_tcga_renal.yaml --fold 1 
