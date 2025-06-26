@@ -55,7 +55,7 @@ run_migen:
 	python check_migen.py 
 
 run_caption:
-	python main_wsi_caption.py  image_dir /home/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files\
+	python main_wsi_caption.py  image_dir /home/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files \
 	--ann_path /project/hnguyen2/mvu9/datasets/PathText/TCGA-KICH \
 	--split_path kich_split.csv 
 	
