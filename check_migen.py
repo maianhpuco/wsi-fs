@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 import yaml
 import sys 
-from dataloader import return_splits_custom 
+
 
 sys.path.append("src/externals/wsi_caption")
  
