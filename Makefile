@@ -60,7 +60,7 @@ run_caption:
 	--split_path kich_split.csv 
 
 run_caption_test:
-	python main_wsi_caption.py  --image_dir /project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files \
+	python main_wsi_caption_test.py  --image_dir /project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files \
 	--ann_path /project/hnguyen2/mvu9/datasets/PathText/TCGA-KICH \
 	--split_path kich_split.csv  
 	--checkpoint_dir /results/BRCA

@@ -153,6 +153,7 @@ def main(local_rank, world_size):
     model = R2GenModel(args, tokenizer).to(local_rank)
     
     if args.mode == 'Test':
+        
         resume_path = os.path.join(args.checkpoint_dir, 'model_best.pth')
         print("Loading checkpoint: {} ...".format(resume_path))
         checkpoint = torch.load(resume_path)['state_dict']
