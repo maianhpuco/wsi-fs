@@ -192,7 +192,7 @@ if __name__ == '__main__':
     #os.environ['CUDA_VISIBLE_DEVICES'] = '5,6'
     n_gpus = torch.cuda.device_count()
     world_size = n_gpus
-
+    args.mode = 'Train'
 
     if args.debug:
         assert n_gpus==1
