@@ -11,18 +11,22 @@ sys.path.append("src/externals_modified")
 from wsi_caption_tokenizer_origin import Tokenizer
 from models.r2gen import R2GenModel
 
+
+
 @torch.no_grad()
 def generate_caption(model, feature_tensor, tokenizer, args):
     model.eval()
-    att_mask = torch.ones(feature_tensor.shape[:2], dtype=torch.long).to(args.device)
-    memory = model._encode(None, feature_tensor.to(args.device), att_mask)
+
+    att_feats = torch.cat([model.prompt, feature_tensor.to(args.device)], dim=1)
+    fc_feats = torch.sum(att_feats, dim=1)
+    memory = model.encoder_decoder(fc_feats, att_feats, mode='encode')
 
     seq = torch.full((1, 1), args.bos_idx, dtype=torch.long).to(args.device)
     state = []
-    mask = att_mask.unsqueeze(1)
+    mask = torch.ones(feature_tensor.shape[:2], dtype=torch.long).unsqueeze(1).to(args.device)
 
     for _ in range(args.max_seq_length):
-        logit, state = model.core(seq[:, -1], None, None, memory, state, mask)
+        logit, state = model.encoder_decoder.core(seq[:, -1], None, None, memory, state, mask)
         logit = torch.log_softmax(logit, dim=-1)
         _, next_word = torch.max(logit, dim=-1)
         seq = torch.cat([seq, next_word.unsqueeze(1)], dim=1)
@@ -31,6 +35,27 @@ def generate_caption(model, feature_tensor, tokenizer, args):
 
     caption = tokenizer.decode(seq.squeeze(0).tolist())
     return caption
+
+# @torch.no_grad()
+# def generate_caption(model, feature_tensor, tokenizer, args):
+#     model.eval()
+#     att_mask = torch.ones(feature_tensor.shape[:2], dtype=torch.long).to(args.device)
+#     memory = model._encode(None, feature_tensor.to(args.device), att_mask)
+
+#     seq = torch.full((1, 1), args.bos_idx, dtype=torch.long).to(args.device)
+#     state = []
+#     mask = att_mask.unsqueeze(1)
+
+#     for _ in range(args.max_seq_length):
+#         logit, state = model.core(seq[:, -1], None, None, memory, state, mask)
+#         logit = torch.log_softmax(logit, dim=-1)
+#         _, next_word = torch.max(logit, dim=-1)
+#         seq = torch.cat([seq, next_word.unsqueeze(1)], dim=1)
+#         if next_word.item() == args.eos_idx:
+#             break
+
+#     caption = tokenizer.decode(seq.squeeze(0).tolist())
+#     return caption
 
 def main(args):
     # Initialize tokenizer and model with random weights
