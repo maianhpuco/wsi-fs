@@ -53,5 +53,9 @@ train_all: sbatch_train_mgpath_modified_clip_tcga_renal sbatch_train_mgpath_modi
 # export HF_HOME=/project/hnguyen2/mvu9/model_cache
 run_migen:
 	python check_migen.py 
-	
+
+run_caption:
+	python main_wsi_caption.py --image_dir /img_dir  --ann_path /project/hnguyen2/mvu9/datasets/PathText/TCGA-BRCA \
+	--split_path /project/hnguyen2/mvu9/folder_04_ma/wsi-fs/src/externals/wsi_caption/ocr/dataset_csv/splits_0.csv \
+	--dataset_name BRCA 
 #--config configs_maui/migen_tcga_renal.yaml --fold 1 
