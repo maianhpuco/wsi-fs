@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, AutoModel
 import os
 
-save_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/bioclinicalbert"
+save_path = "/project/hnguyen2/mvu9/pretrained_checkpoints/Bio_ClinicalBERT"
 os.makedirs(save_path, exist_ok=True)
 
 # Download and save model and tokenizer
