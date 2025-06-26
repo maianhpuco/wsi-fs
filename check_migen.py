@@ -116,6 +116,7 @@ if __name__ == '__main__':
     args.threshold = 1.0
     args.text_extractor = 'bioclinicalbert'
 
+    args.ann_path = '/project/hnguyen2/mvu9/folder_04_ma/wsi-fs/src/externals/wsi_vqa/dataset/WSI_captions/WsiVQA_train.json'
     # Hardcoded inputs
     args.slide_id = 'TCGA-UW-A7GP-11Z-00-DX1.C89DD837-4B77-4CB5-8FAB-DF9315892B9B'
     args.slide_path = os.path.join(
