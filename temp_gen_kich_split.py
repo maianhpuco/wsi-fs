@@ -3,7 +3,7 @@ import pandas as pd
 import random
 
 # === CONFIGURATION ===
-feature_dir = "/home/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files"
+feature_dir = "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/features_fp/pt_files"
 output_csv = "kich_split.csv"
 train_ratio = 0.7
 val_ratio = 0.15
