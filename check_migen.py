@@ -48,6 +48,8 @@ def load_wsi_feature_from_dataset(args):
 
         # Load feature for the given slide_id
         feature_tensor = test_dataset.get_features_by_slide_id(args.slide_id)
+        print("---------------")
+        print(f"Loaded feature tensor for slide {args.slide_id} with shape {feature_tensor.shape}")
         return feature_tensor.unsqueeze(0)  # shape [1, N, d_vf]
     else:
         raise NotImplementedError(f"Dataset {dataset_name} not supported yet.")
