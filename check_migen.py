@@ -131,5 +131,5 @@ if __name__ == '__main__':
     args.bos_idx = 0
     args.eos_idx = 0
     args.pad_idx = 0
-    
+    args.threshold = 0.5
     main(args)
