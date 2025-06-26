@@ -133,4 +133,5 @@ if __name__ == '__main__':
     args.pad_idx = 0
     args.threshold = 0.5
     args.n_classes = 3
+    args.drop_prob_lm = 0.5 
     main(args)
