@@ -4,16 +4,19 @@ import argparse
 import numpy as np
 import yaml
 import sys 
+from dataloader import return_splits_custom 
+
 sys.path.append("src/externals/wsi_caption")
  
 from modules.tokenizers import Tokenizer
 from models.r2gen import R2GenModel
-from dataloader import return_splits_custom
 
 def load_wsi_feature_from_dataset(args):
     """
     Use your MIL dataset and config to retrieve a test sample feature.
     """
+    from src.datasets.single_scale.tcga import return_splits_custom
+ 
     dataset_name = args.dataset_name.lower()
 
     if dataset_name in ['tcga_renal', 'tcga_lung']:
