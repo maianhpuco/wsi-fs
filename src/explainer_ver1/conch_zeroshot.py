@@ -52,16 +52,20 @@ class CONCH_ZeroShot_Model(nn.Module):
         return text_features
 
     def encode_features(self, x):
+        # x: [B, N, L]
         x = x.float()
-        A_V = self.attention_V(x)
-        A_U = self.attention_U(x)
-        A = self.attention_weights(A_V * A_U)
-        A = torch.transpose(A, 1, 0)
-        A = F.softmax(A, dim=1)
-        feat = torch.mm(A, x)
-        feat = feat / feat.norm(dim=-1, keepdim=True)
-        # return feat
-        return feat.squeeze(1) if feat.size(1) == 1 else feat 
+
+        A_V = self.attention_V(x)         # [B, N, D]
+        A_U = self.attention_U(x)         # [B, N, D]
+        A = self.attention_weights(A_V * A_U)  # [B, N, K]
+        A = A.transpose(1, 2)             # [B, K, N]
+        A = F.softmax(A, dim=-1)          # attention weights over patches
+
+        feat = torch.bmm(A, x)            # [B, K, L]
+        feat = F.normalize(feat, dim=-1)  # normalize feature dimension
+
+        return feat.squeeze(1) if feat.size(1) == 1 else feat  # return [B, L] if K == 1
+
     
     def forward(self, x_s, coord_s, x_l, coords_l, label=None):
         # Encode multi-scale features
