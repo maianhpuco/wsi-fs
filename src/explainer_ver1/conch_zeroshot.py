@@ -62,19 +62,10 @@ class CONCH_ZeroShot_Model(nn.Module):
         self.attention_weights = nn.Linear(self.D, self.K).to(self.device)
 
     def encode_text(self, prompts):
-        tokenized = [self.tokenizer.encode(p) for p in prompts]
-        max_len = min(max(len(t) for t in tokenized), 77)
-
-        # Pad and truncate
-        token_tensor = torch.zeros(len(prompts), 77, dtype=torch.long)
-        for i, tokens in enumerate(tokenized):
-            tokens = tokens[:77]
-            token_tensor[i, :len(tokens)] = torch.tensor(tokens)
-
-        token_tensor = token_tensor.to(self.device)
-        embeddings = self.conch_model.token_embedding(token_tensor).type(self.conch_model.dtype)  # [B, 77, D]
-        return F.normalize(self.text_encoder(embeddings, token_tensor), dim=-1)
-
+        tokenized = self.conch_model.tokenizer(prompts).to(self.device)
+        text_features = self.conch_model.encode_text(tokenized)
+        return F.normalize(text_features, dim=-1)
+    
     def encode_features(self, x):
         x = x.float()
         A_V = self.attention_V(x)         # [B, N, D]
