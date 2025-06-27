@@ -16,7 +16,9 @@ os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache
 
 from explainer_ver1 import CONCH_ZeroShot_Model
 sys.path.append("src/externals/CONCH")
-from conch.zero_shot import zero_shot_classifier, run_mizero
+
+ 
+from conch.downstream.zeroshot_path import zero_shot_classifier, run_mizero
 from utils.file_utils import save_pkl
 
 
