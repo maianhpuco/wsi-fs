@@ -46,11 +46,11 @@ class CONCH_ZeroShot_Model(nn.Module):
         self.attention_weights = nn.Linear(self.D, self.K).to(self.device)
 
     def encode_text(self, prompts):
-        tokenized = tokenize(prompts).to(self.device)
+        tokenized = tokenize(texts=prompts).to(self.device)
         text_features = self.conch_model.encode_text(tokenized)
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
         return text_features
-
+    
     def encode_features(self, x):
         # x: [B, N, L]
         x = x.float()
