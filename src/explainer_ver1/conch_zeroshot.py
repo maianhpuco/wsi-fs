@@ -60,8 +60,9 @@ class CONCH_ZeroShot_Model(nn.Module):
         A = F.softmax(A, dim=1)
         feat = torch.mm(A, x)
         feat = feat / feat.norm(dim=-1, keepdim=True)
-        return feat
-
+        # return feat
+        return feat.squeeze(1) if feat.size(1) == 1 else feat 
+    
     def forward(self, x_s, coord_s, x_l, coords_l, label=None):
         # Encode multi-scale features
         feat_low = self.encode_features(x_s)
