@@ -7,15 +7,16 @@ import pandas as pd
 import torch
 from datetime import datetime
 from utils.file_utils import save_pkl
-import ml_collections
+from utils.core_utils import Accuracy_Logger, calculate_error
 from sklearn.metrics import roc_auc_score, accuracy_score, f1_score
+import ml_collections
 
 # Set up path
-sys.path.append(os.path.join("src"))   
-
+sys.path.append(os.path.join("src"))
 os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
 
 from explainer_ver1 import CONCH_ZeroShot_Model
+
 
 def seed_torch(seed=7):
     import random
@@ -28,6 +29,7 @@ def seed_torch(seed=7):
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+
 
 def prepare_dataset(args, fold_id):
     if args.dataset_name == 'tcga_renal':
@@ -45,30 +47,45 @@ def prepare_dataset(args, fold_id):
         print(f"Test dataset size for fold {fold_id}: {len(test_dataset)}")
         return train_dataset, val_dataset, test_dataset
     else:
-        raise NotImplementedError(f"[\u2717] Dataset '{args.dataset_name}' not supported.")
+        raise NotImplementedError(f"[✗] Dataset '{args.dataset_name}' not supported.")
 
-def evaluate(model, dataset, args):
+
+def run_evaluation(model, loader, args, epoch=0):
+    device = args.device
     model.eval()
+    acc_logger = Accuracy_Logger(n_classes=args.n_classes)
+
     all_probs, all_preds, all_labels = [], [], []
+    val_loss = val_error = 0.
+
     with torch.no_grad():
-        for data in dataset:
-            # unpack tuple instead of assuming dict
-            x_s, coord_s, x_l, coords_l, label = [d.to(args.device) for d in data]
+        for batch_idx, (x_s, coord_s, x_l, coords_l, label) in enumerate(loader):
+            x_s, coord_s, x_l, coords_l, label = [d.to(device, non_blocking=True) for d in (x_s, coord_s, x_l, coords_l, label)]
+            Y_prob, Y_hat, loss = model(x_s, coord_s, x_l, coords_l, label)
 
-            Y_prob, Y_hat, _ = model(x_s, coord_s, x_l, coords_l, label)
+            acc_logger.log(Y_hat, label)
             all_probs.append(Y_prob.cpu().numpy())
-            all_preds.append(Y_hat.cpu().numpy())
-            all_labels.append(label.cpu().numpy())
+            all_preds.append(Y_hat.cpu())
+            all_labels.append(label.cpu())
 
-    all_probs = np.concatenate(all_probs, axis=0)
-    all_preds = np.concatenate(all_preds, axis=0)
-    all_labels = np.concatenate(all_labels, axis=0)
+            val_loss += loss.item()
+            val_error += calculate_error(Y_hat, label)
+
+    all_probs = np.concatenate(all_probs)
+    all_preds = torch.cat(all_preds).numpy()
+    all_labels = torch.cat(all_labels).numpy()
 
     auc = roc_auc_score(all_labels, all_probs, multi_class='ovr') if args.n_classes > 2 else roc_auc_score(all_labels, all_probs[:, 1])
     acc = accuracy_score(all_labels, all_preds)
     f1 = f1_score(all_labels, all_preds, average='macro')
 
+    print(f"[Evaluation] AUC: {auc:.4f}, ACC: {acc:.4f}, F1: {f1:.4f}")
+    for i in range(args.n_classes):
+        acc_i, correct, count = acc_logger.get_summary(i)
+        print(f"  - Class {i}: acc={acc_i:.4f}, correct={correct}/{count}")
+
     return {'auc': auc, 'acc': acc, 'f1': f1}
+
 
 def main(args):
     args.text_prompt = np.array(pd.read_csv(args.text_prompt_path, header=None)).squeeze()
@@ -76,16 +93,14 @@ def main(args):
 
     all_test_auc, all_test_acc, all_test_f1, folds = [], [], [], []
 
-    for i in range(args.k_start, args.k_end + 1):
-        print(f"\n=========== Fold {i} ===========")
-        datasets = prepare_dataset(args, i)
-        _, _, test_dataset = datasets
+    for fold_id in range(args.k_start, args.k_end + 1):
+        print(f"\n=========== Fold {fold_id} ===========")
+        _, _, test_dataset = prepare_dataset(args, fold_id)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        fold_result_dir = os.path.join(args.paths['results_dir'], f"zeroshot_fold{i}_timestamp_{timestamp}")
+        fold_result_dir = os.path.join(args.paths['results_dir'], f"zeroshot_fold{fold_id}_timestamp_{timestamp}")
         os.makedirs(fold_result_dir, exist_ok=True)
-
-        folds.append(i)
+        folds.append(fold_id)
 
         config = ml_collections.ConfigDict()
         config.input_size = 1024
@@ -93,17 +108,20 @@ def main(args):
         config.text_prompt = args.text_prompt
         config.device = args.device
         config.prototype_number = args.prototype_number
-        config.weight_path = "hf_hub:MahmoodLab/conch" #args.paths.get('weight_path', '')
+        config.weight_path = "hf_hub:MahmoodLab/conch"
 
         model = CONCH_ZeroShot_Model(config=config, num_classes=args.n_classes).to(args.device)
 
-        results = evaluate(model, test_dataset, args)
+        # Wrap dataset in a DataLoader for consistency
+        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2)
+
+        results = run_evaluation(model, test_loader, args)
 
         all_test_auc.append(results['auc'])
         all_test_acc.append(results['acc'])
         all_test_f1.append(results['f1'])
 
-        save_pkl(os.path.join(fold_result_dir, f'split_{i}_results.pkl'), results)
+        save_pkl(os.path.join(fold_result_dir, f'split_{fold_id}_results.pkl'), results)
 
     summary_df = pd.DataFrame({
         'folds': folds,
@@ -123,7 +141,8 @@ def main(args):
     summary_df.to_csv(os.path.join(args.paths['results_dir'], f"summary_{suffix}.csv"), index=False)
     result_df.to_csv(os.path.join(args.paths['results_dir'], f"result_{suffix}.csv"), index=False)
 
-    print("Zero-shot evaluation complete.")
+    print("\n✅ Zero-shot evaluation complete.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
