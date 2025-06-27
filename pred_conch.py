@@ -52,13 +52,9 @@ def evaluate(model, dataset, args):
     all_probs, all_preds, all_labels = [], [], []
     with torch.no_grad():
         for data in dataset:
-            x_s, coord_s, x_l, coords_l, label = (
-                data['x_s'].to(args.device),
-                data['coord_s'].to(args.device),
-                data['x_l'].to(args.device),
-                data['coords_l'].to(args.device),
-                data['label'].to(args.device)
-            )
+            # unpack tuple instead of assuming dict
+            x_s, coord_s, x_l, coords_l, label = [d.to(args.device) for d in data]
+
             Y_prob, Y_hat, _ = model(x_s, coord_s, x_l, coords_l, label)
             all_probs.append(Y_prob.cpu().numpy())
             all_preds.append(Y_hat.cpu().numpy())
