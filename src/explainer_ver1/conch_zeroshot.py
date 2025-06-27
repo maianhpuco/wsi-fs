@@ -4,7 +4,9 @@ import torch.nn.functional as F
 import os
 import sys
 import pandas as pd
-
+from open_clip import get_tokenizer
+ 
+ 
 # Setup path to CONCH
 current_dir = os.path.dirname(os.path.abspath(__file__))  # research/
 _path = os.path.abspath(os.path.join(current_dir, "../..", 'src/externals/CONCH'))
@@ -26,7 +28,8 @@ class CONCH_ZeroShot_Model(nn.Module):
             hf_auth_token=os.environ.get("HF_TOKEN")
         )
         self.logit_scale = self.conch_model.logit_scale
-        self.tokenizer = self.conch_model.tokenizer  # use built-in tokenizer
+        self.tokenizer = get_tokenizer("ViT-B-16")
+        # self.tokenizer = self.conch_model.tokenizer  # use built-in tokenizer
 
         # Load text prompts
         if isinstance(config.text_prompt, str) and config.text_prompt.endswith(".csv"):
