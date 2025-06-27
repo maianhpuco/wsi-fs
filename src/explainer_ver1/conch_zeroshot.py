@@ -1,24 +1,23 @@
 import os
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import sys 
 
 sys.path.append("src/externals/CONCH") 
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
 class CONCH_ZeroShot_Model(nn.Module):
     def __init__(self, config, num_classes=None):
-        """
-        Args:
-            config: configuration object with fields like .device, .weight_path
-            num_classes: optional, used for logging or slicing prompts
-        """
         super(CONCH_ZeroShot_Model, self).__init__()
         self.device = config.device
         self.num_classes = num_classes
+        self.text_prompt = config.text_prompt  # <- list of 2 * num_classes
 
-        # Load CONCH base model (e.g., ViT-B/16 + projection)
+        assert isinstance(self.text_prompt, list) and len(self.text_prompt) == 2 * self.num_classes, \
+            f"Expected 2 * num_classes text prompts, got {len(self.text_prompt)}"
+
+        # Load CONCH model
         self.model, self.preprocess = create_model_from_pretrained(
             model_cfg="conch_ViT-B-16",
             checkpoint_path=config.weight_path,
@@ -27,40 +26,61 @@ class CONCH_ZeroShot_Model(nn.Module):
         )
 
         self.tokenizer = get_tokenizer()
+        self.visual = self.model.visual
         self.logit_scale = self.model.logit_scale
-        self.visual = self.model.visual  # for patch features
+        self.loss_ce = nn.CrossEntropyLoss()
+
+        # Precompute text features
+        self.text_features_low, self.text_features_high = self.init_text_features()
 
     def encode_text(self, prompts):
-        """
-        Encode a list of text prompts.
-        Returns:
-            torch.Tensor: [N, D] normalized
-        """
         tokenized = self.tokenizer(prompts).to(self.device)
         text_features = self.model.encode_text(tokenized)
         return F.normalize(text_features, dim=-1)
 
-    def encode_image(self, images):
-        """
-        Encode images directly.
-        Args:
-            images: [B, C, H, W]
-        Returns:
-            torch.Tensor: [B, D] normalized
-        """
-        image_features = self.model.encode_image(images)
+    def encode_image(self, image):
+        image_features = self.model.encode_image(image)
         return F.normalize(image_features, dim=-1)
 
     def forward_project(self, patch_features):
-        """
-        Project patch-level features through visual projection.
-        Args:
-            patch_features: [N, D]
-        Returns:
-            torch.Tensor: [N, D] normalized
-        """
         projected = self.visual.forward_project(patch_features)
         return F.normalize(projected, dim=-1)
 
-    def forward(self, *args, **kwargs):
-        raise NotImplementedError("Use encode_text(), encode_image(), or forward_project() methods directly.")
+    def init_text_features(self):
+        low_text = self.text_prompt[:self.num_classes]
+        high_text = self.text_prompt[self.num_classes:]
+        text_features_low = self.encode_text(low_text)   # [C, D]
+        text_features_high = self.encode_text(high_text) # [C, D]
+        return text_features_low, text_features_high
+
+    def forward(self, x_s, coord_s, x_l, coord_l, label):
+        """
+        Args:
+            x_s: low-res patch features [B, N, D]
+            x_l: high-res patch features [B, N, D]
+            label: ground-truth label [B]
+        Returns:
+            Y_prob: softmax probabilities [B, C]
+            Y_hat: predicted label [B]
+            loss: cross-entropy loss
+        """
+        B = x_s.size(0)
+
+        # Flatten and project each patch feature
+        x_s_proj = self.forward_project(x_s.view(-1, x_s.size(-1))).view(B, -1, -1)  # [B, N, D]
+        x_l_proj = self.forward_project(x_l.view(-1, x_l.size(-1))).view(B, -1, -1)  # [B, N, D]
+
+        # Mean pooling over patches
+        image_features_low = F.normalize(x_s_proj.mean(dim=1), dim=-1)    # [B, D]
+        image_features_high = F.normalize(x_l_proj.mean(dim=1), dim=-1)   # [B, D]
+
+        # Compute logits
+        logits_low = image_features_low @ self.text_features_low.T.cuda()     # [B, C]
+        logits_high = image_features_high @ self.text_features_high.T.cuda()  # [B, C]
+        logits = logits_low + logits_high
+
+        loss = self.loss_ce(logits, label)
+        Y_prob = F.softmax(logits, dim=1)
+        Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
+
+        return Y_prob, Y_hat, loss
