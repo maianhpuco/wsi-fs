@@ -10,7 +10,7 @@ from utils.file_utils import save_pkl
 from utils.core_utils import train  # Make sure this expects model as the first arg
 # sys.path.append(base_path)
 sys.path.append(os.path.join("src"))  
-
+from conch.open_clip_custom import tokenize, get_tokenizer 
 from explainer_ver1 import ViLa_MIL_Model
 import ml_collections
 
@@ -74,45 +74,63 @@ def main(args):
         print(f"\n=========== Fold {i} ===========")
         seed_torch(args.seed)
         folds.append(i)
-        
+        # Build model
         config = ml_collections.ConfigDict()
-        config.input_size = 1024
-        config.hidden_size = 192
-        config.text_prompt = args.text_prompt
-        config.prototype_number = args.prototype_number
-        config.device = args.device  
-        model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).to(args.device)
+        config.device = torch.device("cuda")
+        config.weight_path = "path/to/checkpoint.pt"
+
+        model = CONCH_ZeroShot_Model(config=config).to(config.device)
+        model.eval()
+
+        # Encode text features for zero-shot
+        zeroshot_weights = zero_shot_classifier(
+            model=model,
+            classnames=[["ccRCC"], ["pRCC"], ["chRCC"]],
+            templates=["A histopathological image showing CLASSNAME tissue"],
+            device=config.device
+        )
+
+        # Run slide-level zero-shot evaluation
+        results, _ = run_mizero(model, zeroshot_weights, dataloader, config.device)
+ 
+    #     config = ml_collections.ConfigDict()
+    #     config.input_size = 1024
+    #     config.hidden_size = 192
+    #     config.text_prompt = args.text_prompt
+    #     config.prototype_number = args.prototype_number
+    #     config.device = args.device  
+    #     model = ViLa_MIL_Model(config=config, num_classes=args.n_classes).to(args.device)
         
-        results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
+    #     results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
-        all_test_auc.append(test_auc)
-        all_val_auc.append(val_auc)
-        all_test_acc.append(test_acc)
-        all_val_acc.append(val_acc)
-        all_test_f1.append(test_f1)
+    #     all_test_auc.append(test_auc)
+    #     all_val_auc.append(val_auc)
+    #     all_test_acc.append(test_acc)
+    #     all_val_acc.append(val_acc)
+    #     all_test_f1.append(test_f1)
 
-        save_pkl(os.path.join(args.results_dir, f'split_{i}_results.pkl'), results)
+    #     save_pkl(os.path.join(args.results_dir, f'split_{i}_results.pkl'), results)
 
-    # Save summary
-    summary_df = pd.DataFrame({
-        'folds': folds,
-        'test_auc': all_test_auc,
-        'test_acc': all_test_acc,
-        'test_f1': all_test_f1
-    })
+    # # Save summary
+    # summary_df = pd.DataFrame({
+    #     'folds': folds,
+    #     'test_auc': all_test_auc,
+    #     'test_acc': all_test_acc,
+    #     'test_f1': all_test_f1
+    # })
 
-    result_df = pd.DataFrame({
-        'metric': ['mean', 'std'],
-        'test_auc': [np.mean(all_test_auc), np.std(all_test_auc)],
-        'test_f1': [np.mean(all_test_f1), np.std(all_test_f1)],
-        'test_acc': [np.mean(all_test_acc), np.std(all_test_acc)]
-    })
+    # result_df = pd.DataFrame({
+    #     'metric': ['mean', 'std'],
+    #     'test_auc': [np.mean(all_test_auc), np.std(all_test_auc)],
+    #     'test_f1': [np.mean(all_test_f1), np.std(all_test_f1)],
+    #     'test_acc': [np.mean(all_test_acc), np.std(all_test_acc)]
+    # })
 
-    args.k = args.k_end - args.k_start + 1
-    suffix = f"partial_{folds[0]}_{folds[-1]}" if len(folds) != args.k else "full"
-    summary_df.to_csv(os.path.join(args.results_dir, f"summary_{suffix}.csv"), index=False)
-    result_df.to_csv(os.path.join(args.results_dir, f"result_{suffix}.csv"), index=False)
-    print("Training complete.")
+    # args.k = args.k_end - args.k_start + 1
+    # suffix = f"partial_{folds[0]}_{folds[-1]}" if len(folds) != args.k else "full"
+    # summary_df.to_csv(os.path.join(args.results_dir, f"summary_{suffix}.csv"), index=False)
+    # result_df.to_csv(os.path.join(args.results_dir, f"result_{suffix}.csv"), index=False)
+    # print("Training complete.")
 
 
 if __name__ == "__main__":
