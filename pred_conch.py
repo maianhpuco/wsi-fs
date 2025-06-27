@@ -103,7 +103,7 @@ def main(args):
         folds.append(fold_id)
 
         config = ml_collections.ConfigDict()
-        config.input_size = 1024
+        config.input_size = 512
         config.hidden_size = 192
         config.text_prompt = args.text_prompt
         config.device = args.device
