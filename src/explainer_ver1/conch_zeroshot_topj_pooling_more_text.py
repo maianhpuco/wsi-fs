@@ -96,7 +96,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
             C = self.num_classes
             class_scores = torch.zeros(B, N, C, device=logits.device)
             for class_id, (start, end) in self.class_to_desc_idx.items():
-                class_scores[:, :, class_id] = logits[:, :, start:end].max(dim=2)[0]
+                class_scores[:, :, class_id] = logits[:, :, start:end].mean(dim=2)[0]
             return class_scores  # [B, N, C]
 
         class_scores_s = get_patch_class_scores(logits_s)  # [B, N, C]
