@@ -67,86 +67,56 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
 
         return torch.cat(desc_features, dim=0), class_to_desc_idx  # [T, D], {class_id: (start, end)}
 
-    def forward(self, x_s, coord_s, x_l, coord_l, label=None, topj=100):
-        """
-        Args:
-            x_s: low-res patch features [B, N, D]
-            coord_s: low-res patch coordinates [B, N, 2]
-            x_l: high-res patch features [B, N, D]
-            coord_l: high-res patch coordinates [B, N, 2]
-            label: ground-truth label [B] (optional)
-            topj: number of top patches to consider for slide-level pooling
-        Returns:
-            Y_prob: softmax probabilities [B, C]
-            Y_hat: predicted label [B]
-            top_descriptions: list of top-matching descriptions for each sample
-            loss: cross-entropy loss (if label provided)
-        """
+    def forward(self, x_s, coord_s, x_l, coord_l, label=None, topj=10):
         B, N, D = x_s.shape
-
-        # Normalize patch features
         x_s_proj = F.normalize(x_s, dim=-1)
         x_l_proj = F.normalize(x_l, dim=-1)
 
-        # Compute cosine similarity to all textual descriptions
         desc_feats = self.desc_text_features.to(self.device)  # [T, D]
+
+        # --------- 1. Compute patch-to-description similarity ---------
         logits_s = torch.matmul(x_s_proj, desc_feats.T)  # [B, N, T]
         logits_l = torch.matmul(x_l_proj, desc_feats.T)  # [B, N, T]
-        print(f"[CONCH] Logits shapes: low-res {logits_s.shape}, high-res {logits_l.shape}")
 
-        # Combine low-res and high-res patches
-        x_proj = torch.cat([x_s_proj, x_l_proj], dim=1)  # [B, 2N, D]
-        logits = torch.cat([logits_s, logits_l], dim=1)  # [B, 2N, T]
-        print(f"[CONCH] Combined logits shape: {logits.shape}")
-
-        # For each patch, select top description per class
-        patch_scores = torch.zeros(B, 2 * N, device=self.device)  # [B, 2N]
-        best_desc_per_class = torch.zeros(B, 2 * N, self.num_classes, dtype=torch.long, device=self.device)  # [B, 2N, C]
-
-        for b in range(B):
-            patch_logits = logits[b]  # [2N, T]
+        # --------- 2. Patch-level class score: max over descriptions in each class ---------
+        def get_patch_class_scores(logits):  # [B, N, T] → [B, N, C]
+            B, N, T = logits.shape
+            C = self.num_classes
+            class_scores = torch.zeros(B, N, C, device=logits.device)
             for class_id, (start, end) in self.class_to_desc_idx.items():
-                class_desc_logits = patch_logits[:, start:end]  # [2N, num_desc]
-                max_scores, max_indices = class_desc_logits.max(dim=1)  # [2N], [2N]
-                patch_scores[b] = torch.maximum(patch_scores[b], max_scores)  # Update with max score across classes
-                best_desc_per_class[b, :, class_id] = start + max_indices  # Absolute desc indices
+                class_scores[:, :, class_id] = logits[:, :, start:end].max(dim=2)[0]  # max over descriptions
+            return class_scores  # [B, N, C]
 
-        # Get top-j indices per slide
-        topj = min(topj, 2 * N)
-        top_idx = torch.topk(patch_scores, topj, dim=1)[1]  # [B, j]
+        class_scores_s = get_patch_class_scores(logits_s)  # [B, N, C]
+        class_scores_l = get_patch_class_scores(logits_l)  # [B, N, C]
 
-        # Gather top-j patch embeddings
+        # --------- 3. For each patch, select best class score ---------
+        patch_scores_s, _ = class_scores_s.max(dim=2)  # [B, N]
+        patch_scores_l, _ = class_scores_l.max(dim=2)  # [B, N]
+
+        # --------- 4. Select top-j patches based on discriminative power ---------
+        topj = min(topj, N)
+        top_idx_s = torch.topk(patch_scores_s, topj, dim=1)[1]  # [B, j]
+        top_idx_l = torch.topk(patch_scores_l, topj, dim=1)[1]  # [B, j]
+
         def gather_top_patches(feats, idx):
-            B, N, D = feats.shape
-            idx_exp = idx.unsqueeze(-1).expand(-1, -1, D)  # [B, j, D]
-            return torch.gather(feats, dim=1, index=idx_exp)  # [B, j, D]
+            return torch.gather(feats, 1, idx.unsqueeze(-1).expand(-1, -1, feats.size(-1)))
 
-        top_feats = gather_top_patches(x_proj, top_idx)  # [B, j, D]
-        image_features = F.normalize(top_feats.mean(dim=1), dim=-1)  # [B, D]
+        top_feat_s = gather_top_patches(x_s_proj, top_idx_s)  # [B, j, D]
+        top_feat_l = gather_top_patches(x_l_proj, top_idx_l)  # [B, j, D]
 
-        # Compute slide-level logits using averaged text features per class
-        class_text_features = torch.zeros(self.num_classes, desc_feats.shape[-1], device=self.device)  # [C, D]
-        for class_id, (start, end) in self.class_to_desc_idx.items():
-            class_text_features[class_id] = desc_feats[start:end].mean(dim=0)  # Average features for class
+        # --------- 5. Slide-level representation ---------
+        image_features_low = F.normalize(top_feat_s.mean(dim=1), dim=-1)   # [B, D]
+        image_features_high = F.normalize(top_feat_l.mean(dim=1), dim=-1)  # [B, D]
 
-        class_logits = image_features @ class_text_features.T  # [B, C]
-        class_logits = class_logits * self.logit_scale.exp()  # Apply logit scale
+        # --------- 6. Compute logits using class-level features ---------
+        logits_low = image_features_low @ self.text_features_low.T.cuda()     # [B, C]
+        logits_high = image_features_high @ self.text_features_high.T.cuda()  # [B, C]
+        logits = logits_low + logits_high
 
-        # Compute softmax and predictions
-        Y_prob = F.softmax(class_logits, dim=1)  # [B, C]
-        Y_hat = Y_prob.argmax(dim=1)  # [B]
-
-        # Extract best description for each predicted class
-        all_descriptions = sum(self.text_prompts.values(), [])  # Flatten to list[str]
-        top_descriptions = []
-        for b in range(B):
-            pred_cls = Y_hat[b].item()
-            # Get the top patch for this sample
-            top_patch_idx = top_idx[b, 0].item()  # Use the top-1 patch for description
-            desc_idx = best_desc_per_class[b, top_patch_idx, pred_cls].item()
-            top_descriptions.append(all_descriptions[desc_idx])
-
-        # Compute loss if label is provided
-        loss = self.loss_ce(class_logits, label) if label is not None else None
+        # --------- 7. Classification outputs ---------
+        Y_prob = F.softmax(logits, dim=1)
+        Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
+        loss = self.loss_ce(logits, label) if label is not None else None
 
         return Y_prob, Y_hat, loss
