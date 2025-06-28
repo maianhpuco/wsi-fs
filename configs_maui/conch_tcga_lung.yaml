@@ -1,4 +1,4 @@
-dataset_name: 'tcga_renal'
+dataset_name: 'tcga_lung'
 paths: 
   data_folder_s:
     luad: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/luad/conch_features_fp/patch_256x256_5x"
