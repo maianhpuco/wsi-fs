@@ -40,13 +40,15 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
 
         # Encode all textual descriptions and track index mapping
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
+        self.text_features_low = self.get_class_features()   # [C, D]
+        self.text_features_high = self.text_features_low     # (or create separately if needed)
 
     def encode_text(self, prompts):
         tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
         tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
         text_features = self.model.encode_text(tokenized["input_ids"])
 
-        # Apply text projection if not already projected
+        # Apply text projection if needed
         if text_features.shape[-1] == 768:
             if hasattr(self.model, "text") and hasattr(self.model.text, "text_projection"):
                 text_features = text_features @ self.model.text.text_projection
@@ -69,6 +71,14 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
 
         return torch.cat(desc_features, dim=0), class_to_desc_idx  # [T, D], {class_id: (start, end)}
 
+    def get_class_features(self):
+        """Aggregate description features into one feature per class via max pooling"""
+        C, D = self.num_classes, self.desc_text_features.shape[1]
+        class_feats = torch.zeros(C, D, device=self.device)
+        for class_id, (start, end) in self.class_to_desc_idx.items():
+            class_feats[class_id] = self.desc_text_features[start:end].max(dim=0)[0]
+        return F.normalize(class_feats, dim=-1)  # [C, D]
+
     def forward(self, x_s, coord_s, x_l, coord_l, label=None, topj=10):
         B, N, D = x_s.shape
         x_s_proj = F.normalize(x_s, dim=-1)
@@ -86,7 +96,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
             C = self.num_classes
             class_scores = torch.zeros(B, N, C, device=logits.device)
             for class_id, (start, end) in self.class_to_desc_idx.items():
-                class_scores[:, :, class_id] = logits[:, :, start:end].max(dim=2)[0]  # max over descriptions
+                class_scores[:, :, class_id] = logits[:, :, start:end].max(dim=2)[0]
             return class_scores  # [B, N, C]
 
         class_scores_s = get_patch_class_scores(logits_s)  # [B, N, C]
@@ -112,8 +122,8 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         image_features_high = F.normalize(top_feat_l.mean(dim=1), dim=-1)  # [B, D]
 
         # --------- 6. Compute logits using class-level features ---------
-        logits_low = image_features_low @ self.text_features_low.T.cuda()     # [B, C]
-        logits_high = image_features_high @ self.text_features_high.T.cuda()  # [B, C]
+        logits_low = image_features_low @ self.text_features_low.T     # [B, C]
+        logits_high = image_features_high @ self.text_features_high.T  # [B, C]
         logits = logits_low + logits_high
 
         # --------- 7. Classification outputs ---------
