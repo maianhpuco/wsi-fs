@@ -52,59 +52,6 @@ class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
         text_features_high = self.encode_text(high_text)
         return text_features_low, text_features_high
 
-    # def forward(self, x_s, coord_s, x_l, coord_l, label):
-    #     """
-    #     Args:
-    #         x_s: [B, N, D] low-res patch features
-    #         x_l: [B, N, D] high-res patch features
-    #         label: [B] ground-truth labels
-    #     Returns:
-    #         Y_probs_dict: {j: [B, C]} softmax outputs for each top-j
-    #         Y_hats_dict: {j: [B]} predicted class indices
-    #         loss: cross-entropy loss computed on top-1 pooled logits
-    #     """
-    #     B, N_s, D_s = x_s.shape
-    #     B, N_l, D_l = x_l.shape
-
-    #     x_s_proj = self.forward_project(x_s.view(-1, D_s)).view(B, N_s, -1)
-    #     x_l_proj = self.forward_project(x_l.view(-1, D_l)).view(B, N_l, -1)
-
-    #     text_features_low = self.text_features_low.to(self.device)
-    #     text_features_high = self.text_features_high.to(self.device)
-
-    #     logits_low_all = torch.matmul(x_s_proj, text_features_low.T)  # [B, N_s, C]
-    #     logits_high_all = torch.matmul(x_l_proj, text_features_high.T)  # [B, N_l, C]
-    #     logits_all = logits_low_all + logits_high_all  # [B, N, C]
-
-    #     Y_probs_dict = {}
-    #     Y_hats_dict = {}
-    #     pooled_logits_dict = {}
-
-    #     logit_scale = self.logit_scale.exp()
-
-    #     for b in range(B):
-    #         patch_logits = logits_all[b]  # [N, C]
-    #         preds, pooled_logits = self.topj_pooling(patch_logits, self.topj, logit_scale=logit_scale)
-
-    #         for j in self.topj:
-    #             if j not in Y_hats_dict:
-    #                 Y_hats_dict[j] = []
-    #                 Y_probs_dict[j] = []
-    #                 pooled_logits_dict[j] = []
-
-    #             Y_hats_dict[j].append(preds[j])
-    #             Y_probs_dict[j].append(F.softmax(pooled_logits[j], dim=1))
-    #             pooled_logits_dict[j].append(pooled_logits[j])
-
-    #     # Stack results per topj
-    #     for j in self.topj:
-    #         Y_hats_dict[j] = torch.stack(Y_hats_dict[j], dim=0)  # [B]
-    #         Y_probs_dict[j] = torch.cat(Y_probs_dict[j], dim=0)  # [B, C]
-    #         pooled_logits_dict[j] = torch.cat(pooled_logits_dict[j], dim=0)  # [B, C]
-
-    #     loss = self.loss_ce(pooled_logits_dict[self.topj[0]], label)
-    #     return Y_probs_dict, Y_hats_dict, loss
-
     @staticmethod
     def topj_pooling(logits, topj, logit_scale=None):
         """
