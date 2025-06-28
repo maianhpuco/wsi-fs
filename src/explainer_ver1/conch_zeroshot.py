@@ -72,11 +72,17 @@ class CONCH_ZeroShot_Model(nn.Module):
             Y_hat: predicted label [B]
             loss: cross-entropy loss
         """
-        B = x_s.size(0)
+        B, N, D = x_s.shape
+        x_s_proj = self.forward_project(x_s.view(-1, D)).view(B, N, -1)  # [B, N, D']
 
-        # Flatten and project each patch feature
-        x_s_proj = self.forward_project(x_s.view(-1, x_s.size(-1))).view(B, -1, -1)  # [B, N, D]
-        x_l_proj = self.forward_project(x_l.view(-1, x_l.size(-1))).view(B, -1, -1)  # [B, N, D]
+        B, N, D = x_l.shape
+        x_l_proj = self.forward_project(x_l.view(-1, D)).view(B, N, -1)  # [B, N, D']
+ 
+        # B = x_s.size(0)
+
+        # # Flatten and project each patch feature
+        # x_s_proj = self.forward_project(x_s.view(-1, x_s.size(-1))).view(B, -1, -1)  # [B, N, D]
+        # x_l_proj = self.forward_project(x_l.view(-1, x_l.size(-1))).view(B, -1, -1)  # [B, N, D]
 
         # Mean pooling over patches
         image_features_low = F.normalize(x_s_proj.mean(dim=1), dim=-1)    # [B, D]
