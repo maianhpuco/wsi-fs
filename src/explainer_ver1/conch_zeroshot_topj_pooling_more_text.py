@@ -79,7 +79,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
             class_feats[class_id] = self.desc_text_features[start:end].max(dim=0)[0]
         return F.normalize(class_feats, dim=-1)  # [C, D]
 
-    def forward(self, x_s, coord_s, x_l, coord_l, label=None, topj=10):
+    def forward(self, x_s, coord_s, x_l, coord_l, label=None, topj=100):
         B, N, D = x_s.shape
         x_s_proj = F.normalize(x_s, dim=-1)
         x_l_proj = F.normalize(x_l, dim=-1)
