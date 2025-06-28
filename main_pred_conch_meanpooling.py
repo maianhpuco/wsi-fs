@@ -14,7 +14,7 @@ import ml_collections
 sys.path.append("src")
 os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
 
-from explainer_ver1 import CONCH_ZeroShot_Model_MeanPooling
+from explainer_ver1 import CONCH_ZeroShot_Model_MeanPooling 
 from utils.file_utils import save_pkl
 
 def seed_torch(seed=42):
@@ -87,7 +87,18 @@ def run_fold_evaluation(fold_id, args):
     all_labels = np.array(all_labels)
     all_preds = np.array(all_preds)
     all_probs = np.concatenate(all_probs, axis=0)
-
+    
+        # ----- Per-class accuracy report -----
+    n_classes = args.n_classes
+    class_results = {}
+    for cls in range(n_classes):
+        cls_mask = (all_labels == cls)
+        total = cls_mask.sum()
+        correct = ((all_preds == cls) & cls_mask).sum()
+        acc_cls = correct / total if total > 0 else 0.0
+        print(f"Class {cls}: acc {acc_cls:.4f}, correct {correct}/{total}")
+    
+    
     if all_probs.shape[1] == 2:
         roc_input = all_probs[:, 1]
         roc_args = {}
