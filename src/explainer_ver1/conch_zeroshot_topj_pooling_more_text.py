@@ -7,12 +7,13 @@ import torch.nn.functional as F
 sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
+
 class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
         self.num_classes = num_classes
-        self.text_prompts = dict(config.text_prompts)  # dict: {class_name: [desc1, desc2, ...]}
+        self.text_prompts = dict(config.text_prompts)  # {class_name: [desc1, desc2, ...]}
         self.topj = getattr(config, "topj", 10)
 
         assert isinstance(self.text_prompts, dict)
@@ -39,6 +40,11 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
         tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
         text_features = self.model.encode_text(tokenized["input_ids"])
+        
+        # ✅ Apply projection if model has one (fix for shape mismatch)
+        if hasattr(self.model, "text_projection"):
+            text_features = text_features @ self.model.text_projection
+
         return F.normalize(text_features, dim=-1)
 
     def init_text_features(self):
@@ -60,7 +66,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         x_s_proj = F.normalize(x_s, dim=-1)
         x_l_proj = F.normalize(x_l, dim=-1)
 
-        # Compute per-patch norms
+        # Compute topj patch indices using L2 norm
         patch_scores_s = x_s_proj.norm(p=2, dim=-1)
         patch_scores_l = x_l_proj.norm(p=2, dim=-1)
 
@@ -74,14 +80,14 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         top_feat_s = gather(x_s_proj, idx_s)  # [B, j, D]
         top_feat_l = gather(x_l_proj, idx_l)  # [B, j, D]
 
-        # Concatenate and normalize top patches
+        # Combine top patches and normalize
         top_feat = F.normalize(torch.cat([top_feat_s, top_feat_l], dim=1), dim=-1)  # [B, 2j, D]
 
-        # Compute similarity between patches and text descriptions
+        # Compute similarity between patch features and text features
         logits = torch.einsum("bnd,td->bnt", top_feat, self.desc_text_features.T)  # [B, 2j, T]
-        logits_max = logits.max(dim=1)[0]  # max over top patches -> [B, T]
+        logits_max = logits.max(dim=1)[0]  # max over patches => [B, T]
 
-        # Aggregate max score per class over its descriptions
+        # Aggregate description scores per class
         class_logits = torch.zeros(B, self.num_classes, device=self.device)
         for class_id, (start, end) in self.class_to_desc_idx.items():
             class_logits[:, class_id] = logits_max[:, start:end].max(dim=1)[0]
@@ -90,7 +96,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         Y_hat = Y_prob.argmax(dim=1)
         loss = self.loss_ce(class_logits, label) if label is not None else None
 
-        # Interpretability: return top-scoring description
+        # Optional: return most-matching description
         best_desc_idx = logits_max.argmax(dim=1)  # [B]
         all_descriptions = sum(self.text_prompts.values(), [])  # flatten
         top_descriptions = [all_descriptions[i] for i in best_desc_idx.tolist()]
