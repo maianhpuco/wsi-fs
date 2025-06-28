@@ -14,14 +14,15 @@ pred_conch_meanpooling_tcga_renal:
 	python main_pred_conch_meanpooling.py --config configs_maui/conch_tcga_renal.yaml 
 pred_conch_topjpooling_tcga_renal:
 	python main_pred_conch_topjpooling.py --config configs_maui/conch_tcga_renal.yaml 
-
+pred_conch_topjpooling_tcga_renal_nodesc:
+	python main_pred_conch_topjpooling.py --config configs_maui/conch_tcga_renal_no_desc.yaml 
 
 pred_conch_meanpooling_tcga_lung:
 	python main_pred_conch_meanpooling.py --config configs_maui/conch_tcga_lung.yaml 
 pred_conch_topjpooling_tcga_lung:
 	python main_pred_conch_topjpooling.py --config configs_maui/conch_tcga_lung.yaml 
- 
 
+ 
 
 mgpath_modified_tcga_renal:
 	python train_mgpath_modified.py --config configs_maui/mgpath_modified_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 10
