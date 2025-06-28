@@ -6,13 +6,16 @@ import torch.nn.functional as F
 
 sys.path.append("src/externals/CONCH") 
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
-
-class CONCH_ZeroShot_Model(nn.Module):
+ 
+ 
+ 
+class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
     def __init__(self, config, num_classes=None):
-        super(CONCH_ZeroShot_Model, self).__init__()
+        super(CONCH_ZeroShot_Model_MeanPooling, self).__init__()
         self.device = config.device
         self.num_classes = num_classes
-        self.text_prompt = config.text_prompt  # <- list of 2 * num_classes
+        self.text_prompt = config.text_prompt
+        self.topj = getattr(config, "topj", (1, 5, 10))  # default fallback
 
         assert isinstance(self.text_prompt, list) and len(self.text_prompt) == 2 * self.num_classes, \
             f"Expected 2 * num_classes text prompts, got {len(self.text_prompt)}"
@@ -34,18 +37,11 @@ class CONCH_ZeroShot_Model(nn.Module):
         self.text_features_low, self.text_features_high = self.init_text_features()
 
     def encode_text(self, prompts):
-        print("Encoding text prompts...")
-        print(prompts)
-
-        # Return PyTorch tensors, pad to the longest sequence
         tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
         tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
-
-        # Use only input_ids, as required by open_clip-style model
         text_features = self.model.encode_text(tokenized["input_ids"])
         return F.normalize(text_features, dim=-1)
-    
-    
+
     def encode_image(self, image):
         image_features = self.model.encode_image(image)
         return F.normalize(image_features, dim=-1)
@@ -68,33 +64,42 @@ class CONCH_ZeroShot_Model(nn.Module):
             x_l: high-res patch features [B, N, D]
             label: ground-truth label [B]
         Returns:
-            Y_prob: softmax probabilities [B, C]
-            Y_hat: predicted label [B]
-            loss: cross-entropy loss
+            Y_probs_dict: softmax probabilities for topj values {j: [B, C]}
+            Y_hats_dict: predictions for topj values {j: [B]}
+            loss: cross-entropy loss (computed on top-1 pooled logits)
         """
-        B, N, D = x_s.shape
-        x_s_proj = self.forward_project(x_s.view(-1, D)).view(B, N, -1)  # [B, N, D']
+        B, N_s, D_s = x_s.shape
+        B, N_l, D_l = x_l.shape
 
-        B, N, D = x_l.shape
-        x_l_proj = self.forward_project(x_l.view(-1, D)).view(B, N, -1)  # [B, N, D']
- 
-        # B = x_s.size(0)
+        x_s_proj = self.forward_project(x_s.view(-1, D_s)).view(B, N_s, -1)  # [B, N_s, D']
+        x_l_proj = self.forward_project(x_l.view(-1, D_l)).view(B, N_l, -1)  # [B, N_l, D']
 
-        # # Flatten and project each patch feature
-        # x_s_proj = self.forward_project(x_s.view(-1, x_s.size(-1))).view(B, -1, -1)  # [B, N, D]
-        # x_l_proj = self.forward_project(x_l.view(-1, x_l.size(-1))).view(B, -1, -1)  # [B, N, D]
+        logits_low_all = torch.matmul(x_s_proj, self.text_features_low.T.cuda())  # [B, N_s, C]
+        logits_high_all = torch.matmul(x_l_proj, self.text_features_high.T.cuda())  # [B, N_l, C]
 
-        # Mean pooling over patches
-        image_features_low = F.normalize(x_s_proj.mean(dim=1), dim=-1)    # [B, D]
-        image_features_high = F.normalize(x_l_proj.mean(dim=1), dim=-1)   # [B, D]
+        logits_all = logits_low_all + logits_high_all  # [B, N, C]
 
-        # Compute logits
-        logits_low = image_features_low @ self.text_features_low.T.cuda()     # [B, C]
-        logits_high = image_features_high @ self.text_features_high.T.cuda()  # [B, C]
-        logits = logits_low + logits_high
+        Y_probs_dict = {}
+        Y_hats_dict = {}
+        pooled_logits_dict = {}
 
-        loss = self.loss_ce(logits, label)
-        Y_prob = F.softmax(logits, dim=1)
-        Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
+        for b in range(B):
+            patch_logits = logits_all[b]  # [N, C]
+            preds, pooled_logits = topj_pooling(patch_logits, self.topj)
+            for j in self.topj:
+                if j not in Y_hats_dict:
+                    Y_hats_dict[j] = []
+                    Y_probs_dict[j] = []
+                    pooled_logits_dict[j] = []
+                Y_hats_dict[j].append(preds[j])
+                Y_probs_dict[j].append(F.softmax(pooled_logits[j], dim=1))
+                pooled_logits_dict[j].append(pooled_logits[j])
 
-        return Y_prob, Y_hat, loss
+        # Stack results
+        for j in self.topj:
+            Y_hats_dict[j] = torch.stack(Y_hats_dict[j])  # [B]
+            Y_probs_dict[j] = torch.cat(Y_probs_dict[j], dim=0)  # [B, C]
+            pooled_logits_dict[j] = torch.cat(pooled_logits_dict[j], dim=0)  # [B, C]
+
+        loss = self.loss_ce(pooled_logits_dict[self.topj[0]], label)
+        return Y_probs_dict, Y_hats_dict, loss

@@ -6,5 +6,6 @@ from .mil_ver1 import ExplainerVer1
 from .mil_ver1b import ViLa_MIL_Model
 from .mil_ver1c import ExplainerVer1c 
 from .mil_ver1d import ViLa_MIL_Model  as ExplainerVer1d 
-from .conch_zeroshot import CONCH_ZeroShot_Model
+from .conch_zeroshot_mean_pooling import CONCH_ZeroShot_Model_MeanPooling
+from .conch_zeroshot_topj_pooling import CONCH_ZeroShot_Model_TopjPooling
 from .vilamil_multi_img_prototype import ViLa_MIL_Model_MultiProto 

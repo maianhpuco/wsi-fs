@@ -10,8 +10,11 @@ train_explainer_ver1_tcga_renal:
 # train_vilamil_tcga_renal: 
 # 	python train_vilamil.py --config configs_maui/vilamil_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20  
 
-pred_conch_tcga_renal:
-	python pred_conch.py --config configs_maui/conch_tcga_renal.yaml 
+pred_conch_meanpooling_tcga_renal:
+	python main_pred_conch_meanpooling.py --config configs_maui/conch_tcga_renal.yaml 
+pred_conch_topjpooling_tcga_renal:
+	python main_pred_conch_topjpooling.py --config configs_maui/conch_tcga_renal.yaml 
+
 
 mgpath_modified_tcga_renal:
 	python train_mgpath_modified.py --config configs_maui/mgpath_modified_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 10
