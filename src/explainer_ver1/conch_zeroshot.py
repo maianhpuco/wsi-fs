@@ -56,15 +56,17 @@ class CONCH_ZeroShot_Model(nn.Module):
         
     #     text_features = self.model.encode_text(tokenized)
     #     return F.normalize(text_features, dim=-1)
-    
+        
     def encode_text(self, prompts):
         print("Encoding text prompts...")
         print(prompts)
 
-        tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True)
+        # Return PyTorch tensors, pad to the longest sequence
+        tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
         tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
 
-        text_features = self.model.encode_text(tokenized)
+        # Use only input_ids, as required by open_clip-style model
+        text_features = self.model.encode_text(tokenized["input_ids"])
         return F.normalize(text_features, dim=-1)
     
     
