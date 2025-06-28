@@ -75,13 +75,14 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         desc_feats = self.desc_text_features.to(self.device)  # [T, D]
         logits_s = torch.matmul(x_s_proj, desc_feats.T)  # [B, N, T]
         logits_l = torch.matmul(x_l_proj, desc_feats.T)  # [B, N, T]
-
+        print(f"[CONCH] Logits shapes: low-res {logits_s.shape}, high-res {logits_l.shape}")
+        
         # Merge low-res and high-res logits: [B, 2N, T]
         logits = torch.cat([logits_s, logits_l], dim=1)
-
+        print(f"[CONCH] Combined logits shape: {logits.shape}")
         # Max over all patches → most activated patch for each description
         logits_max = logits.max(dim=1)[0]  # [B, T]
-
+        print(f"[CONCH] Max logits shape: {logits_max.shape}")
         # For each class, pool over its description indices (max per class)
         class_logits = torch.zeros(B, self.num_classes, device=self.device)
         best_desc_per_class = torch.zeros(B, self.num_classes, dtype=torch.long, device=self.device)
