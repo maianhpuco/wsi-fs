@@ -39,6 +39,7 @@ def prepare_dataset(args, fold_id):
         label_dict=args.label_dict,
         seed=args.seed,
         use_h5=True,
+        args=args, 
     )
     print(f"[✓] Fold {fold_id} | Test set size: {len(test_dataset)}")
     return test_dataset
