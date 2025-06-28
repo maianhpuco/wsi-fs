@@ -33,14 +33,28 @@ class CONCH_ZeroShot_Model(nn.Module):
         # Precompute text features
         self.text_features_low, self.text_features_high = self.init_text_features()
 
+    # def encode_text(self, prompts):
+    #     print("Encoding text prompts...")
+    #     print(prompts)
+        
+    #     tokenized = self.tokenizer(prompts).to(self.device)
+    #     text_features = self.model.encode_text(tokenized)
+    #     return F.normalize(text_features, dim=-1)
     def encode_text(self, prompts):
         print("Encoding text prompts...")
         print(prompts)
         
-        tokenized = self.tokenizer(prompts).to(self.device)
+        tokenized = self.tokenizer(prompts)
+        
+        # If the tokenizer returns a list (e.g., list of token ids), convert to tensor
+        if isinstance(tokenized, list):
+            tokenized = torch.tensor(tokenized).to(self.device)
+        else:
+            tokenized = tokenized.to(self.device)
+        
         text_features = self.model.encode_text(tokenized)
         return F.normalize(text_features, dim=-1)
-
+    
     def encode_image(self, image):
         image_features = self.model.encode_image(image)
         return F.normalize(image_features, dim=-1)
