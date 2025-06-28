@@ -95,7 +95,21 @@ class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
 
         B, N, D = x_l.shape
         x_l_proj = self.forward_project(x_l.view(-1, D)).view(B, N, -1)  # [B, N, D']
+        # Print shape info
+        print(f"Low-res patches: {x_s_proj.shape}, High-res patches: {x_l_proj.shape}")
+        print(f"Low-res text features: {self.text_features_low.shape}, High-res text features: {self.text_features_high.shape}")
 
+        # Compute and print stats
+        def print_stats(name, tensor):
+            mean = tensor.mean().item()
+            std = tensor.std().item()
+            print(f"{name} - Mean: {mean:.4f}, Std: {std:.4f}")
+
+        print_stats("Low-res patch embeddings", x_s_proj)
+        print_stats("High-res patch embeddings", x_l_proj)
+        print_stats("Low-res text embeddings", self.text_features_low)
+        print_stats("High-res text embeddings", self.text_features_high)
+        return 
         # Compute logits for each patch
         logits_s = torch.matmul(x_s_proj, self.text_features_low.T.cuda())  # [B, N, C]
         logits_l = torch.matmul(x_l_proj, self.text_features_high.T.cuda())  # [B, N, C]
@@ -120,7 +134,7 @@ class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
 
         image_features_low = F.normalize(top_feat_s.mean(dim=1), dim=-1)  # [B, D]
         image_features_high = F.normalize(top_feat_l.mean(dim=1), dim=-1)  # [B, D]
-
+        
         # Compute logits
         logits_low = image_features_low @ self.text_features_low.T.cuda()     # [B, C]
         logits_high = image_features_high @ self.text_features_high.T.cuda()  # [B, C]
