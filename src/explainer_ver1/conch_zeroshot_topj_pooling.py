@@ -11,7 +11,7 @@ from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
  
 class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
     def __init__(self, config, num_classes=None):
-        super(CONCH_ZeroShot_Model_MeanPooling, self).__init__()
+        super(CONCH_ZeroShot_Model_TopjPooling, self).__init__()
         self.device = config.device
         self.num_classes = num_classes
         self.text_prompt = config.text_prompt
