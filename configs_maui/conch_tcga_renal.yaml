@@ -6,9 +6,9 @@ paths:
     kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/conch_features_fp/patch_256x256_5x"
 
   data_folder_l:
-    kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/conch_features_fp/patch_256x256_10x"
-    kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/conch_features_fp/patch_256x256_10x"
-    kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/conch_features_fp/patch_256x256_10x"
+    kich: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/conch_features_fp/patch_256x256_5x"
+    kirc: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirc/conch_features_fp/patch_256x256_5x"
+    kirp: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kirp/conch_features_fp/patch_256x256_5x"
  
   results_dir: "/project/hnguyen2/mvu9/wsi_fs_results/explainer_ver1d_tcga_renal_results" 
   # split_folder: "/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/splits_csv_tcga_renal"
