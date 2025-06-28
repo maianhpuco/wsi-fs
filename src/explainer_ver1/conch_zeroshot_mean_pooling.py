@@ -90,8 +90,8 @@ class CONCH_ZeroShot_Model_MeanPooling(nn.Module):
         logits_high = image_features_high @ self.text_features_high.T.cuda()  # [B, C]
         logits = logits_low + logits_high
 
-        loss = self.loss_ce(logits, label)
+        # loss = self.loss_ce(logits, label)
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
 
-        return Y_prob, Y_hat, loss
+        return Y_prob, Y_hat, None 
