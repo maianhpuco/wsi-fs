@@ -16,6 +16,9 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         self.text_prompts = dict(config.text_prompts)  # {class_name: [desc1, desc2, ...]}
         self.topj = getattr(config, "topj", 100)
 
+        # Initialize tokenizer before using it
+        self.tokenizer = get_tokenizer()
+
         # Validate text prompts
         assert isinstance(self.text_prompts, dict), "text_prompts must be a dictionary"
         for class_name, prompts in self.text_prompts.items():
@@ -31,7 +34,6 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
             hf_auth_token=os.environ.get("HF_TOKEN")
         )
 
-        self.tokenizer = get_tokenizer()
         self.visual = self.model.visual
         self.logit_scale = self.model.logit_scale
         self.loss_ce = nn.CrossEntropyLoss()
