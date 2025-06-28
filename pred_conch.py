@@ -59,20 +59,21 @@ def run_fold_evaluation(fold_id, args):
     model.eval()
 
     all_preds, all_probs, all_labels = [], [], []
-
+    
     for batch in tqdm(test_loader):
-        x_s = batch['features_s'].to(args.device)           # [1, N, D]
-        x_l = batch['features_l'].to(args.device)           # [1, N, D]
-        coord_s = batch['coords_s']
-        coord_l = batch['coords_l']
-        label = batch['label'].to(args.device)              # [1]
+        x_s, coord_s, x_l, coord_l, label = batch
+        x_s = x_s.to(args.device)
+        coord_s = coord_s.to(args.device)
+        x_l = x_l.to(args.device)
+        coord_l = coord_l.to(args.device)
+        label = label.to(args.device)
 
         Y_prob, Y_hat, loss = model(x_s, coord_s, x_l, coord_l, label)
 
         all_preds.append(Y_hat.cpu().item())
         all_probs.append(Y_prob.detach().cpu().numpy())
         all_labels.append(label.cpu().item())
-
+    
     all_labels = np.array(all_labels)
     all_preds = np.array(all_preds)
     all_probs = np.concatenate(all_probs, axis=0)
