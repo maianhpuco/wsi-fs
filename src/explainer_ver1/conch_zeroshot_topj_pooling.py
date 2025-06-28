@@ -91,12 +91,12 @@ class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
             loss: cross-entropy loss
         """
         B, N, D = x_s.shape
-        x_s_proj = F.normalize(x_s, dim=-1)
-        # x_s_proj = self.forward_project(x_s.view(-1, D)).view(B, N, -1)  # [B, N, D']
+        # x_s_proj = F.normalize(x_s, dim=-1)
+        x_s_proj = self.forward_project(x_s.view(-1, D)).view(B, N, -1)  # [B, N, D']
 
         B, N, D = x_l.shape
-        x_l_proj = F.normalize(x_l, dim=-1)
-        # x_l_proj = self.forward_project(x_l.view(-1, D)).view(B, N, -1)  # [B, N, D']
+        # x_l_proj = F.normalize(x_l, dim=-1)
+        x_l_proj = self.forward_project(x_l.view(-1, D)).view(B, N, -1)  # [B, N, D']
         # # Print shape info
         # print(f"Low-res patches: {x_s_proj.shape}, High-res patches: {x_l_proj.shape}")
         # print(f"Low-res text features: {self.text_features_low.shape}, High-res text features: {self.text_features_high.shape}")
