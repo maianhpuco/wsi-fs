@@ -34,6 +34,9 @@ class CONCH_ZeroShot_Model(nn.Module):
         self.text_features_low, self.text_features_high = self.init_text_features()
 
     def encode_text(self, prompts):
+        print("Encoding text prompts...")
+        print(prompts)
+        
         tokenized = self.tokenizer(prompts).to(self.device)
         text_features = self.model.encode_text(tokenized)
         return F.normalize(text_features, dim=-1)
