@@ -8,4 +8,5 @@ from .mil_ver1c import ExplainerVer1c
 from .mil_ver1d import ViLa_MIL_Model  as ExplainerVer1d 
 from .conch_zeroshot_mean_pooling import CONCH_ZeroShot_Model_MeanPooling
 from .conch_zeroshot_topj_pooling import CONCH_ZeroShot_Model_TopjPooling
+from .conch_zeroshot_topj_pooling_more_text import CONCH_ZeroShot_Model_TopjPooling_MoreText
 from .vilamil_multi_img_prototype import ViLa_MIL_Model_MultiProto 

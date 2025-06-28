@@ -14,7 +14,7 @@ import ml_collections
 sys.path.append("src")
 os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
 
-from explainer_ver1 import CONCH_ZeroShot_Model_TopjPooling 
+from explainer_ver1 import CONCH_ZeroShot_Model_TopjPooling_MoreText 
 from utils.file_utils import save_pkl
 
 def seed_torch(seed=42):
@@ -56,7 +56,7 @@ def run_fold_evaluation(fold_id, args):
     config.prototype_number = args.prototype_number
     config.weight_path = "hf_hub:MahmoodLab/conch"
 
-    model = CONCH_ZeroShot_Model_TopjPooling(config=config, num_classes=args.n_classes).to(args.device)
+    model = CONCH_ZeroShot_Model_TopjPooling_MoreText(config=config, num_classes=args.n_classes).to(args.device)
     model.eval()
 
     all_preds, all_probs, all_labels = [], [], []
