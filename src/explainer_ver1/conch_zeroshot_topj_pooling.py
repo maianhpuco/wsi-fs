@@ -85,7 +85,8 @@ class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
 
         for b in range(B):
             patch_logits = logits_all[b]  # [N, C]
-            preds, pooled_logits = topj_pooling(patch_logits, self.topj)
+            
+            preds, pooled_logits =self.topj_pooling(patch_logits, self.topj)
             for j in self.topj:
                 if j not in Y_hats_dict:
                     Y_hats_dict[j] = []
@@ -103,3 +104,17 @@ class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
 
         loss = self.loss_ce(pooled_logits_dict[self.topj[0]], label)
         return Y_probs_dict, Y_hats_dict, loss
+    
+    @staticmethod
+    def topj_pooling(logits, topj):
+        """
+        logits: N x C logit for each patch
+        topj: tuple of the top number of patches to use for pooling
+        """
+        # Sums logits across topj patches for each class, to get class prediction for each topj
+        maxj = min(max(topj), logits.size(0)) # Ensures j is smaller than number of patches. Unlikely for number of patches to be < 10, but just in case
+        values, _ = logits.topk(maxj, 0, True, True) # maxj x C
+        preds = {j : values[:min(j, maxj)].mean(dim=0, keepdim=True) for j in topj} # dict of 1 x C logit scores
+        pooled_logits = {key: val for key,val in preds.items()}    
+        preds = {key: val.argmax(dim=1) for key,val in preds.items()} # dict of predicted class indices
+        return preds, pooled_logits
