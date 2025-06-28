@@ -12,11 +12,11 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         super().__init__()
         self.device = config.device
         self.num_classes = num_classes
-        self.text_prompt = config.text_prompt  # dict: {class_name: [desc1, desc2, ...]}
+        self.text_prompts = config.text_prompts  # dict: {class_name: [desc1, desc2, ...]}
         self.topj = getattr(config, "topj", 10)
 
-        assert isinstance(self.text_prompt, dict)
-        for prompts in self.text_prompt.values():
+        assert isinstance(self.text_prompts, dict)
+        for prompts in self.text_prompts.values():
             assert isinstance(prompts, list)
 
         # Load CONCH model
@@ -46,7 +46,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         class_to_desc_idx = {}
         start_idx = 0
 
-        for class_id, (class_name, desc_list) in enumerate(self.text_prompt.items()):
+        for class_id, (class_name, desc_list) in enumerate(self.text_prompts.items()):
             features = self.encode_text(desc_list)  # [#desc, D]
             end_idx = start_idx + features.size(0)
             desc_features.append(features)

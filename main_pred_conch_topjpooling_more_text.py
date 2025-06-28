@@ -51,7 +51,7 @@ def run_fold_evaluation(fold_id, args):
     config = ml_collections.ConfigDict()
     config.input_size = 512
     config.hidden_size = 192
-    config.text_prompt = args.text_prompt
+    config.text_prompts = args.text_prompts
     config.device = args.device
     config.prototype_number = args.prototype_number
     config.weight_path = "hf_hub:MahmoodLab/conch"
@@ -134,10 +134,10 @@ def run_fold_evaluation(fold_id, args):
 def main(args):
     import json
 
-    with open(args.text_prompt_path, "r") as f:
-        args.text_prompt = json.load(f)
-    print(args.text_prompt)
-    # args.text_prompt = np.array(pd.read_csv(args.text_prompt_path, header=None)).squeeze().tolist()
+    with open(args.text_prompts_path, "r") as f:
+        args.text_prompts = json.load(f)
+    print(args.text_prompts)
+    # args.text_prompts = np.array(pd.read_csv(args.text_prompts_path, header=None)).squeeze().tolist()
     seed_torch(args.seed)
 
     summary = []
