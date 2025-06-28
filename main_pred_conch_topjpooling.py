@@ -47,7 +47,7 @@ def prepare_dataset(args, fold_id):
 def run_fold_evaluation(fold_id, args):
     test_dataset = prepare_dataset(args, fold_id)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2)
-    return 
+    
     config = ml_collections.ConfigDict()
     config.input_size = 512
     config.hidden_size = 192
