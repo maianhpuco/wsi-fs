@@ -129,6 +129,32 @@ def run_fold_evaluation(fold_id, args):
     }
 
     save_pkl(os.path.join(result_dir, f"split_{fold_id}_results.pkl"), results)
+        # ---- Confusion Matrix ----
+    from sklearn.metrics import confusion_matrix
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    cm = confusion_matrix(all_labels, all_preds)
+    print("\nConfusion Matrix:")
+    print(cm)
+
+    # Plot confusion matrix
+    plt.figure(figsize=(6, 5))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=[f"Pred {i}" for i in range(n_classes)],
+                yticklabels=[f"True {i}" for i in range(n_classes)])
+    plt.title(f"Confusion Matrix (Fold {fold_id})")
+    plt.xlabel("Predicted Label")
+    plt.ylabel("True Label")
+    plt.tight_layout()
+
+    # Save confusion matrix plot
+    cm_path = os.path.join(result_dir, f"confusion_matrix_fold{fold_id}.png")
+    plt.savefig(cm_path)
+    plt.close()
+    print(f"[✓] Confusion matrix saved to {cm_path}")
+ 
+ 
     return {'fold': fold_id, 'test_auc': auc, 'test_acc': acc, 'test_f1': f1}
 
 def main(args):
