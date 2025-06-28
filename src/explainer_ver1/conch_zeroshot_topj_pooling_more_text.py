@@ -12,7 +12,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         super().__init__()
         self.device = config.device
         self.num_classes = num_classes
-        self.text_prompts = config.text_prompts  # dict: {class_name: [desc1, desc2, ...]}
+        self.text_prompts = dict(config.text_prompts)  # dict: {class_name: [desc1, desc2, ...]}
         self.topj = getattr(config, "topj", 10)
 
         assert isinstance(self.text_prompts, dict)
