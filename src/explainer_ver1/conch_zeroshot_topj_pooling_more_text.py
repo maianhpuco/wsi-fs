@@ -19,7 +19,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         for prompts in self.text_prompts.values():
             assert isinstance(prompts, list)
 
-        # Load CONCH model
+        # Load pretrained CONCH model
         self.model, _ = create_model_from_pretrained(
             model_cfg="conch_ViT-B-16",
             checkpoint_path=config.weight_path,
@@ -32,7 +32,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         self.logit_scale = self.model.logit_scale
         self.loss_ce = nn.CrossEntropyLoss()
 
-        # Encode all text descriptions and associate with class
+        # Encode all textual descriptions and track index mapping
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
 
     def encode_text(self, prompts):
@@ -60,8 +60,8 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         x_s_proj = F.normalize(x_s, dim=-1)
         x_l_proj = F.normalize(x_l, dim=-1)
 
-        # Use topj pooling from both resolutions
-        patch_scores_s = x_s_proj.norm(p=2, dim=-1)  # optional: relevance
+        # Compute per-patch norms
+        patch_scores_s = x_s_proj.norm(p=2, dim=-1)
         patch_scores_l = x_l_proj.norm(p=2, dim=-1)
 
         topj = min(topj, N)
@@ -74,19 +74,25 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
         top_feat_s = gather(x_s_proj, idx_s)  # [B, j, D]
         top_feat_l = gather(x_l_proj, idx_l)  # [B, j, D]
 
+        # Concatenate and normalize top patches
         top_feat = F.normalize(torch.cat([top_feat_s, top_feat_l], dim=1), dim=-1)  # [B, 2j, D]
 
-        # Compute similarity to each description
+        # Compute similarity between patches and text descriptions
         logits = torch.einsum("bnd,td->bnt", top_feat, self.desc_text_features.T)  # [B, 2j, T]
         logits_max = logits.max(dim=1)[0]  # max over top patches -> [B, T]
 
-        # For each class, aggregate max of its prompts
-        class_logits = torch.zeros(B, self.num_classes).to(self.device)
+        # Aggregate max score per class over its descriptions
+        class_logits = torch.zeros(B, self.num_classes, device=self.device)
         for class_id, (start, end) in self.class_to_desc_idx.items():
-            class_logits[:, class_id] = logits_max[:, start:end].max(dim=1)[0]  # max over that class's descs
+            class_logits[:, class_id] = logits_max[:, start:end].max(dim=1)[0]
 
         Y_prob = F.softmax(class_logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
-
         loss = self.loss_ce(class_logits, label) if label is not None else None
-        return Y_prob, Y_hat, loss
+
+        # Interpretability: return top-scoring description
+        best_desc_idx = logits_max.argmax(dim=1)  # [B]
+        all_descriptions = sum(self.text_prompts.values(), [])  # flatten
+        top_descriptions = [all_descriptions[i] for i in best_desc_idx.tolist()]
+
+        return Y_prob, Y_hat, loss, top_descriptions
