@@ -131,7 +131,7 @@ class CONCH_ZeroShot_Model_TopjPooling(nn.Module):
 
         return preds, pooled_logits
     
-    def forward(self, x_s, coord_s, x_l, coord_l, label, topj=10):
+    def forward(self, x_s, coord_s, x_l, coord_l, label, topj=100):
         """
         Args:
             x_s: low-res patch features [B, N, D]
