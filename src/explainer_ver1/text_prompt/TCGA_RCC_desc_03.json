@@ -1,38 +1,38 @@
 {
   "Clear Cell Renal Cell Carcinoma (ccRCC)": [
-    "ccRCC  Clear Cytoplasm  Tumor cells exhibit abundant clear cytoplasm due to glycogen and lipid content being dissolved during processing. This gives the cells a 'clear' appearance under H&E staining.",
-    "ccRCC  Delicate Vasculature  Numerous fine, arborizing capillaries create a 'chicken wire' or 'lace-like' vascular pattern between nests of tumor cells.",
-    "ccRCC  Cell Arrangement  Cells are arranged in nests, acini, or alveolar patterns surrounded by the aforementioned vasculature.",
-    "ccRCC  Nuclear Grade  Typically low to intermediate Fuhrman or ISUP nuclear grade; nuclei are round with smooth contours and inconspicuous nucleoli (Grade 1–2), but can be higher in aggressive forms.",
-    "ccRCC  Necrosis and Hemorrhage  In more aggressive or larger tumors, areas of necrosis, hemorrhage, or cystic degeneration may be visible.",
-    "ccRCC  Cystic Changes  Focal cystic spaces filled with fluid can occur within the tumor architecture.",
-    "ccRCC  Thick-walled Vessels  Prominent, thick-walled vessels may be seen traversing the tumor.",
-    "ccRCC  Pseudocapsule  A fibrous pseudocapsule often separates the tumor from adjacent renal parenchyma.",
-    "ccRCC  Sinusoidal Network  Rich sinusoidal spaces are commonly seen between tumor cell nests.",
-    "ccRCC  High Lipid Content  Lipid-laden cytoplasm is often retained in fresh frozen sections but appears clear in routine H&E stains."
+    "Clear Cell Renal Cell Carcinoma  Clear Cytoplasm  Tumor cells exhibit abundant clear cytoplasm due to glycogen and lipid content being dissolved during processing. This gives the cells a 'clear' appearance under H&E staining.",
+    "Clear Cell Renal Cell Carcinoma  Delicate Vasculature  Numerous fine, arborizing capillaries create a 'chicken wire' or 'lace-like' vascular pattern between nests of tumor cells.",
+    "Clear Cell Renal Cell Carcinoma  Cell Arrangement  Cells are arranged in nests, acini, or alveolar patterns surrounded by the aforementioned vasculature.",
+    "Clear Cell Renal Cell Carcinoma  Nuclear Grade  Typically low to intermediate Fuhrman or ISUP nuclear grade; nuclei are round with smooth contours and inconspicuous nucleoli (Grade 1–2), but can be higher in aggressive forms.",
+    "Clear Cell Renal Cell Carcinoma  Necrosis and Hemorrhage  In more aggressive or larger tumors, areas of necrosis, hemorrhage, or cystic degeneration may be visible.",
+    "Clear Cell Renal Cell Carcinoma  Cystic Changes  Focal cystic spaces filled with fluid can occur within the tumor architecture.",
+    "Clear Cell Renal Cell Carcinoma  Thick-walled Vessels  Prominent, thick-walled vessels may be seen traversing the tumor.",
+    "Clear Cell Renal Cell Carcinoma  Pseudocapsule  A fibrous pseudocapsule often separates the tumor from adjacent renal parenchyma.",
+    "Clear Cell Renal Cell Carcinoma  Sinusoidal Network  Rich sinusoidal spaces are commonly seen between tumor cell nests.",
+    "Clear Cell Renal Cell Carcinoma  High Lipid Content  Lipid-laden cytoplasm is often retained in fresh frozen sections but appears clear in routine H&E stains."
   ],
   "Papillary Renal Cell Carcinoma (pRCC)": [
-    "pRCC  Papillary Architecture  Tumor is composed of papillae with central fibrovascular cores lined by tumor cells.",
-    "pRCC  Foamy Macrophages  The papillary cores are frequently infiltrated by foamy (lipid-laden) macrophages.",
-    "pRCC  Psammoma Bodies  Small, concentrically laminated calcified structures may be seen within the papillae.",
-    "pRCC  Tubulopapillary Pattern  Areas of tubular structures alongside papillary formations can be present.",
-    "pRCC  Cytoplasmic Color  Tumor cells display basophilic cytoplasm in Type 1 and eosinophilic cytoplasm in Type 2 pRCC.",
-    "pRCC  Nuclei Shape  The nuclei are oval to elongated and less pleomorphic than in clear cell RCC.",
-    "pRCC  Multifocality  Tumors may present as multiple nodules within the same kidney.",
-    "pRCC  Fibrous Capsule  A thick fibrous capsule often encloses tumor clusters.",
-    "pRCC  Hemosiderin Pigment  Brown pigment accumulation due to iron (hemosiderin) may be seen in macrophages or tumor cells.",
-    "pRCC  Tumor-Normal Interface  A sharp boundary typically separates tumor tissue from adjacent normal renal parenchyma."
+    "Papillary Renal Cell Carcinoma  Papillary Architecture  Tumor is composed of papillae with central fibrovascular cores lined by tumor cells.",
+    "Papillary Renal Cell Carcinoma  Foamy Macrophages  The papillary cores are frequently infiltrated by foamy (lipid-laden) macrophages.",
+    "Papillary Renal Cell Carcinoma  Psammoma Bodies  Small, concentrically laminated calcified structures may be seen within the papillae.",
+    "Papillary Renal Cell Carcinoma  Tubulopapillary Pattern  Areas of tubular structures alongside papillary formations can be present.",
+    "Papillary Renal Cell Carcinoma  Cytoplasmic Color  Tumor cells display basophilic cytoplasm in Type 1 and eosinophilic cytoplasm in Type 2 pRCC.",
+    "Papillary Renal Cell Carcinoma  Nuclei Shape  The nuclei are oval to elongated and less pleomorphic than in clear cell RCC.",
+    "Papillary Renal Cell Carcinoma  Multifocality  Tumors may present as multiple nodules within the same kidney.",
+    "Papillary Renal Cell Carcinoma  Fibrous Capsule  A thick fibrous capsule often encloses tumor clusters.",
+    "Papillary Renal Cell Carcinoma  Hemosiderin Pigment  Brown pigment accumulation due to iron (hemosiderin) may be seen in macrophages or tumor cells.",
+    "Papillary Renal Cell Carcinoma  Tumor-Normal Interface  A sharp boundary typically separates tumor tissue from adjacent normal renal parenchyma."
   ],
   "Chromophobe Renal Cell Carcinoma (chRCC)": [
-    "chRCC  Pale Eosinophilic Cytoplasm  Tumor cells display a pale to eosinophilic cytoplasm that appears granular and translucent under H&E staining due to numerous cytoplasmic vesicles.",
-    "chRCC  Perinuclear Halos  Distinct clear zones surrounding the nuclei are seen in most tumor cells, forming characteristic perinuclear halos caused by cytoplasmic clearing.",
-    "chRCC  Wrinkled Nuclei  The nuclei often exhibit irregular, wrinkled, or raisinoid contours, which help distinguish chRCC from other renal tumors.",
-    "chRCC  Well-defined Cell Borders  Tumor cells have distinct and prominent cell borders, resulting in a plant-cell or cobblestone-like appearance.",
-    "chRCC  Binucleation  It is common to observe binucleated cells, where individual tumor cells contain two nuclei of similar size and shape.",
-    "chRCC  Solid and Trabecular Architecture  Tumor cells are usually arranged in solid sheets or trabecular (cord-like) formations, without significant papillary or nested structures.",
-    "chRCC  Fibrotic Stroma  The background stroma is often fibrotic and hyalinized, sometimes with thick-walled blood vessels coursing through it.",
-    "chRCC  Low Mitotic Activity  chRCC typically shows minimal mitotic activity and nuclear pleomorphism, contributing to its generally indolent behavior.",
-    "chRCC  Hyaline Degeneration  Focal areas of stromal or cytoplasmic hyaline change can be seen, appearing as homogenous, glassy eosinophilic material.",
-    "chRCC  Sharp Tumor Margins  Tumor boundaries are often well-circumscribed, showing a sharp demarcation from the adjacent renal parenchyma."
+    "Chromophobe Renal Cell Carcinoma  Pale Eosinophilic Cytoplasm  Tumor cells display a pale to eosinophilic cytoplasm that appears granular and translucent under H&E staining due to numerous cytoplasmic vesicles.",
+    "Chromophobe Renal Cell Carcinoma  Perinuclear Halos  Distinct clear zones surrounding the nuclei are seen in most tumor cells, forming characteristic perinuclear halos caused by cytoplasmic clearing.",
+    "Chromophobe Renal Cell Carcinoma  Wrinkled Nuclei  The nuclei often exhibit irregular, wrinkled, or raisinoid contours, which help distinguish chRCC from other renal tumors.",
+    "Chromophobe Renal Cell Carcinoma  Well-defined Cell Borders  Tumor cells have distinct and prominent cell borders, resulting in a plant-cell or cobblestone-like appearance.",
+    "Chromophobe Renal Cell Carcinoma  Binucleation  It is common to observe binucleated cells, where individual tumor cells contain two nuclei of similar size and shape.",
+    "Chromophobe Renal Cell Carcinoma  Solid and Trabecular Architecture  Tumor cells are usually arranged in solid sheets or trabecular (cord-like) formations, without significant papillary or nested structures.",
+    "Chromophobe Renal Cell Carcinoma  Fibrotic Stroma  The background stroma is often fibrotic and hyalinized, sometimes with thick-walled blood vessels coursing through it.",
+    "Chromophobe Renal Cell Carcinoma  Low Mitotic Activity  chRCC typically shows minimal mitotic activity and nuclear pleomorphism, contributing to its generally indolent behavior.",
+    "Chromophobe Renal Cell Carcinoma  Hyaline Degeneration  Focal areas of stromal or cytoplasmic hyaline change can be seen, appearing as homogenous, glassy eosinophilic material.",
+    "Chromophobe Renal Cell Carcinoma  Sharp Tumor Margins  Tumor boundaries are often well-circumscribed, showing a sharp demarcation from the adjacent renal parenchyma."
   ]
 }
