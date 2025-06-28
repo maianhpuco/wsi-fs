@@ -46,19 +46,32 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
     #         text_features = text_features @ self.model.text_projection
 
     #     return F.normalize(text_features, dim=-1)
+    # def encode_text(self, prompts):
+    #     tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
+    #     tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
+    #     text_features = self.model.encode_text(tokenized["input_ids"])
+
+    #     # Apply text projection properly
+    #     if hasattr(self.model, "text") and hasattr(self.model.text, "text_projection"):
+    #         text_features = text_features @ self.model.text.text_projection
+    #     elif hasattr(self.model, "text_projection"):
+    #         text_features = text_features @ self.model.text_projection
+
+    #     return F.normalize(text_features, dim=-1)
     def encode_text(self, prompts):
         tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
         tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
         text_features = self.model.encode_text(tokenized["input_ids"])
 
-        # Apply text projection properly
-        if hasattr(self.model, "text") and hasattr(self.model.text, "text_projection"):
-            text_features = text_features @ self.model.text.text_projection
-        elif hasattr(self.model, "text_projection"):
-            text_features = text_features @ self.model.text_projection
+        # Only apply projection if text_features not yet projected
+        if text_features.shape[-1] == 768:
+            if hasattr(self.model, "text") and hasattr(self.model.text, "text_projection"):
+                text_features = text_features @ self.model.text.text_projection
+            elif hasattr(self.model, "text_projection"):
+                text_features = text_features @ self.model.text_projection
 
         return F.normalize(text_features, dim=-1)
-    
+ 
     def init_text_features(self):
         desc_features = []
         class_to_desc_idx = {}
