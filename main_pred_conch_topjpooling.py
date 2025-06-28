@@ -86,8 +86,6 @@ def run_fold_evaluation(fold_id, args):
             all_labels.append(label.cpu().item())
                 # ----- Per-class accuracy report -----
                 
-
-        
     all_labels = np.array(all_labels)
     all_preds = np.array(all_preds)
     all_probs = np.concatenate(all_probs, axis=0)
