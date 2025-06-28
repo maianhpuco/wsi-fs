@@ -66,34 +66,45 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
 
     def forward(self, x_s, coord_s, x_l, coord_l, label=None, topj=100):
         B, N, D = x_s.shape
+
+        # Normalize patch features
         x_s_proj = F.normalize(x_s, dim=-1)
         x_l_proj = F.normalize(x_l, dim=-1)
 
-        # Compute cosine similarity to all descriptions
+        # Compute cosine similarity to all textual descriptions
         desc_feats = self.desc_text_features.to(self.device)  # [T, D]
-        print(f"[CONCH] Description features shape: {desc_feats.shape}")
         logits_s = torch.matmul(x_s_proj, desc_feats.T)  # [B, N, T]
         logits_l = torch.matmul(x_l_proj, desc_feats.T)  # [B, N, T]
 
-        # Concatenate low-res and high-res logits
-        logits = torch.cat([logits_s, logits_l], dim=1)  # [B, 2N, T]
+        # Merge low-res and high-res logits: [B, 2N, T]
+        logits = torch.cat([logits_s, logits_l], dim=1)
 
-        # Max over patches
+        # Max over all patches → most activated patch for each description
         logits_max = logits.max(dim=1)[0]  # [B, T]
 
-        # Aggregate per class (max over its description indices)
+        # For each class, pool over its description indices (max per class)
         class_logits = torch.zeros(B, self.num_classes, device=self.device)
-        for class_id, (start, end) in self.class_to_desc_idx.items():
-            class_logits[:, class_id] = logits_max[:, start:end].max(dim=1)[0]
+        best_desc_per_class = torch.zeros(B, self.num_classes, dtype=torch.long, device=self.device)
 
-        # Classification outputs
-        Y_prob = F.softmax(class_logits, dim=1)
-        Y_hat = Y_prob.argmax(dim=1)
+        for class_id, (start, end) in self.class_to_desc_idx.items():
+            class_desc_scores = logits_max[:, start:end]  # [B, num_desc]
+            max_scores, max_indices = class_desc_scores.max(dim=1)  # [B], [B]
+            class_logits[:, class_id] = max_scores
+            best_desc_per_class[:, class_id] = start + max_indices  # absolute desc index
+
+        # Compute softmax and predictions
+        Y_prob = F.softmax(class_logits, dim=1)  # [B, C]
+        Y_hat = Y_prob.argmax(dim=1)  # [B]
+
+        # Classification loss (if label provided)
         loss = self.loss_ce(class_logits, label) if label is not None else None
 
-        # Optional: return top-matching description
-        best_desc_idx = logits_max.argmax(dim=1)
-        all_descriptions = sum(self.text_prompts.values(), [])
-        top_descriptions = [all_descriptions[i] for i in best_desc_idx.tolist()]
+        # Extract best description for each predicted class
+        all_descriptions = sum(self.text_prompts.values(), [])  # flatten to list[str]
+        top_descriptions = []
+        for i in range(B):
+            pred_cls = Y_hat[i].item()
+            desc_idx = best_desc_per_class[i, pred_cls].item()
+            top_descriptions.append(all_descriptions[desc_idx])
 
-        return Y_prob, Y_hat, loss, top_descriptions
+        return Y_prob, Y_hat, top_descriptions 
