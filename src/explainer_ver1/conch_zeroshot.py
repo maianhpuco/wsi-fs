@@ -40,22 +40,33 @@ class CONCH_ZeroShot_Model(nn.Module):
     #     tokenized = self.tokenizer(prompts).to(self.device)
     #     text_features = self.model.encode_text(tokenized)
     #     return F.normalize(text_features, dim=-1)
+    # def encode_text(self, prompts):
+    #     print("Encoding text prompts...")
+    #     print(prompts)
+        
+    #     tokenized = self.tokenizer(prompts)
+    #     print("Type of tokenized:", type(tokenized))
+    #     print("Tokenized:", tokenized)
+ 
+    #     # If the tokenizer returns a list (e.g., list of token ids), convert to tensor
+    #     if isinstance(tokenized, list):
+    #         tokenized = torch.tensor(tokenized).to(self.device)
+    #     else:
+    #         tokenized = tokenized.to(self.device)
+        
+    #     text_features = self.model.encode_text(tokenized)
+    #     return F.normalize(text_features, dim=-1)
+    
     def encode_text(self, prompts):
         print("Encoding text prompts...")
         print(prompts)
-        
-        tokenized = self.tokenizer(prompts)
-        print("Type of tokenized:", type(tokenized))
-        print("Tokenized:", tokenized)
- 
-        # If the tokenizer returns a list (e.g., list of token ids), convert to tensor
-        if isinstance(tokenized, list):
-            tokenized = torch.tensor(tokenized).to(self.device)
-        else:
-            tokenized = tokenized.to(self.device)
-        
+
+        tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True)
+        tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
+
         text_features = self.model.encode_text(tokenized)
         return F.normalize(text_features, dim=-1)
+    
     
     def encode_image(self, image):
         image_features = self.model.encode_image(image)
