@@ -45,7 +45,9 @@ class CONCH_ZeroShot_Model(nn.Module):
         print(prompts)
         
         tokenized = self.tokenizer(prompts)
-        
+        print("Type of tokenized:", type(tokenized))
+        print("Tokenized:", tokenized)
+ 
         # If the tokenizer returns a list (e.g., list of token ids), convert to tensor
         if isinstance(tokenized, list):
             tokenized = torch.tensor(tokenized).to(self.device)
