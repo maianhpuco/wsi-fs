@@ -71,6 +71,7 @@ class CONCH_ZeroShot_Model_TopjPooling_MoreText(nn.Module):
 
         # Compute cosine similarity to all descriptions
         desc_feats = self.desc_text_features.to(self.device)  # [T, D]
+        print(f"[CONCH] Description features shape: {desc_feats.shape}")
         logits_s = torch.matmul(x_s_proj, desc_feats.T)  # [B, N, T]
         logits_l = torch.matmul(x_l_proj, desc_feats.T)  # [B, N, T]
 
