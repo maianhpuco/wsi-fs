@@ -8,5 +8,5 @@
 #SBATCH --gres=gpu:2
 
 echo "Starting Explainer v1ftraining for TCGA-Renal"
-python train_explainer_ver1f_2.py --config configs_maui/explainer_ver1f_tcga_renal_2.yaml --k_start 1 --k_end 1 --max_epochs 200
+python train_explainer_ver1f_2.py --config configs_maui/explainer_ver1f_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 200
 echo "Training complete"
