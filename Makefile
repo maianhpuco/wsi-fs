@@ -16,6 +16,8 @@ pred_conch_topjpooling_tcga_renal:
 	python main_pred_conch_topjpooling.py --config configs_maui/conch_tcga_renal.yaml 
 pred_conch_topjpooling_tcga_renal_nodesc:
 	python main_pred_conch_topjpooling.py --config configs_maui/conch_tcga_renal_no_desc.yaml 
+pred_conch_topjpooling_tcga_renal_more_text:
+	python main_pred_conch_topjpooling_more_text.py --config configs_maui/conch_tcga_renal_no_more_text.yaml 
 
 pred_conch_meanpooling_tcga_lung:
 	python main_pred_conch_meanpooling.py --config configs_maui/conch_tcga_lung.yaml 
