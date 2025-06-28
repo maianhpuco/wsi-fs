@@ -135,7 +135,7 @@ def main(args):
     import json
 
     with open(args.text_prompt_path, "r") as f:
-        args.text_prompts = json.load(f)
+        args.text_prompt = json.load(f)
  
     # args.text_prompt = np.array(pd.read_csv(args.text_prompt_path, header=None)).squeeze().tolist()
     seed_torch(args.seed)
