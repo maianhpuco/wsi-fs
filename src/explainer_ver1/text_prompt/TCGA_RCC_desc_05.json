@@ -24,16 +24,16 @@
     "pRCC  The nuclei in pRCC are typically not wrinkled or raisinoid, unlike in chRCC."
   ], 
   "Chromophobe Renal Cell Carcinoma (chRCC)": [
-    "chRCC  Tumor cells have pale eosinophilic cytoplasm filled with microvesicles under H&E staining.",
-    "chRCC  Perinuclear halos are a defining cytologic feature, creating a clearing zone around nuclei.",
-    "chRCC  The nuclei appear wrinkled and irregular — often described as raisinoid.",
-    "chRCC  chRCC forms solid sheets or trabecular cords of cells with minimal architectural complexity.",
-    "chRCC  Tumor cells display well-defined cell membranes, giving a plant-cell or cobblestone appearance.",
-    "chRCC  chRCC does not contain clear cytoplasm or lipid-rich vacuoles like ccRCC.",
-    "chRCC  Papillary architecture and foamy macrophages are not features of chRCC.",
-    "chRCC  This tumor lacks sinusoidal capillary networks seen in ccRCC.",
-    "chRCC  Unlike pRCC, chRCC does not form fibrovascular papillae or psammoma bodies.",
-    "chRCC  Nuclei in chRCC are not round and smooth; they are irregular and wrinkled, unlike in ccRCC or pRCC."
+    "chRCC  Tumor cells in chromophobe RCC display pale eosinophilic cytoplasm with a translucent quality caused by cytoplasmic microvesicles.",
+    "chRCC  One of the most defining features of chRCC is the presence of prominent perinuclear halos, forming a clear ring around the nucleus.",
+    "chRCC  chRCC nuclei are irregular, wrinkled, and raisinoid in shape, contrasting sharply with the smooth nuclei seen in ccRCC.",
+    "chRCC  Tumor cells grow in solid sheets or trabecular patterns, lacking the papillary or nested arrangement of other RCC subtypes.",
+    "chRCC  The tumor shows sharply defined cell borders, creating a plant-cell-like appearance under the microscope.",
+    
+    "chRCC  Chromophobe RCC does not contain clear cytoplasm or chicken-wire vasculature, which are characteristic of clear cell RCC.",
+    "chRCC  This tumor lacks papillary architecture and does not have fibrovascular cores or foamy macrophages like pRCC.",
+    "chRCC  chRCC is not composed of alveolar or nested structures and does not exhibit sinusoidal networks like ccRCC.",
+    "chRCC  The cytoplasm in chRCC is not clear or lipid-rich; instead, it is pale and granular with perinuclear clearing.",
+    "chRCC  Unlike pRCC or ccRCC, chRCC rarely exhibits hemorrhage, cystic changes, or psammoma bodies."
   ]
- 
 }
