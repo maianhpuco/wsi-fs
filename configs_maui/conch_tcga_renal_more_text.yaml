@@ -19,7 +19,7 @@ label_dict: {'KIRP': 0, 'KIRC': 1, 'KICH': 2}
 
 model_name: ViLa_MIL_Model # can replace by ViLa_MIL_Model
 # you rmodel cofig here 
-text_prompt_path: "/project/hnguyen2/mvu9/folder_04_ma/wsi-fs/src/explainer_ver1/text_prompt/TCGA_RCC_no_desc.json"
+text_prompt_path: "/project/hnguyen2/mvu9/folder_04_ma/wsi-fs/src/explainer_ver1/text_prompt/TCGA_RCC_desc_01.json"
 prototype_number: 10
 # max_epochs: 20
 lr: 0.001
