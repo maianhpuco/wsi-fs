@@ -87,7 +87,18 @@ def run_fold_evaluation(fold_id, args):
     all_labels = np.array(all_labels)
     all_preds = np.array(all_preds)
     all_probs = np.concatenate(all_probs, axis=0)
-
+    
+        # ----- Per-class accuracy report -----
+    n_classes = args.n_classes
+    class_results = {}
+    for cls in range(n_classes):
+        cls_mask = (all_labels == cls)
+        total = cls_mask.sum()
+        correct = ((all_preds == cls) & cls_mask).sum()
+        acc_cls = correct / total if total > 0 else 0.0
+        print(f"Class {cls}: acc {acc_cls:.4f}, correct {correct}/{total}")
+    
+    
     if all_probs.shape[1] == 2:
         roc_input = all_probs[:, 1]
         roc_args = {}
