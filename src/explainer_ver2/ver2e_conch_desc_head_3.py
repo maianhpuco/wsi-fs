@@ -41,7 +41,7 @@ class DescriptionHead(nn.Module):
         return scores.unsqueeze(-1)
 
 
-class Ver2d(nn.Module):
+class Ver2e(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
