@@ -115,7 +115,8 @@ def main(args):
 
         model = Ver2d(config=config, num_classes=args.n_classes).cuda()
         cur = 1 
-        ckpt_path = os.path.join(args.results_dir, f"s_{cur}_checkpoint.pt")
+        # ckpt_path = os.path.join(args.results_dir, f"s_{cur}_checkpoint.pt")
+        ckpt_path = args.ckpt_path 
         model.load_state_dict(torch.load(ckpt_path, map_location=args.device)) 
       
 
@@ -129,6 +130,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
+    parser.add_argument('--ckpt_path', type=str, default=None)
     args = parser.parse_args()
 
     with open(args.config, 'r') as f:
