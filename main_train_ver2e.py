@@ -95,6 +95,8 @@ def main(args):
 
         save_pkl(os.path.join(args.results_dir, f'split_{i}_results.pkl'), results)
 
+        desc_dir = os.path.join(args.results_dir, "desc") 
+        os.makedirs(desc_dir, exist_ok=True)
         # ===== Return descriptions for patches in test set =====
         for idx, batch in enumerate(datasets[2]):  # test_dataset
             model.eval()
@@ -104,8 +106,20 @@ def main(args):
                 x_s_proj = F.normalize(x_s_proj, dim=-1)
 
                 # === Description Summary by Attention Threshold ===
-                summary = model.get_patchwise_desc_summary(x_s_proj, threshold=0.25)
-                save_pkl(os.path.join(args.results_dir, f"desc_summary_{slide_id}.pkl"), summary)
+                summary = model.get_patchwise_desc_summary(x_s_proj, threshold=0.5)
+                import json
+
+                def convert(o):
+                    if isinstance(o, torch.Tensor):
+                        return o.tolist()
+                    if isinstance(o, np.ndarray):
+                        return o.tolist()
+                    return o
+
+                with open(os.path.join(desc_dir, f"desc_summary_{slide_id}.json"), "w") as f:
+                    json.dump(summary, f, indent=2, default=convert) 
+                
+                # save_pkl(os.path.join(args.results_dir, f"desc_summary_{slide_id}.pkl"), summary)
 
     # Save summary
     summary_df = pd.DataFrame({
