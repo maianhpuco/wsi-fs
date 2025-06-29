@@ -1,0 +1,38 @@
+{
+  "Clear Cell Renal Cell Carcinoma (ccRCC)": [
+    "Tumor cells with clear cytoplasm",
+    "Delicate capillary network resembling chicken wire",
+    "Cells arranged in alveolar or nested patterns",
+    "Prominent nucleoli in round to oval nuclei",
+    "Well-defined cell borders",
+    "Frequent hemorrhage and necrotic areas",
+    "Cystic spaces within the tumor",
+    "Thick-walled vessels scattered in tumor region",
+    "Tumor surrounded by a fibrous pseudocapsule",
+    "Rich sinusoidal spaces between tumor nests"
+  ],
+  "Papillary Renal Cell Carcinoma (pRCC)": [
+    "Papillary structures with central fibrovascular cores",
+    "Dense infiltration of foamy macrophages in papillary cores",
+    "Presence of psammoma bodies (small calcified spots)",
+    "Cells arranged in tubulopapillary patterns",
+    "Tumor cells with oval or elongated nuclei",
+    "Basophilic or eosinophilic cytoplasm visible in tumor cells",
+    "Multiple separate tumor nodules (multifocality)",
+    "Thick fibrous capsule around tumor clusters",
+    "Hemosiderin pigment visible in cells or stroma",
+    "Clear separation between tumor and normal tissue"
+  ],
+  "Chromophobe Renal Cell Carcinoma (chRCC)": [
+    "Tumor cells with pale eosinophilic cytoplasm",
+    "Prominent perinuclear halos creating a clearing effect",
+    "Well-defined cell borders giving a plant-cell appearance",
+    "Wrinkled and irregular (raisinoid) nuclear contours",
+    "Frequent binucleated tumor cells",
+    "Solid sheets or trabecular arrangement of tumor cells",
+    "Dense fibrotic stroma with thick-walled vessels",
+    "Minimal mitotic activity or nuclear pleomorphism",
+    "Occasional hyaline change in surrounding stroma",
+    "Sharp boundary between tumor and surrounding tissue"
+  ]
+}

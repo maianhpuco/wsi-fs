@@ -1,0 +1,43 @@
+{
+  "Clear Cell Renal Cell Carcinoma (ccRCC)": [
+    "ccRCC  Clear cytoplasm is the hallmark of this tumor, caused by dissolved lipids and glycogen.",
+    "ccRCC  A rich, delicate capillary network creates a chicken-wire appearance between tumor nests.",
+    "ccRCC  Tumor cells are organized in nested or alveolar architectures with sinusoidal spaces.",
+    "ccRCC  Low to intermediate-grade nuclei with round contours and small nucleoli are common in ccRCC.",
+    "ccRCC  ccRCC often shows areas of hemorrhage and cystic degeneration within the tumor mass.",
+    "ccRCC  This tumor lacks papillary structures with fibrovascular cores, which are common in pRCC.",
+    "ccRCC  Unlike chRCC, ccRCC does not have perinuclear halos or a plant-cell appearance.",
+    "ccRCC  ccRCC is not characterized by eosinophilic cytoplasm or wrinkled nuclei.",
+    "ccRCC  You won't find foamy macrophages or psammoma bodies in classic ccRCC morphology.",
+    "ccRCC  ccRCC does not display solid sheet-like or trabecular growth typical of chRCC."
+  ], 
+  "Papillary Renal Cell Carcinoma (pRCC)": [
+    "pRCC  Tumor growth is papillary with central fibrovascular cores lined by epithelial cells.",
+    "pRCC  Foamy macrophages are abundant in the papillary cores, forming a key diagnostic feature.",
+    "pRCC  Psammoma bodies, or concentrically laminated calcifications, are commonly seen.",
+    "pRCC  The tumor often presents as multiple discrete nodules (multifocality) within the kidney.",
+    "pRCC  Cells may show basophilic (Type 1) or eosinophilic (Type 2) cytoplasm depending on subtype.",
+    "pRCC  pRCC does not exhibit the clear cytoplasm seen in ccRCC due to lack of lipid/glycogen clearing.",
+    "pRCC  Unlike chRCC, it lacks well-defined cell borders and perinuclear halos.",
+    "pRCC  pRCC is not arranged in solid trabecular sheets like chromophobe RCC.",
+    "pRCC  There is no prominent sinusoidal vascular pattern as found in ccRCC.",
+    "pRCC  The nuclei in pRCC are typically not wrinkled or raisinoid, unlike in chRCC."
+  ], 
+  "Chromophobe Renal Cell Carcinoma (chRCC)": [
+    "chRCC  Tumor cells have pale eosinophilic cytoplasm filled with microvesicles under H&E staining.",
+    "chRCC  Perinuclear halos are a defining cytologic feature, creating a clearing zone around nuclei.",
+    "chRCC  The nuclei appear wrinkled and irregular — often described as raisinoid.",
+    "chRCC  chRCC forms solid sheets or trabecular cords of cells with minimal architectural complexity.",
+    "chRCC  Tumor cells display well-defined cell membranes, giving a plant-cell or cobblestone appearance.",
+    "chRCC  chRCC does not contain clear cytoplasm or lipid-rich vacuoles like ccRCC.",
+    "chRCC  Papillary architecture and foamy macrophages are not features of chRCC.",
+    "chRCC  This tumor lacks sinusoidal capillary networks seen in ccRCC.",
+    "chRCC  Unlike pRCC, chRCC does not form fibrovascular papillae or psammoma bodies.",
+    "chRCC  Nuclei in chRCC are not round and smooth; they are irregular and wrinkled, unlike in ccRCC or pRCC."
+  ], 
+  "No Tumor Detected": [
+    "Normal renal parenchyma with no visible tumor cells.",
+    "Benign glomeruli and tubules without nuclear atypia.",
+    "Absence of papillary, clear cell, or chromophobe features."
+  ] 
+}

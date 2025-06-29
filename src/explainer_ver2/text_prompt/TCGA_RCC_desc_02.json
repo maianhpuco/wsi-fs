@@ -1,0 +1,38 @@
+{
+  "Clear Cell Renal Cell Carcinoma (ccRCC)": [
+    "Clear Cytoplasm  Tumor cells exhibit abundant clear cytoplasm due to glycogen and lipid content being dissolved during processing. This gives the cells a 'clear' appearance under H&E staining.",
+    "Delicate Vasculature  Numerous fine, arborizing capillaries create a 'chicken wire' or 'lace-like' vascular pattern between nests of tumor cells.",
+    "Cell Arrangement  Cells are arranged in nests, acini, or alveolar patterns surrounded by the aforementioned vasculature.",
+    "Nuclear Grade  Typically low to intermediate Fuhrman or ISUP nuclear grade; nuclei are round with smooth contours and inconspicuous nucleoli (Grade 1–2), but can be higher in aggressive forms.",
+    "Necrosis and Hemorrhage  In more aggressive or larger tumors, areas of necrosis, hemorrhage, or cystic degeneration may be visible.",
+    "Cystic Changes  Focal cystic spaces filled with fluid can occur within the tumor architecture.",
+    "Thick-walled Vessels  Prominent, thick-walled vessels may be seen traversing the tumor.",
+    "Pseudocapsule  A fibrous pseudocapsule often separates the tumor from adjacent renal parenchyma.",
+    "Sinusoidal Network  Rich sinusoidal spaces are commonly seen between tumor cell nests.",
+    "High Lipid Content  Lipid-laden cytoplasm is often retained in fresh frozen sections but appears clear in routine H&E stains."
+  ],
+  "Papillary Renal Cell Carcinoma (pRCC)": [
+    "Papillary Architecture  Tumor is composed of papillae with central fibrovascular cores lined by tumor cells.",
+    "Foamy Macrophages  The papillary cores are frequently infiltrated by foamy (lipid-laden) macrophages.",
+    "Psammoma Bodies  Small, concentrically laminated calcified structures may be seen within the papillae.",
+    "Tubulopapillary Pattern  Areas of tubular structures alongside papillary formations can be present.",
+    "Cytoplasmic Color  Tumor cells display basophilic cytoplasm in Type 1 and eosinophilic cytoplasm in Type 2 pRCC.",
+    "Nuclei Shape  The nuclei are oval to elongated and less pleomorphic than in clear cell RCC.",
+    "Multifocality  Tumors may present as multiple nodules within the same kidney.",
+    "Fibrous Capsule  A thick fibrous capsule often encloses tumor clusters.",
+    "Hemosiderin Pigment  Brown pigment accumulation due to iron (hemosiderin) may be seen in macrophages or tumor cells.",
+    "Tumor-Normal Interface  A sharp boundary typically separates tumor tissue from adjacent normal renal parenchyma."
+  ],
+  "Chromophobe Renal Cell Carcinoma (chRCC)": [
+    "Pale Eosinophilic Cytoplasm  Tumor cells display a pale to eosinophilic cytoplasm that appears granular and translucent under H&E staining due to numerous cytoplasmic vesicles.",
+    "Perinuclear Halos  Distinct clear zones surrounding the nuclei are seen in most tumor cells, forming characteristic perinuclear halos caused by cytoplasmic clearing.",
+    "Wrinkled Nuclei  The nuclei often exhibit irregular, wrinkled, or raisinoid contours, which help distinguish chRCC from other renal tumors.",
+    "Well-defined Cell Borders  Tumor cells have distinct and prominent cell borders, resulting in a plant-cell or cobblestone-like appearance.",
+    "Binucleation  It is common to observe binucleated cells, where individual tumor cells contain two nuclei of similar size and shape.",
+    "Solid and Trabecular Architecture  Tumor cells are usually arranged in solid sheets or trabecular (cord-like) formations, without significant papillary or nested structures.",
+    "Fibrotic Stroma  The background stroma is often fibrotic and hyalinized, sometimes with thick-walled blood vessels coursing through it.",
+    "Low Mitotic Activity  chRCC typically shows minimal mitotic activity and nuclear pleomorphism, contributing to its generally indolent behavior.",
+    "Hyaline Degeneration  Focal areas of stromal or cytoplasmic hyaline change can be seen, appearing as homogenous, glassy eosinophilic material.",
+    "Sharp Tumor Margins  Tumor boundaries are often well-circumscribed, showing a sharp demarcation from the adjacent renal parenchyma."
+  ]
+}

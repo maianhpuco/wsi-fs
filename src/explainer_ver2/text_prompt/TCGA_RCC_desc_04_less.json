@@ -1,0 +1,12 @@
+{
+  "Clear Cell Renal Cell Carcinoma (ccRCC)": [
+    "A WSI of Clear Cell Renal Cell Carcinoma with visually descriptive characteristics of solid mass, well-circumscribed, borders, pale or yellowish color, and homogeneous texture."
+  ], 
+  "Papillary Renal Cell Carcinoma (pRCC)": [
+    "A WSI of Papillary Renal Cell Carcinoma with visually descriptive characteristics of papillary growth pattern, multiple papillary structures, well-circumscribed borders, varied architectural patterns, and pinkish coloration."
+    ], 
+  "Chromophobe Renal Cell Carcinoma (chRCC)": [
+    "A WSI of Chromophobe Renal Cell Carcinoma at low resolution with visually descriptive characteristics of solid or well-circumscribed mass, pale or tan coloration, homogeneous texture, distinct cell borders, and perinuclear clearing."
+    ]
+ 
+}

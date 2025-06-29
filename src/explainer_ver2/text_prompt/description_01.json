@@ -1,0 +1,74 @@
+{
+  "CCRCC": {
+    "diagnostic_features": [
+      {
+        "name": "Clear Cytoplasm",
+        "description": "Tumor cells exhibit abundant clear cytoplasm due to glycogen and lipid content being dissolved during processing. This gives the cells a 'clear' appearance under H&E staining."
+      },
+      {
+        "name": "Delicate Vasculature",
+        "description": "Numerous fine, arborizing capillaries create a 'chicken wire' or 'lace-like' vascular pattern between nests of tumor cells."
+      },
+      {
+        "name": "Cell Arrangement",
+        "description": "Cells are arranged in nests, acini, or alveolar patterns surrounded by the aforementioned vasculature."
+      },
+      {
+        "name": "Nuclear Grade",
+        "description": "Typically low to intermediate Fuhrman or ISUP nuclear grade; nuclei are round with smooth contours and inconspicuous nucleoli (Grade 1–2), but can be higher in aggressive forms."
+      },
+      {
+        "name": "Necrosis and Hemorrhage",
+        "description": "In more aggressive or larger tumors, areas of necrosis, hemorrhage, or cystic degeneration may be visible."
+      }
+    ]
+  },
+  "PRCC": {
+    "diagnostic_features": [
+      {
+        "name": "Papillary Architecture",
+        "description": "Tumor cells are arranged along fibrovascular cores, forming true papillae. These papillary fronds may contain foamy macrophages."
+      },
+      {
+        "name": "Foamy Macrophages",
+        "description": "Abundant foamy histiocytes (lipid-laden macrophages) are commonly found within the fibrovascular cores of the papillae."
+      },
+      {
+        "name": "Psammoma Bodies",
+        "description": "Round, concentrically laminated calcifications are frequently present in PRCC and serve as a useful diagnostic clue."
+      },
+      {
+        "name": "Cell Type",
+        "description": "Two subtypes: Type 1 cells are small with scant pale cytoplasm and low-grade nuclei; Type 2 cells are larger with eosinophilic cytoplasm and higher nuclear grade."
+      },
+      {
+        "name": "Architecture Variability",
+        "description": "Mixture of tubular, papillary, and solid growth patterns, especially in type 2 PRCC."
+      }
+    ]
+  },
+  "CRCC": {
+    "diagnostic_features": [
+      {
+        "name": "Cytoplasmic Features",
+        "description": "Cells have pale, finely reticulated cytoplasm or eosinophilic granular cytoplasm, often described as 'vegetable cell-like' or 'plant cell-like'."
+      },
+      {
+        "name": "Cell Borders",
+        "description": "Distinct, thickened cell membranes give the tumor a 'plant cell' appearance, with well-outlined cell borders."
+      },
+      {
+        "name": "Perinuclear Halos",
+        "description": "Clear perinuclear halos are seen due to cytoplasmic clearing around the nucleus, possibly due to microvesicles or cytoplasmic organelle arrangement."
+      },
+      {
+        "name": "Nuclear Wrinkling",
+        "description": "Irregular, 'raisinoid' nuclei with prominent nuclear wrinkling and irregular nuclear contours are a hallmark."
+      },
+      {
+        "name": "Architecture",
+        "description": "Growth is typically solid, trabecular, or nested with minimal stroma. Some tumors exhibit a sheet-like architecture."
+      }
+    ]
+  }
+}
