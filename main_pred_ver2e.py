@@ -13,7 +13,7 @@ from utils.core_utils import train  # Make sure this expects model as the first 
 sys.path.append(os.path.join("src"))  
 sys.path.append("src")
 os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
-from explainer_ver2 import Ver2d
+from explainer_ver2 import Ver2e
 import ml_collections
 
 # === PATH SETUP ===
@@ -113,7 +113,7 @@ def main(args):
         config.prototype_number = args.prototype_number
         config.weight_path = "hf_hub:MahmoodLab/conch"
 
-        model = Ver2d(config=config, num_classes=args.n_classes).cuda()
+        model = Ver2e(config=config, num_classes=args.n_classes).cuda()
         cur = 1 
         # ckpt_path = os.path.join(args.results_dir, f"s_{cur}_checkpoint.pt")
         ckpt_path = args.ckpt_path 
