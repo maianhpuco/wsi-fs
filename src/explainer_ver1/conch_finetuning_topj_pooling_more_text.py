@@ -37,7 +37,9 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         self.loss_ce = nn.CrossEntropyLoss()
 
         # Optional learnable projection for visual features
-        feat_dim = self.model.visual.output_dim
+        # feat_dim = self.model.visual.output_dim
+        feat_dim = self.model.visual.proj.shape[1]  # usually 512 or 768 depending on ViT size
+
         self.visual_proj = nn.Linear(feat_dim, feat_dim)
 
         # Encode text features
