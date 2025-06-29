@@ -136,7 +136,7 @@ if __name__ == "__main__":
     for k, v in config.items():
         setattr(args, k, v)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seed_torch(args.seed)
 
     print("################# SETTINGS ###################")
