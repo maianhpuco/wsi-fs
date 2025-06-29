@@ -89,7 +89,7 @@ def main(args):
         config.prototype_number = args.prototype_number
         config.weight_path = "hf_hub:MahmoodLab/conch"
 
-        model = Ver2a(config=config, num_classes=args.n_classes).cuda()
+        model = Ver2b(config=config, num_classes=args.n_classes).cuda()
         
         results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
