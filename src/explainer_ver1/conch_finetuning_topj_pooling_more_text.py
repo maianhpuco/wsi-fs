@@ -33,31 +33,18 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         self.logit_scale = self.model.logit_scale
         self.loss_ce = nn.CrossEntropyLoss()
 
-        feat_dim = getattr(config, "input_size", 512)  # Use config.input_size
+        feat_dim = getattr(config, "input_size", 512)
         self.visual_proj = nn.Linear(feat_dim, feat_dim)
 
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
         self.text_features_low = self.aggregate_class_features()
         self.text_features_high = self.text_features_low
 
-    # def encode_text(self, prompts):
-    #     tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
-    #     tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
-    #     text_features = self.model.encode_text(tokenized["input_ids"])
-
-    #     projection = getattr(self.model, "text_projection", None)
-    #     if projection is None and hasattr(self.model, "text"):
-    #         projection = getattr(self.model.text, "text_projection", None)
-    #     if projection is not None:
-    #         text_features = text_features @ projection
-
-    #     return F.normalize(text_features, dim=-1)
     def encode_text(self, prompts):
         tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
         tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
         text_features = self.model.encode_text(tokenized["input_ids"])
 
-        # Only project if dimensions don't match expected feature dim
         if text_features.shape[-1] != self.visual_proj.in_features:
             projection = getattr(self.model, "text_projection", None)
             if projection is None and hasattr(self.model, "text"):
@@ -66,7 +53,7 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
                 text_features = text_features @ projection
 
         return F.normalize(text_features, dim=-1)
- 
+
     def init_text_features(self):
         desc_feats, class_to_desc = [], {}
         start_idx = 0
