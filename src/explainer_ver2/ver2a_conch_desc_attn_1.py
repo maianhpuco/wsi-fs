@@ -20,7 +20,7 @@ class AttentionPooling(nn.Module):
         return torch.sum(attn_weights.unsqueeze(-1) * feats, dim=1)  # [B, D]
 
 
-class Ver2a_AttnPooling(nn.Module):
+class Ver2a(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
