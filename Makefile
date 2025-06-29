@@ -24,6 +24,11 @@ pred_conch_topjpooling_tcga_renal_nodesc:
 pred_conch_topjpooling_tcga_renal_more_text:
 	python main_pred_conch_topjpooling_more_text.py --config configs_maui/conch_tcga_renal_more_text.yaml 
 
+# =======================================  
+train_conch_topjpooling_tcga_renal_more_text:
+	python main_pred_conch_topjpooling_more_text.py --config configs_maui/conch_tcga_renal_more_text.yaml 
+
+
 
 
 
