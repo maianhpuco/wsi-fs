@@ -87,8 +87,7 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
             x_l = x_l.unsqueeze(0)
             coord_s = coord_s.unsqueeze(0)
             coord_l = coord_l.unsqueeze(0)
-            if label is not None:
-                label = label.unsqueeze(0)
+
         
         B, N, D = x_s.shape
         x_s_proj = F.normalize(x_s, dim=-1)
@@ -147,6 +146,11 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         # --------- 7. Classification outputs ---------
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = torch.topk(Y_prob, 1, dim=1)[1].squeeze(1)
+        
+        if label is not None and label.ndim > 1:
+            label = label.squeeze(-1)
+        
         loss = self.loss_ce(logits, label) if label is not None else None
+ 
 
         return Y_prob, Y_hat, loss
