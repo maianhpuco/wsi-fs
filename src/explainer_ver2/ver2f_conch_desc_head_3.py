@@ -168,6 +168,7 @@ class Ver2f(nn.Module):
 
             contrastive_loss_total /= B
             loss += contrastive_weight * contrastive_loss_total
+            print("Contrastive loss:", contrastive_loss_total.item())
         # =====================================
 
         Y_prob = F.softmax(logits, dim=1)
