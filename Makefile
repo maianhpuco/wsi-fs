@@ -42,7 +42,8 @@ train_ver2c_tcga_renal:
 	python main_train_ver2c.py --config configs_maui/ver2c_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
 train_ver2d_tcga_renal:
 	python main_train_ver2d.py --config configs_maui/ver2d_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
-
+train_ver2e_tcga_renal:
+	python main_train_ver2e.py --config configs_maui/ver2e_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
 
 
 
