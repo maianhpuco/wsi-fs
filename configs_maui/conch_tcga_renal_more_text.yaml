@@ -37,3 +37,4 @@ early_stopping: true
 n_classes: 3 
 log_data: false
 reg: 1e-5
+batch_size: 32

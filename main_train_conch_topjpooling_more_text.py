@@ -6,130 +6,80 @@ import numpy as np
 import pandas as pd
 import torch
 from datetime import datetime
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
-import ml_collections
-
+from utils.file_utils import save_pkl
+from utils.core_utils import train  # Make sure this expects model as the first arg
+# sys.path.append(base_path)
+sys.path.append(os.path.join("src"))  
 sys.path.append("src")
 os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
-
 from explainer_ver1 import CONCH_Finetuning_Model_TopjPooling_MoreText
-from utils.file_utils import save_pkl
+import ml_collections
+
+# === PATH SETUP ===
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
 
 
-def seed_torch(seed=42):
+def seed_torch(seed=7):
     import random
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
 
 def prepare_dataset(args, fold_id):
-    from src.datasets.multiple_scales.tcga import return_splits_custom
-    train_dataset, val_dataset, test_dataset = return_splits_custom(
-        train_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/train.csv"),
-        val_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/val.csv"),
-        test_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/test.csv"),
-        data_dir_s=args.paths['data_folder_s'],
-        data_dir_l=args.paths['data_folder_l'],
-        label_dict=args.label_dict,
-        seed=args.seed,
-        use_h5=True,
-        args=args,
-    )
-    print(f"[✓] Fold {fold_id} | Train: {len(train_dataset)} | Test: {len(test_dataset)}")
-    return train_dataset, val_dataset, test_dataset
-
-
-def train_and_save(model, train_loader, args):
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    model.train()
-    for epoch in range(args.epochs):
-        total_loss = 0
-        for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs}"):
-            x_s, coord_s, x_l, coord_l, label = [b.to(args.device) for b in batch]
-            if x_s.ndim == 2:
-                x_s = x_s.unsqueeze(0)
-                x_l = x_l.unsqueeze(0)
-                coord_s = coord_s.unsqueeze(0)
-                coord_l = coord_l.unsqueeze(0)
-                label = label.unsqueeze(0)
-
-            optimizer.zero_grad()
-            _, _, loss = model(x_s, coord_s, x_l, coord_l, label)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-
-        print(f"[✓] Epoch {epoch+1} - Avg Loss: {total_loss/len(train_loader):.4f}")
-
-    torch.save(model.state_dict(), os.path.join(args.paths['weight_path'], f"conch_model.pt"))
-    print(f"[✓] Model saved to {args.paths['weight_path']}/conch_model.pt")
-
-
-def evaluate(model, test_loader, args, fold_id):
-    model.eval()
-    all_preds, all_probs, all_labels = [], [], []
-    with torch.no_grad():
-        for batch in tqdm(test_loader):
-            x_s, coord_s, x_l, coord_l, label = [b.to(args.device) for b in batch]
-            if x_s.ndim == 2:
-                x_s = x_s.unsqueeze(0)
-                x_l = x_l.unsqueeze(0)
-                coord_s = coord_s.unsqueeze(0)
-                coord_l = coord_l.unsqueeze(0)
-                label = label.unsqueeze(0)
-            Y_prob, Y_hat, _ = model(x_s, coord_s, x_l, coord_l, label)
-            all_preds.append(Y_hat.cpu().item())
-            all_probs.append(Y_prob.cpu().numpy())
-            all_labels.append(label.cpu().item())
-
-    all_labels = np.array(all_labels)
-    all_preds = np.array(all_preds)
-    all_probs = np.concatenate(all_probs, axis=0)
-
-    acc = accuracy_score(all_labels, all_preds)
-    f1 = f1_score(all_labels, all_preds, average='weighted')
-    try:
-        auc = roc_auc_score(all_labels, all_probs, multi_class='ovo', average='macro')
-    except:
-        auc = np.nan
-
-    print(f"[✓] Fold {fold_id} Evaluation: ACC={acc:.3f} | F1={f1:.3f} | AUC={auc:.3f}")
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    result_dir = os.path.join(args.paths['results_dir'], f"train_fold{fold_id}_{timestamp}")
-    os.makedirs(result_dir, exist_ok=True)
-
-    results = {
-        'roc_auc': auc,
-        'acc': acc,
-        'weighted_f1': f1,
-        'preds': all_preds.tolist(),
-        'labels': all_labels.tolist()
-    }
-    save_pkl(os.path.join(result_dir, f"fold_{fold_id}_results.pkl"), results)
+    if args.dataset_name == 'tcga_renal':
+        from src.datasets.multiple_scales.tcga import return_splits_custom
+        patch_size = args.patch_size
+        data_dir_s_mapping= args.paths['data_folder_s']
+        data_dir_l_mapping =args.paths['data_folder_l'] 
+         
+        train_dataset, val_dataset, test_dataset = return_splits_custom(
+            train_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/train.csv"),
+            val_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/val.csv"),
+            test_csv_path=os.path.join(args.paths['split_folder'], f"fold_{fold_id}/test.csv"),
+            data_dir_s=data_dir_s_mapping,
+            data_dir_l=data_dir_l_mapping,
+            label_dict=args.label_dict,
+            seed=args.seed,
+            use_h5=True,
+        )
+        print(len(train_dataset))
+        return train_dataset, val_dataset, test_dataset  
+    else:
+        raise NotImplementedError(f"[✗] Dataset '{args.dataset_name}' not supported.")
 
 
 def main(args):
     import json
+
     with open(args.text_prompts_path, "r") as f:
         args.text_prompts = json.load(f)
-
+    print(args.text_prompts)    
+    
     seed_torch(args.seed)
-    summary = []
 
-    for fold_id in range(args.k_start, args.k_end + 1):
-        print(f"\n========== Fold {fold_id} ==========")
-        train_dataset, val_dataset, test_dataset = prepare_dataset(args, fold_id)
+    # Prepare dataset once for all folds
+    
 
-        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
-        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2)
+    all_test_auc, all_val_auc, all_test_acc, all_val_acc, all_test_f1, folds = [], [], [], [], [], []
+
+    for i in range(args.k_start, args.k_end + 1):
+        datasets = prepare_dataset(args, i)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        args.results_dir = os.path.join(args.paths['results_dir'], f"resuls_fold{i}_timestamp_{timestamp}")
+        os.makedirs(args.results_dir, exist_ok=True) 
+        
+        print(f"\n=========== Fold {i} ===========")
+        seed_torch(args.seed)
+        folds.append(i)
 
         config = ml_collections.ConfigDict()
         config.input_size = 512
@@ -139,30 +89,46 @@ def main(args):
         config.prototype_number = args.prototype_number
         config.weight_path = "hf_hub:MahmoodLab/conch"
 
-        model = CONCH_Finetuning_Model_TopjPooling_MoreText(config=config, num_classes=args.n_classes).to(args.device)
-        train_and_save(model, train_loader, args)
-        result = evaluate(model, test_loader, args, fold_id)
-        summary.append(result)
+        model = CONCH_Finetuning_Model_TopjPooling_MoreText(config=config, num_classes=args.n_classes).cuda()
+        
+        results, test_auc, val_auc, test_acc, val_acc, _, test_f1 = train(model, datasets, cur=i, args=args)
 
-    summary_df = pd.DataFrame(summary)
-    suffix = f"partial_{summary[0]['fold']}_{summary[-1]['fold']}" if len(summary) < (args.k_end - args.k_start + 1) else "full"
+        all_test_auc.append(test_auc)
+        all_val_auc.append(val_auc)
+        all_test_acc.append(test_acc)
+        all_val_acc.append(val_acc)
+        all_test_f1.append(test_f1)
+
+        save_pkl(os.path.join(args.results_dir, f'split_{i}_results.pkl'), results)
+
+    # Save summary
+    summary_df = pd.DataFrame({
+        'folds': folds,
+        'test_auc': all_test_auc,
+        'test_acc': all_test_acc,
+        'test_f1': all_test_f1
+    })
 
     result_df = pd.DataFrame({
         'metric': ['mean', 'std'],
-        'test_auc': [summary_df.test_auc.mean(), summary_df.test_auc.std()],
-        'test_acc': [summary_df.test_acc.mean(), summary_df.test_acc.std()],
-        'test_f1': [summary_df.test_f1.mean(), summary_df.test_f1.std()],
+        'test_auc': [np.mean(all_test_auc), np.std(all_test_auc)],
+        'test_f1': [np.mean(all_test_f1), np.std(all_test_f1)],
+        'test_acc': [np.mean(all_test_acc), np.std(all_test_acc)]
     })
 
-    summary_df.to_csv(os.path.join(args.paths['results_dir'], f"summary_{suffix}.csv"), index=False)
-    result_df.to_csv(os.path.join(args.paths['results_dir'], f"result_{suffix}.csv"), index=False)
-
-    print("\n✅ Training and evaluation complete.")
+    args.k = args.k_end - args.k_start + 1
+    suffix = f"partial_{folds[0]}_{folds[-1]}" if len(folds) != args.k else "full"
+    summary_df.to_csv(os.path.join(args.results_dir, f"summary_{suffix}.csv"), index=False)
+    result_df.to_csv(os.path.join(args.results_dir, f"result_{suffix}.csv"), index=False)
+    print("Training complete.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
+    parser.add_argument('--k_start', type=int, required=True)
+    parser.add_argument('--k_end', type=int, required=True)
+    parser.add_argument('--max_epochs', type=int, default=42)
     args = parser.parse_args()
 
     with open(args.config, 'r') as f:
@@ -170,19 +136,8 @@ if __name__ == "__main__":
     for k, v in config.items():
         setattr(args, k, v)
 
-    if 'paths' in config:
-        args.paths = config['paths']
-        for subkey, val in args.paths.items():
-            if isinstance(val, dict):
-                args.paths[subkey] = {k: os.path.abspath(v) for k, v in val.items()}
-            else:
-                args.paths[subkey] = os.path.abspath(val)
-
-    if not os.path.exists(args.paths.get('weight_path', '')):
-        os.makedirs(args.paths['weight_path'], exist_ok=True)
-        print(f"[✓] Created weight folder: {args.paths['weight_path']}")
-
-    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    seed_torch(args.seed)
 
     print("################# SETTINGS ###################")
     for k, v in vars(args).items():
@@ -191,3 +146,15 @@ if __name__ == "__main__":
     print("##############################################")
 
     main(args)
+    # h5_path = '/project/hnguyen2/mvu9/processing_datasets/processing_tcga_256/kich/clip_rn50_features/TCGA-UW-A7GY-01Z-00-DX1.CD2CCA5D-C92B-409C-B5D6-1EB7C8A0B4CD.h5'
+    # import h5py 
+    # with h5py.File(h5_path, 'r') as f:
+    #     print("Keys in the H5 file:")
+    #     for key in f.keys():
+    #         print(f"  - {key}: shape={f[key].shape}, dtype={f[key].dtype}")
+
+    #     # Optional: inspect a sample value
+    #     if 'features' in f:
+    #         print("\nSample from 'features':", f['features'][:1])
+    #     if 'coords' in f:
+    #         print("\nSample from 'coords':", f['coords'][:5])
