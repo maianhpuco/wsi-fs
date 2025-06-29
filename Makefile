@@ -23,10 +23,14 @@ pred_conch_topjpooling_tcga_renal_nodesc:
 	python main_pred_conch_topjpooling.py --config configs_maui/conch_tcga_renal_no_desc.yaml 
 pred_conch_topjpooling_tcga_renal_more_text:
 	python main_pred_conch_topjpooling_more_text.py --config configs_maui/conch_tcga_renal_more_text.yaml 
-
+pred_conch_topjpooling_tcga_renal_more_text:
+	python main_pred_conch_topjpooling_more_text.py --config configs_maui/conch_tcga_renal_more_text.yaml 
+ 
 # =======================================  
 train_conch_topjpooling_tcga_renal_more_text:
 	python main_train_conch_topjpooling_more_text.py --config configs_maui/conch_finetune_tcga_renal_more_text.yaml --k_start 1 --k_end 1 --max_epochs 20 
+train_conch_topjpooling_tcga_renal_less_text:
+	python main_train_conch_topjpooling_more_text.py --config configs_maui/conch_finetune_tcga_renal_less_text.yaml --k_start 1 --k_end 1 --max_epochs 20 
 
 
 
