@@ -139,7 +139,7 @@ def main(args):
         config.prototype_number = args.prototype_number
         config.weight_path = "hf_hub:MahmoodLab/conch"
 
-        model = CONCH_ZeroShot_Model_TopjPooling_MoreText(config=config, num_classes=args.n_classes).to(args.device)
+        model = CONCH_Finetuning_Model_TopjPooling_MoreText(config=config, num_classes=args.n_classes).to(args.device)
         train_and_save(model, train_loader, args)
         result = evaluate(model, test_loader, args, fold_id)
         summary.append(result)
