@@ -40,19 +40,33 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         self.text_features_low = self.aggregate_class_features()
         self.text_features_high = self.text_features_low
 
+    # def encode_text(self, prompts):
+    #     tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
+    #     tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
+    #     text_features = self.model.encode_text(tokenized["input_ids"])
+
+    #     projection = getattr(self.model, "text_projection", None)
+    #     if projection is None and hasattr(self.model, "text"):
+    #         projection = getattr(self.model.text, "text_projection", None)
+    #     if projection is not None:
+    #         text_features = text_features @ projection
+
+    #     return F.normalize(text_features, dim=-1)
     def encode_text(self, prompts):
         tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
         tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
         text_features = self.model.encode_text(tokenized["input_ids"])
 
-        projection = getattr(self.model, "text_projection", None)
-        if projection is None and hasattr(self.model, "text"):
-            projection = getattr(self.model.text, "text_projection", None)
-        if projection is not None:
-            text_features = text_features @ projection
+        # Only project if dimensions don't match expected feature dim
+        if text_features.shape[-1] != self.visual_proj.in_features:
+            projection = getattr(self.model, "text_projection", None)
+            if projection is None and hasattr(self.model, "text"):
+                projection = getattr(self.model.text, "text_projection", None)
+            if projection is not None:
+                text_features = text_features @ projection
 
         return F.normalize(text_features, dim=-1)
-
+ 
     def init_text_features(self):
         desc_feats, class_to_desc = [], {}
         start_idx = 0
