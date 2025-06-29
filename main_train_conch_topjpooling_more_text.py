@@ -13,7 +13,7 @@ import ml_collections
 sys.path.append("src")
 os.environ['HF_HOME'] = '/project/hnguyen2/mvu9/folder_04_ma/cache_folder/.cache/huggingface'
 
-from explainer_ver1 import CONCH_ZeroShot_Model_TopjPooling_MoreText
+from explainer_ver1 import CONCH_Finetuning_Model_TopjPooling_MoreText
 from utils.file_utils import save_pkl
 
 
