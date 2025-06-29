@@ -121,11 +121,13 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         logits_l = slide_feat_l @ self.text_features_high.T
         logits = logits_s + logits_l
 
+        # if label is not None and label.ndim > 1:
+        #     label = label.squeeze(-1)
+        loss = self.loss_ce(logits, label)  
+        
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
 
-        if label is not None and label.ndim > 1:
-            label = label.squeeze(-1)
-        loss = self.loss_ce(logits, label) if label is not None else None
+
 
         return Y_prob, Y_hat, loss

@@ -66,7 +66,7 @@ def main(args):
 
     for i in range(args.k_start, args.k_end + 1):
         datasets = prepare_dataset(args, i)
-        return 
+ 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         args.results_dir = os.path.join(args.paths['results_dir'], f"resuls_fold{i}_timestamp_{timestamp}")
         os.makedirs(args.results_dir, exist_ok=True) 
