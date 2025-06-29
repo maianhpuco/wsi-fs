@@ -126,36 +126,9 @@ def main(args):
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2) 
         validate_and_save_desc(model, test_loader , desc_dir, args)
         
-       
-                # save_pkl(os.path.join(args.results_dir, f"desc_summary_{slide_id}.pkl"), summary)
-
-    # # Save summary
-    # summary_df = pd.DataFrame({
-    #     'folds': folds,
-    #     'test_auc': all_test_auc,
-    #     'test_acc': all_test_acc,
-    #     'test_f1': all_test_f1
-    # })
-
-    # result_df = pd.DataFrame({
-    #     'metric': ['mean', 'std'],
-    #     'test_auc': [np.mean(all_test_auc), np.std(all_test_auc)],
-    #     'test_f1': [np.mean(all_test_f1), np.std(all_test_f1)],
-    #     'test_acc': [np.mean(all_test_acc), np.std(all_test_acc)]
-    # })
-
-    # args.k = args.k_end - args.k_start + 1
-    # suffix = f"partial_{folds[0]}_{folds[-1]}" if len(folds) != args.k else "full"
-    # summary_df.to_csv(os.path.join(args.results_dir, f"summary_{suffix}.csv"), index=False)
-    # result_df.to_csv(os.path.join(args.results_dir, f"result_{suffix}.csv"), index=False)
-    # print("Training complete.")
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
-    parser.add_argument('--k_start', type=int, required=True)
-    parser.add_argument('--k_end', type=int, required=True)
-    parser.add_argument('--max_epochs', type=int, default=42)
     args = parser.parse_args()
 
     with open(args.config, 'r') as f:
