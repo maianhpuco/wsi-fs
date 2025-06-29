@@ -47,8 +47,10 @@ train_ver2e_tcga_renal:
 pred_ver2e_tcga_renal:
 	python main_pred_ver2e.py --config configs_maui/ver2e_tcga_renal.yaml \
 	--ckpt_path /project/hnguyen2/mvu9/wsi_fs_results/ver2d_tcga_renal_results/resuls_fold1_timestamp_20250629_124539/s_1_checkpoint.pt
- 
-
+train_ver2f_tcga_renal:
+	python main_train_ver2e.py --config configs_maui/ver2e_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
+pred_ver2f_tcga_renal:
+	python main_train_ver2f.py --config configs_maui/ver2f_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
 
 # ======================================= 
 pred_conch_meanpooling_tcga_lung:

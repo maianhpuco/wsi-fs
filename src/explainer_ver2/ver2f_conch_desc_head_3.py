@@ -41,7 +41,7 @@ class DescriptionHead(nn.Module):
         return scores.unsqueeze(-1)
 
 
-class Ver2e(nn.Module):
+class Ver2f(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
@@ -116,24 +116,11 @@ class Ver2e(nn.Module):
     def compute_patch_scores_per_class(self, patch_feats):
         class_scores = []
         for head in self.desc_heads:
-            sim = head(patch_feats)
+            sim = head(patch_feats)  # [B, N, 1]
             class_scores.append(sim)
-        return torch.cat(class_scores, dim=-1)
+        return torch.cat(class_scores, dim=-1)  # [B, N, C]
 
-    def patch_to_concept_contrastive(self, z, d_pos, d_neg, temperature=0.1):
-        z = F.normalize(z, dim=-1)
-        d_pos = F.normalize(d_pos, dim=-1)
-        d_neg = F.normalize(d_neg, dim=-1)
-
-        pos_score = torch.matmul(z, d_pos.T)
-        neg_score = torch.matmul(z, d_neg.T)
-
-        logits = torch.cat([pos_score, neg_score], dim=1) / temperature
-        labels = torch.zeros(z.size(0), dtype=torch.long, device=z.device)
-
-        return F.cross_entropy(logits, labels)
-
-    def forward(self, x_s, coord_s, x_l, coord_l, label=None):
+    def forward(self, x_s, coord_s, x_l, coord_l, label=None, contrastive_weight=0.1):
         if x_s.ndim == 2:
             x_s = x_s.unsqueeze(0)
             x_l = x_l.unsqueeze(0)
@@ -142,7 +129,7 @@ class Ver2e(nn.Module):
 
         B, N, D = x_s.shape
 
-        x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
+        x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)  # [B, N, D]
         x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
         class_scores_s = self.compute_patch_scores_per_class(x_s_proj)
@@ -158,50 +145,80 @@ class Ver2e(nn.Module):
         logits_l = slide_feat_l @ self.text_features_high.T
         logits = logits_s + logits_l
 
-        ce_loss = self.loss_ce(logits, label) if label is not None else None
+        loss = self.loss_ce(logits, label) if label is not None else None
 
-        contrastive_loss_total = 0.0
+        # ========= CONTRASTIVE LOSS ========= #
         if label is not None:
+            contrastive_loss_total = 0.0
             for b in range(B):
                 y = label[b].item()
                 start_pos, end_pos = self.class_to_desc_idx[y]
-                d_pos = self.desc_text_features[start_pos:end_pos]
+                d_pos = self.desc_text_features[start_pos:end_pos]  # [P, D]
+
+                # d_neg = all descriptions except for d_pos
                 d_neg = torch.cat([
                     self.desc_text_features[:start_pos],
                     self.desc_text_features[end_pos:]
-                ], dim=0)
-                z = x_s_proj[b]
+                ], dim=0)  # [N, D]
+
+                z = x_s_proj[b]  # [N, D], all patches in slide b
+
+                # Contrastive loss for all patches in this slide
                 contrastive_loss_total += self.patch_to_concept_contrastive(z, d_pos, d_neg)
+
             contrastive_loss_total /= B
+            loss += contrastive_weight * contrastive_loss_total
+        # =====================================
 
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
 
-        return Y_prob, Y_hat, ce_loss, contrastive_loss_total
+        return Y_prob, Y_hat, loss
+    
 
-    def get_slide_desc_summary(self, patch_feats, top_k=5, threshold=None):
+    def get_patchwise_desc_summary(self, patch_feats, threshold=0.25):
+        """
+        Returns: dict[class_id → dict[desc_str → count]]
+        """
         patch_feats = F.normalize(patch_feats, dim=-1)
         B, N, D = patch_feats.shape
         all_desc = sum(self.text_prompts.values(), [])
         summary_list = []
 
         for b in range(B):
-            slide_summary = {}
+            per_slide_summary = {}
             for class_id, head in enumerate(self.desc_heads):
-                _, attn_weights = head(patch_feats[b:b+1], return_attention=True)
-                attn_weights = attn_weights.squeeze(0)
-                desc_scores = attn_weights.mean(dim=0)
+                _, attn_weights = head(patch_feats[b:b+1], return_attention=True)  # [1, N, num_desc]
+                attn_weights = attn_weights.squeeze(0)  # [N, num_desc]
                 desc_start, desc_end = self.class_to_desc_idx[class_id]
                 desc_names = all_desc[desc_start:desc_end]
+                matched_desc = {}
 
-                if threshold is not None:
-                    selected = [(desc_names[i], desc_scores[i].item())
-                                for i in range(len(desc_scores)) if desc_scores[i] > threshold]
-                else:
-                    topk_vals, topk_idx = torch.topk(desc_scores, min(top_k, len(desc_scores)))
-                    selected = [(desc_names[i], topk_vals[j].item())
-                                for j, i in enumerate(topk_idx)]
-                slide_summary[class_id] = selected
-            summary_list.append(slide_summary)
+                for n in range(N):
+                    for j, score in enumerate(attn_weights[n]):
+                        if score.item() > threshold:
+                            desc_str = desc_names[j]
+                            matched_desc[desc_str] = matched_desc.get(desc_str, 0) + 1
+                per_slide_summary[class_id] = matched_desc
+            summary_list.append(per_slide_summary)
 
         return summary_list
+    
+    def patch_to_concept_contrastive(self, z, d_pos, d_neg, temperature=0.1):
+        """
+        z: [N, D] - patch features
+        d_pos: [P, D] - positive class description embeddings
+        d_neg: [M, D] - negative class description embeddings
+        """
+        z = F.normalize(z, dim=-1)          # [N, D]
+        d_pos = F.normalize(d_pos, dim=-1)  # [P, D]
+        d_neg = F.normalize(d_neg, dim=-1)  # [M, D]
+
+        pos_score = torch.matmul(z, d_pos.T)  # [N, P]
+        neg_score = torch.matmul(z, d_neg.T)  # [N, M]
+
+        logits = torch.cat([pos_score, neg_score], dim=1) / temperature  # [N, P+M]
+        labels = torch.zeros(z.size(0), dtype=torch.long, device=z.device)  # target: all should match first token group
+
+        return F.cross_entropy(logits, labels)
+    
