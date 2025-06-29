@@ -36,9 +36,12 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         feat_dim = getattr(config, "input_size", 512)
         self.visual_proj = nn.Linear(feat_dim, feat_dim)
 
+        # Detach to avoid keeping computation graph
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
-        self.text_features_low = self.aggregate_class_features()
-        self.text_features_high = self.text_features_low
+        self.desc_text_features = self.desc_text_features.detach()
+
+        self.text_features_low = self.aggregate_class_features().detach()
+        self.text_features_high = self.text_features_low  # Already detached
 
     def encode_text(self, prompts):
         tokenized = self.tokenizer(prompts, return_tensors="pt", padding=True)
@@ -96,8 +99,9 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
         x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
-        logits_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)
-        logits_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)
+        # Detach text features in case of accidental graph linkage
+        logits_s = self.compute_patch_scores(x_s_proj, self.desc_text_features.detach())
+        logits_l = self.compute_patch_scores(x_l_proj, self.desc_text_features.detach())
 
         class_scores_s = self.get_class_scores_from_descriptions(logits_s)
         class_scores_l = self.get_class_scores_from_descriptions(logits_l)
@@ -117,17 +121,14 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         slide_feat_s = F.normalize(top_feat_s.mean(dim=1), dim=-1)
         slide_feat_l = F.normalize(top_feat_l.mean(dim=1), dim=-1)
 
-        logits_s = slide_feat_s @ self.text_features_low.T
-        logits_l = slide_feat_l @ self.text_features_high.T
+        # Detach to prevent backprop through text features
+        logits_s = slide_feat_s @ self.text_features_low.detach().T
+        logits_l = slide_feat_l @ self.text_features_high.detach().T
         logits = logits_s + logits_l
 
-        # if label is not None and label.ndim > 1:
-        #     label = label.squeeze(-1)
-        loss = self.loss_ce(logits, label)  
-        
+        loss = self.loss_ce(logits, label)
+
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
-
-
 
         return Y_prob, Y_hat, loss
