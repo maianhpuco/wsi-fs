@@ -93,13 +93,14 @@ class CONCH_Finetuning_Model_TopjPooling_MoreText(nn.Module):
         B, N, D = x_s.shape
         x_s_proj = F.normalize(x_s, dim=-1)
         x_l_proj = F.normalize(x_l, dim=-1)
+        
         # Optional projection
-        image_features_low = self.visual_proj(image_features_low)
-        image_features_high = self.visual_proj(image_features_high)
+        x_s_proj = self.visual_proj(x_s_proj)
+        x_l_proj = self.visual_proj(x_l_proj)
 
         # Normalize after projection
-        image_features_low = F.normalize(image_features_low, dim=-1)
-        image_features_high = F.normalize(image_features_high, dim=-1) 
+        x_s_proj = F.normalize(x_s_proj, dim=-1)
+        x_l_proj = F.normalize(x_l_proj, dim=-1) 
         
         desc_feats = self.desc_text_features.to(self.device)  # [T, D]
 
