@@ -71,7 +71,7 @@ def validate_and_save_desc(model, loader, desc_dir, args):
             # Forward pass to get patch features
             B, N, D = data_s.shape
             data_s_proj = F.normalize(model.visual_proj(F.normalize(data_s, dim=-1)), dim=-1)
-            patch_summaries = model.get_patchwise_desc_summary(data_s_proj, threshold=0.25)
+            patch_summaries = model.get_patchwise_desc_summary(data_s_proj, threshold=0.05)
 
             slide_id = loader.dataset.slide_data.iloc[batch_idx]["slide_id"]
             out_path = os.path.join(desc_dir, f"desc_summary_{slide_id}.json")
