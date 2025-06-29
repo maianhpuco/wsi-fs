@@ -37,7 +37,7 @@ train_conch_topjpooling_tcga_renal_less_text:
 train_ver2a_tcga_renal:
 	python main_train_ver2a.py --config configs_maui/ver2a_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
 train_ver2b_tcga_renal:
-	python main_train_ver2a.py --config configs_maui/ver2b_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
+	python main_train_ver2b.py --config configs_maui/ver2b_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
 
 
 

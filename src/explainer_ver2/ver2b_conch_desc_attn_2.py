@@ -8,16 +8,20 @@ sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
 
-class AttentionPooling(nn.Module):
-    def __init__(self, feat_dim):
+class GatedAttentionPooling(nn.Module):
+    def __init__(self, feat_dim, hidden_dim):
         super().__init__()
-        self.attn_proj = nn.Linear(feat_dim, 1)
+        self.attention_V = nn.Sequential(nn.Linear(feat_dim, hidden_dim), nn.Tanh())
+        self.attention_U = nn.Sequential(nn.Linear(feat_dim, hidden_dim), nn.Sigmoid())
+        self.attention_weights = nn.Linear(hidden_dim, 1)
 
     def forward(self, feats):
         # feats: [B, N, D]
-        attn_weights = self.attn_proj(feats).squeeze(-1)  # [B, N]
-        attn_weights = F.softmax(attn_weights, dim=1)  # [B, N]
-        return torch.sum(attn_weights.unsqueeze(-1) * feats, dim=1)  # [B, D]
+        A_V = self.attention_V(feats)  # [B, N, D']
+        A_U = self.attention_U(feats)  # [B, N, D']
+        A = self.attention_weights(A_V * A_U).squeeze(-1)  # [B, N]
+        A = F.softmax(A, dim=1)  # [B, N]
+        return torch.sum(A.unsqueeze(-1) * feats, dim=1)  # [B, D]
 
 
 class Ver2b(nn.Module):
@@ -45,8 +49,9 @@ class Ver2b(nn.Module):
         self.loss_ce = nn.CrossEntropyLoss()
 
         feat_dim = getattr(config, "input_size", 512)
+        hidden_dim = getattr(config, "hidden_size", 256)
         self.visual_proj = nn.Linear(feat_dim, feat_dim)
-        self.attn_pooling = AttentionPooling(feat_dim)
+        self.attn_pooling = GatedAttentionPooling(feat_dim, hidden_dim)
 
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
         self.desc_text_features = self.desc_text_features.detach()
