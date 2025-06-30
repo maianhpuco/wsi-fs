@@ -145,7 +145,7 @@ class Ver2c(nn.Module):
     def compute_patch_scores_per_class(self, patch_feats):
         # Compute attention scores for each class's descriptions
         class_scores = []
-        for head in self.desc_heads:
+        for head in self.desc_heads: 
             # Get attention scores for each description [B, N, num_desc]
             scores = head(patch_feats)
             # Average scores across descriptions for this class [B, N, 1]
@@ -179,7 +179,7 @@ class Ver2c(nn.Module):
             # Pool patch features using class-specific attention scores
             feat_s = self.attn_pooling[c](x_s_proj, class_scores_s[:, :, c])  # [B, D]
             feat_l = self.attn_pooling[c](x_l_proj, class_scores_l[:, :, c])  # [B, D]
-            class_feats_s.append(feat_s)
+            class_feats_s.append(feat_s) # 3 * 512 
             class_feats_l.append(feat_l)
 
         # Stack class-specific features into [B, C, D]
