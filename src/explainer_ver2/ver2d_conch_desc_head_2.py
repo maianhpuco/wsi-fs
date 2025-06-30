@@ -60,7 +60,7 @@ class DescriptionHead(nn.Module):
         return attn_weights
 
 # Define the main model class
-class Ver2c(nn.Module):
+class Ver2d(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         # Store device and number of classes from config
