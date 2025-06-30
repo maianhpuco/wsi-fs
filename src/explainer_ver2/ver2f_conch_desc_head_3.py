@@ -114,12 +114,12 @@ class Ver2f(nn.Module):
             class_feats[class_id] = self.desc_text_features[start:end].max(dim=0)[0]
         return F.normalize(class_feats, dim=-1)
 
-    def compute_patch_scores_per_class(self, patch_feats):
+    def compute_patch_scores_per_class(self, patch_feats):  # patch_feats: [B, N, D] 
         class_scores = []
         for head in self.desc_heads:
-            sim = head(patch_feats)
+            sim = head(patch_feats)  # [B, N, 1] 
             class_scores.append(sim)
-        return torch.cat(class_scores, dim=-1)
+        return torch.cat(class_scores, dim=-1) # [B, N, C] 
 
     def forward(self, x_s, coord_s, x_l, coord_l, label=None, contrastive_weight=0.1):
         if x_s.ndim == 2:
@@ -129,16 +129,18 @@ class Ver2f(nn.Module):
             coord_l = coord_l.unsqueeze(0)
 
         B, N, D = x_s.shape
-        x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
+        x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1) # [B, N, D] 
         x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
         patch_feat_s = self.attn_pooling(x_s_proj)
         patch_feat_l = self.attn_pooling(x_l_proj)
+        
         slide_feat_s = F.normalize(patch_feat_s, dim=-1)
         slide_feat_l = F.normalize(patch_feat_l, dim=-1)
+        
         logits_s = slide_feat_s @ self.text_features_low.T
         logits_l = slide_feat_l @ self.text_features_high.T
-        logits = logits_s + logits_l
+        logits = logits_s + logits_l # [B, C] 
 
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
