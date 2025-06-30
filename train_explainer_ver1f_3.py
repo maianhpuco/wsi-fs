@@ -18,7 +18,6 @@ import ml_collections
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(current_dir, 'src')))
 
-
 def seed_torch(seed=7):
     import random
     random.seed(seed)

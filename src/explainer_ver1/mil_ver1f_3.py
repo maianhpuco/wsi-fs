@@ -28,7 +28,6 @@ from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 _tokenizer = _Tokenizer()
 
 
-
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     def norm_cdf(x):
         return (1. + math.erf(x / math.sqrt(2.))) / 2.
@@ -209,13 +208,13 @@ class ViLa_MIL_Model(nn.Module):
         compents, _ = self.cross_attention_1(self.learnable_image_center, M, M) 
         compents = self.norm(compents + self.learnable_image_center)
         # Enhance with properly encoded text prototypes
-        text_enhancement_low = text_enhanced_features_low.mean(0, keepdim=True).unsqueeze(0)
+        text_enhancement_low = text_enhanced_features_low.mean(0, keepdim=True)
         compents = torch.cat([compents, text_enhancement_low], dim=1)
 
         compents_high, _ = self.cross_attention_1(self.learnable_image_center, M_high, M_high)
         compents_high = self.norm(compents_high + self.learnable_image_center)
         # Enhance with properly encoded text prototypes
-        text_enhancement_high = text_enhanced_features_high.mean(0, keepdim=True).unsqueeze(0)
+        text_enhancement_high = text_enhanced_features_high.mean(0, keepdim=True)
         compents_high = torch.cat([compents_high, text_enhancement_high], dim=1)
 
         H = compents.squeeze().float()
