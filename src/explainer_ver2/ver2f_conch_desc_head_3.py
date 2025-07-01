@@ -133,10 +133,11 @@ class Ver2f(nn.Module):
         ])
         # Linear layer to combine class-specific features into a single slide feature
         self.class_combiner = nn.Linear(feat_dim * num_classes, feat_dim)
-        # Attention pooling for description scores
-        self.desc_pooling = nn.ModuleList([
-            DescriptionAttentionPooling(hidden_dim) for _ in range(self.num_classes)
-        ])
+        # Attention pooling for description scores 
+        
+        # self.desc_pooling = nn.ModuleList([
+        #     DescriptionAttentionPooling(hidden_dim) for _ in range(self.num_classes)
+        # ])
 
         # Initialize text features for descriptions and class-to-description mapping
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
@@ -280,10 +281,10 @@ class Ver2f(nn.Module):
                 for c2_idx in range(total_desc):
                     if c1_idx != c2_idx:
                         # Approximate phi(c1, c2) using cosine similarity of description features
-                        c1_feat = self.desc_text_features[c1_idx]
-                        c2_feat = self.desc_text_features[c2_idx]
-                        phi_c1_c2 = F.cosine_similarity(c1_feat.unsqueeze(0), c2_feat.unsqueeze(0)).item()
-                        cov_loss += max(0, phi_c1_c2)  # Max(0, phi) as a simple coverage metric
+                        c1_feat = self.desc_text_features[c1_idx].unsqueeze(0)
+                        c2_feat = self.desc_text_features[c2_idx].unsqueeze(0)
+                        phi_c1_c2 = F.cosine_similarity(c1_feat, c2_feat)  # Keep as tensor
+                        cov_loss += torch.relu(phi_c1_c2)  # Use ReLU for max(0, phi)
             cov_loss = cov_loss / (total_desc * (total_desc - 1))  # Normalize
 
             # Combine discriminability and coverage with hyperparameters
@@ -291,7 +292,7 @@ class Ver2f(nn.Module):
             total_loss += submod_loss
 
         return total_loss / B  # Average over batch
-
+    
     def forward(self, x_s, coord_s, x_l, coord_l, label=None):
         # Ensure inputs have batch dimension
         if x_s.ndim == 2:
