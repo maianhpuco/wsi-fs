@@ -353,4 +353,4 @@ class Ver2f(nn.Module):
         slide_desc_scores = (slide_desc_scores_s + slide_desc_scores_l) / 2
 
         # Return slide-level description scores alongside existing outputs
-        return Y_prob, Y_hat, loss
+        return Y_prob, Y_hat, loss, slide_desc_scores
