@@ -135,9 +135,9 @@ class Ver2f(nn.Module):
         self.class_combiner = nn.Linear(feat_dim * num_classes, feat_dim)
         # Attention pooling for description scores 
         
-        # self.desc_pooling = nn.ModuleList([
-        #     DescriptionAttentionPooling(hidden_dim) for _ in range(self.num_classes)
-        # ])
+        self.desc_pooling = nn.ModuleList([
+            DescriptionAttentionPooling(hidden_dim) for _ in range(self.num_classes)
+        ])
 
         # Initialize text features for descriptions and class-to-description mapping
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
