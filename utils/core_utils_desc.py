@@ -222,8 +222,8 @@ def validate(cur, epoch, model, loader, n_classes, early_stopping = None, writer
                                                                   data_l.to(device, non_blocking=True), coords_l.to(device, non_blocking=True), \
                                                                   label.to(device, non_blocking=True)
             Y_prob, Y_hat, loss, descriptions = model(data_s, coord_s, data_l, coords_l, label)
-            if print_results:
-                print(f"Y_hat: {Y_hat.tolist()} | Y_prob: {Y_prob.tolist()} | Descriptions: {descriptions}")
+            # if print_results:
+            #     print(f"Y_hat: {Y_hat.tolist()} | Y_prob: {Y_prob.tolist()} | Descriptions: {descriptions}")
 
             acc_logger.log(Y_hat, label)
             prob[batch_idx] = Y_prob.cpu().numpy()
@@ -237,12 +237,12 @@ def validate(cur, epoch, model, loader, n_classes, early_stopping = None, writer
             
         # Save descriptions to a file
     
-    desc_dir = os.path.join(results_dir, "desc")
-    os.makedirs(desc_dir, exist_ok=True)
+    # desc_dir = os.path.join(results_dir, "desc")
+    # os.makedirs(desc_dir, exist_ok=True)
     
-    desc_file = os.path.join(desc_dir, f"descriptions.json")
-    with open(desc_file, 'w') as f:
-        json.dump(all_descriptions, f, indent=2)
+    # desc_file = os.path.join(desc_dir, f"descriptions.json")
+    # with open(desc_file, 'w') as f:
+    #     json.dump(all_descriptions, f, indent=2)
         
     val_error /= len(loader)
     val_loss /= len(loader)
