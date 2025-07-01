@@ -206,7 +206,8 @@ class Ver2e(nn.Module):
             # Average scores across descriptions for this class [B, N, 1]
             class_scores.append(scores.mean(dim=-1, keepdim=True))
             # Compute slide-level scores for each description using attention pooling [B, num_desc]
-            slide_scores = desc_pool(scores)
+            # slide_scores = desc_pool(scores)
+            slide_scores = desc_pool(scores.detach()).detach()
             slide_desc_scores.append(slide_scores)
         # Concatenate scores for all classes [B, N, C]
         class_scores = torch.cat(class_scores, dim=-1)
