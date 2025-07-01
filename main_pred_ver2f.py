@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 from datetime import datetime
 from utils.file_utils import save_pkl
-from utils.core_utils import train  # Make sure this expects model as the first arg
+from utils.core_utils_desc import train  # Make sure this expects model as the first arg
 
 sys.path.append(os.path.join("src"))  
 sys.path.append("src")
