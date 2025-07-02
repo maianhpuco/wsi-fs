@@ -98,31 +98,7 @@ def main(args):
 
         desc_dir = os.path.join(args.results_dir, "desc") 
         os.makedirs(desc_dir, exist_ok=True)
-        # # ===== Return descriptions for patches in test set =====
-        # for idx, batch in enumerate(datasets[2]):  # test_dataset
-        #     model.eval()
-        #     with torch.no_grad():
-        #         x_s, coord_s, x_l, coord_l, label, slide_id = batch['features_s'].cuda(), batch['coords_s'], batch['features_l'].cuda(), batch['coords_l'], batch['label'].cuda(), batch['slide_id']
-        #         x_s_proj = model.visual_proj(F.normalize(x_s.unsqueeze(0), dim=-1))
-        #         x_s_proj = F.normalize(x_s_proj, dim=-1)
 
-        #         # === Description Summary by Attention Threshold ===
-        #         summary = model.get_patchwise_desc_summary(x_s_proj, threshold=0.5)
-        #         import json
-
-        #         def convert(o):
-        #             if isinstance(o, torch.Tensor):
-        #                 return o.tolist()
-        #             if isinstance(o, np.ndarray):
-        #                 return o.tolist()
-        #             return o
-
-        #         with open(os.path.join(desc_dir, f"desc_summary_{slide_id}.json"), "w") as f:
-        #             json.dump(summary, f, indent=2, default=convert) 
-                
-        #         # save_pkl(os.path.join(args.results_dir, f"desc_summary_{slide_id}.pkl"), summary)
-
-    # Save summary
     summary_df = pd.DataFrame({
         'folds': folds,
         'test_auc': all_test_auc,
