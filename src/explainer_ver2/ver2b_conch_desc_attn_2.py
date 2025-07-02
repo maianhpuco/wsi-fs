@@ -101,7 +101,7 @@ class Ver2b(nn.Module):
         for class_id, (start, end) in self.class_to_desc_idx.items():
             class_scores[:, :, class_id] = logits_desc[:, :, start:end].mean(dim=2)
         return class_scores
-
+    
     def forward(self, x_s, coord_s, x_l, coord_l, label=None):
         if x_s.ndim == 2:
             x_s = x_s.unsqueeze(0)
@@ -112,27 +112,60 @@ class Ver2b(nn.Module):
         B, N, D = x_s.shape
 
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
-        x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
+        # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
-        logits_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)
-        logits_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)
+        logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
+        # logits_desc_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)  # [B, N, T]
 
-        class_scores_s = self.get_class_scores_from_descriptions(logits_s)
-        class_scores_l = self.get_class_scores_from_descriptions(logits_l)
+        class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
+        # class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
 
-        patch_feat_s = self.attn_pooling(x_s_proj)  # [B, D]
-        patch_feat_l = self.attn_pooling(x_l_proj)  # [B, D]
+        # Combine class scores from small and large patches
+        class_scores = (class_scores_s) / 2  # [B, N, C]
+        # print(f"Class scores shape: {class_scores.shape}")
+         
+        # Apply attention over patches for each class
+        attn_weights = F.softmax(class_scores, dim=1)  # [B, N, C]
+        logits = torch.sum(attn_weights * class_scores, dim=1)  # [B, C]
 
-        slide_feat_s = F.normalize(patch_feat_s, dim=-1)
-        slide_feat_l = F.normalize(patch_feat_l, dim=-1)
-
-        logits_s = slide_feat_s @ self.text_features_low.T
-        logits_l = slide_feat_l @ self.text_features_high.T
-        logits = logits_s + logits_l
-
+        # Compute loss if label is provided
         loss = self.loss_ce(logits, label) if label is not None else None
 
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
 
-        return Y_prob, Y_hat, loss
+        return Y_prob, Y_hat, loss 
+    # def forward(self, x_s, coord_s, x_l, coord_l, label=None):
+    #     if x_s.ndim == 2:
+    #         x_s = x_s.unsqueeze(0)
+    #         x_l = x_l.unsqueeze(0)
+    #         coord_s = coord_s.unsqueeze(0)
+    #         coord_l = coord_l.unsqueeze(0)
+
+    #     B, N, D = x_s.shape
+
+    #     x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
+    #     x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
+
+    #     logits_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)
+    #     logits_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)
+
+    #     class_scores_s = self.get_class_scores_from_descriptions(logits_s)
+    #     class_scores_l = self.get_class_scores_from_descriptions(logits_l)
+
+    #     patch_feat_s = self.attn_pooling(x_s_proj)  # [B, D]
+    #     patch_feat_l = self.attn_pooling(x_l_proj)  # [B, D]
+
+    #     slide_feat_s = F.normalize(patch_feat_s, dim=-1)
+    #     slide_feat_l = F.normalize(patch_feat_l, dim=-1)
+
+    #     logits_s = slide_feat_s @ self.text_features_low.T
+    #     logits_l = slide_feat_l @ self.text_features_high.T
+    #     logits = logits_s + logits_l
+
+    #     loss = self.loss_ce(logits, label) if label is not None else None
+
+    #     Y_prob = F.softmax(logits, dim=1)
+    #     Y_hat = Y_prob.argmax(dim=1)
+
+    #     return Y_prob, Y_hat, loss
