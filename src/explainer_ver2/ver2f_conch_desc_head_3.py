@@ -255,7 +255,7 @@ class Ver2f(nn.Module):
         class_scores = torch.cat(class_scores, dim=-1)
         # Concatenate slide-level description scores [B, num_desc * C]
         slide_desc_scores = torch.cat(slide_desc_scores, dim=1)
-        print(f"slide_desc_scores shape: {slide_desc_scores.shape}")  # Debugging output
+        print(f"slide_desc_scores shape: {slide_desc_scores}")  # Debugging output
         return class_scores, slide_desc_scores
 
     def get_concept_scores(self, slide_desc_scores):
