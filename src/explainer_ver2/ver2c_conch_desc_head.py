@@ -159,7 +159,7 @@ class Ver2c(nn.Module):
             x_s = x_s.unsqueeze(0)
             x_l = x_l.unsqueeze(0)
             coord_s = coord_s.unsqueeze(0)
-            coord_l = coord_l.unsqueeze(0)
+            # coord_l = coord_l.unsqueeze(0)
 
         # Get input dimensions
         B, N, D = x_s.shape

@@ -8,16 +8,16 @@ sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
 
-class AttentionPooling(nn.Module):
-    def __init__(self, feat_dim):
-        super().__init__()
-        self.attn_proj = nn.Linear(feat_dim, 1)
+# class AttentionPooling(nn.Module):
+#     def __init__(self, feat_dim):
+#         super().__init__()
+#         self.attn_proj = nn.Linear(feat_dim, 1)
 
-    def forward(self, feats):
-        # feats: [B, N, D]
-        attn_weights = self.attn_proj(feats).squeeze(-1)  # [B, N]
-        attn_weights = F.softmax(attn_weights, dim=1)  # [B, N]
-        return torch.sum(attn_weights.unsqueeze(-1) * feats, dim=1)  # [B, D]
+#     def forward(self, feats):
+#         # feats: [B, N, D]
+#         attn_weights = self.attn_proj(feats).squeeze(-1)  # [B, N]
+#         attn_weights = F.softmax(attn_weights, dim=1)  # [B, N]
+#         return torch.sum(attn_weights.unsqueeze(-1) * feats, dim=1)  # [B, D]
 
 
 class Ver2a(nn.Module):
@@ -46,7 +46,7 @@ class Ver2a(nn.Module):
 
         feat_dim = getattr(config, "input_size", 512)
         self.visual_proj = nn.Linear(feat_dim, feat_dim)
-        self.attn_pooling = AttentionPooling(feat_dim)
+        # self.attn_pooling = AttentionPooling(feat_dim)
 
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
         self.desc_text_features = self.desc_text_features.detach()
@@ -117,9 +117,10 @@ class Ver2a(nn.Module):
         # class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
 
         # Combine class scores from small and large patches
-        class_scores = (class_scores_s) / 2  # [B, N, C]
+        class_scores = (class_scores_s)  # [B, N, C]
         # print(f"Class scores shape: {class_scores.shape}")
-         
+        logits = class_scores.mean(dim=1)  # [B, C]
+ 
         # Apply attention over patches for each class
         attn_weights = F.softmax(class_scores, dim=1)  # [B, N, C]
         logits = torch.sum(attn_weights * class_scores, dim=1)  # [B, C]
@@ -131,39 +132,5 @@ class Ver2a(nn.Module):
         Y_hat = Y_prob.argmax(dim=1)
 
         return Y_prob, Y_hat, loss
- 
-    # def forward(self, x_s, coord_s, x_l, coord_l, label=None):
-    #     if x_s.ndim == 2:
-    #         x_s = x_s.unsqueeze(0)
-    #         x_l = x_l.unsqueeze(0)
-    #         coord_s = coord_s.unsqueeze(0)
-    #         coord_l = coord_l.unsqueeze(0)
 
-    #     B, N, D = x_s.shape
-
-    #     x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
-    #     x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
-
-    #     logits_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)
-    #     logits_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)
-
-    #     class_scores_s = self.get_class_scores_from_descriptions(logits_s)
-    #     class_scores_l = self.get_class_scores_from_descriptions(logits_l)
-
-        # patch_feat_s = self.attn_pooling(x_s_proj)  # [B, D]
-        # patch_feat_l = self.attn_pooling(x_l_proj)  # [B, D]
-
-        # slide_feat_s = F.normalize(patch_feat_s, dim=-1)
-        # slide_feat_l = F.normalize(patch_feat_l, dim=-1)
-
-        # logits_s = slide_feat_s @ self.text_features_low.T
-        # logits_l = slide_feat_l @ self.text_features_high.T
         
-        # logits = logits_s + logits_l
-
-        # loss = self.loss_ce(logits, label) if label is not None else None
-
-        # Y_prob = F.softmax(logits, dim=1)
-        # Y_hat = Y_prob.argmax(dim=1)
-
-        # return Y_prob, Y_hat, loss 
