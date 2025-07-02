@@ -99,11 +99,13 @@ class Ver2a(nn.Module):
         # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
         logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
+        print(f"Logits desc shape: {logits_desc_s.shape}") 
         # logits_desc_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)  # [B, N, T]
 
         class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
         # class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
-
+        print(f"Class scores shape: {class_scores_s.shape}")
+        
         # Combine class scores from small and large patches
         class_scores = (class_scores_s)  # [B, N, C]
         # print(f"Class scores shape: {class_scores.shape}")
