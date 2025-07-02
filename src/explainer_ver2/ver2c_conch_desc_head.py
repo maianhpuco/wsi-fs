@@ -111,16 +111,66 @@ class Ver2c(nn.Module):
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
         # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
-        logits_desc_s, slide_score = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
+        # Step 1: Identify "No Tumor Detected" class and main tumor classes
+        all_class_ids = list(self.class_to_desc_idx.keys())
+        total_classes = len(all_class_ids)
+        no_tumor_class_id = total_classes - 1  # Assume "No Tumor Detected" is the last class
+        main_class_ids = [cid for cid in all_class_ids if cid != no_tumor_class_id]
 
-        class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
+        # Step 2: Filter patches using "No Tumor Detected" descriptions
+        if no_tumor_class_id in self.class_to_desc_idx:
+            no_tumor_start, no_tumor_end = self.class_to_desc_idx[no_tumor_class_id]
+            no_tumor_desc_feats = self.desc_text_features[no_tumor_start:no_tumor_end]
+            
+            # Compute scores against no tumor descriptions
+            no_tumor_scores = self.compute_patch_scores(x_s_proj, no_tumor_desc_feats)  # [B, N, num_no_tumor_desc]
+            no_tumor_class_scores = no_tumor_scores.mean(dim=-1)  # [B, N] - average across no tumor descriptions
+            
+            # Create mask for patches with low no tumor scores (likely tumor patches)
+            no_tumor_threshold = 0.5  # Threshold for filtering
+            tumor_patch_mask = no_tumor_class_scores < no_tumor_threshold  # [B, N]
+            
+            # Apply mask to features - zero out likely non-tumor patches
+            x_s_proj_filtered = x_s_proj * tumor_patch_mask.unsqueeze(-1)  # [B, N, D]
+        else:
+            # If no "No Tumor Detected" class, use all patches
+            x_s_proj_filtered = x_s_proj
+            tumor_patch_mask = torch.ones(B, N, device=x_s_proj.device, dtype=torch.bool)
 
-        # Combine class scores from small and large patches
-        class_scores = (class_scores_s)  # [B, N, C]
+        # Step 3: Extract descriptions for main tumor classes
+        main_class_desc_feats = []
+        main_class_to_desc = {}
+        current_start = 0
+        
+        for class_id in main_class_ids:
+            if class_id in self.class_to_desc_idx:
+                start, end = self.class_to_desc_idx[class_id]
+                class_desc = self.desc_text_features[start:end]
+                main_class_desc_feats.append(class_desc)
+                main_class_to_desc[class_id] = (current_start, current_start + class_desc.size(0))
+                current_start += class_desc.size(0)
+        
+        main_desc_feats = torch.cat(main_class_desc_feats, dim=0)  # [total_main_desc, D]
+
+        # Step 4: Compute patch scores for filtered patches against main classes
+        logits_desc_s = self.compute_patch_scores(x_s_proj_filtered, main_desc_feats)  # [B, N, total_main_desc]
+
+        # Step 5: Convert description scores to class scores for main classes
+        num_main_classes = len(main_class_ids)
+        class_scores_s = torch.zeros(B, N, num_main_classes, device=logits_desc_s.device)
+        for idx, class_id in enumerate(main_class_ids):
+            if class_id in main_class_to_desc:
+                start, end = main_class_to_desc[class_id]
+                class_scores_s[:, :, idx] = logits_desc_s[:, :, start:end].mean(dim=2)
+
+        # Only consider patches that passed the tumor filter
+        class_scores_s = class_scores_s * tumor_patch_mask.unsqueeze(-1)
+        
+        class_scores = class_scores_s  # [B, N, num_main_classes]
  
         # Apply attention over patches for each class
-        attn_weights = F.softmax(class_scores, dim=1)  # [B, N, C]
-        logits = torch.sum(attn_weights * class_scores, dim=1)  # [B, C]
+        attn_weights = F.softmax(class_scores, dim=1)  # [B, N, num_main_classes]
+        logits = torch.sum(attn_weights * class_scores, dim=1)  # [B, num_main_classes]
 
         # Compute loss if label is provided
         loss = self.loss_ce(logits, label) if label is not None else None
