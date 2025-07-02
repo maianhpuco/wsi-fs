@@ -29,15 +29,30 @@ class GatedAttentionPooling(nn.Module):
         A = F.softmax(A, dim=1)
         # Compute weighted sum of features using attention weights
         return torch.sum(A.unsqueeze(-1) * feats, dim=1)
-
-# Define a module for attention-based pooling of description scores
+    
 class DescriptionAttentionPooling(nn.Module):
     def __init__(self, hidden_dim=256):
         super().__init__()
-        # Linear layers for attention computation
-        self.attention_V = nn.Sequential(nn.Linear(1, hidden_dim), nn.Tanh())
-        self.attention_U = nn.Sequential(nn.Linear(1, hidden_dim), nn.Sigmoid())
-        self.attention_weights = nn.Linear(hidden_dim, 1)
+
+    def forward(self, desc_attn_scores, patch_feats):
+        """
+        Args:
+            desc_attn_scores: [B, N, num_desc]
+            patch_feats: [B, N, D]
+        Returns:
+            slide_desc_scores: [B, num_desc] - average concept score per slide
+        """
+        # Average over patches for each concept
+        return desc_attn_scores.mean(dim=1)  # [B, num_desc] 
+    
+# Define a module for attention-based pooling of description scores
+# class DescriptionAttentionPooling(nn.Module):
+#     def __init__(self, hidden_dim=256):
+#         super().__init__()
+#         # Linear layers for attention computation
+#         self.attention_V = nn.Sequential(nn.Linear(1, hidden_dim), nn.Tanh())
+#         self.attention_U = nn.Sequential(nn.Linear(1, hidden_dim), nn.Sigmoid())
+#         self.attention_weights = nn.Linear(hidden_dim, 1)
 
     # def forward(self, desc_scores):
     #     """
@@ -59,29 +74,29 @@ class DescriptionAttentionPooling(nn.Module):
     #     slide_scores = torch.sum(A.unsqueeze(-1) * desc_scores, dim=1)  # [B * num_desc, 1]
     #     # Reshape to [B, num_desc]
     #     return slide_scores.view(B, num_desc)
-    def forward(self, desc_attn_scores, patch_feats):
-        """
-        Args:
-            desc_attn_scores: [B, N, num_desc]
-            patch_feats: [B, N, D]
-        Returns:
-            slide_desc_scores: [B, num_desc, D] → or mean over D → [B, num_desc]
-        """
-        B, N, num_desc = desc_attn_scores.shape
-        desc_attn_scores = desc_attn_scores.permute(0, 2, 1)  # [B, num_desc, N]
+    # def forward(self, desc_attn_scores, patch_feats):
+    #     """
+    #     Args:
+    #         desc_attn_scores: [B, N, num_desc]
+    #         patch_feats: [B, N, D]
+    #     Returns:
+    #         slide_desc_scores: [B, num_desc, D] → or mean over D → [B, num_desc]
+    #     """
+    #     B, N, num_desc = desc_attn_scores.shape
+    #     desc_attn_scores = desc_attn_scores.permute(0, 2, 1)  # [B, num_desc, N]
 
-        slide_desc_feats = []
-        for i in range(num_desc):
-            # Get attention weights for concept i
-            attn = desc_attn_scores[:, i, :]  # [B, N]
-            attn = F.softmax(attn, dim=-1)  # normalize
-            weighted_feat = torch.sum(attn.unsqueeze(-1) * patch_feats, dim=1)  # [B, D]
-            slide_desc_feats.append(weighted_feat)
+    #     slide_desc_feats = []
+    #     for i in range(num_desc):
+    #         # Get attention weights for concept i
+    #         attn = desc_attn_scores[:, i, :]  # [B, N]
+    #         attn = F.softmax(attn, dim=-1)  # normalize
+    #         weighted_feat = torch.sum(attn.unsqueeze(-1) * patch_feats, dim=1)  # [B, D]
+    #         slide_desc_feats.append(weighted_feat)
 
-        slide_desc_feats = torch.stack(slide_desc_feats, dim=1)  # [B, num_desc, D]
-        slide_desc_scores = slide_desc_feats.norm(dim=-1)  # or dot with text feature if you want alignment
-        print(f"slide_desc_scores shape: {slide_desc_scores.shape}")  # Debugging output
-        return slide_desc_scores  # [B, num_desc]
+    #     slide_desc_feats = torch.stack(slide_desc_feats, dim=1)  # [B, num_desc, D]
+    #     slide_desc_scores = slide_desc_feats.norm(dim=-1)  # or dot with text feature if you want alignment
+    #     print(f"slide_desc_scores shape: {slide_desc_scores.shape}")  # Debugging output
+    #     return slide_desc_scores  # [B, num_desc]
     
 # Define a module to compute attention scores between patch features and class descriptions
 class DescriptionHead(nn.Module): 
@@ -240,6 +255,7 @@ class Ver2f(nn.Module):
         class_scores = torch.cat(class_scores, dim=-1)
         # Concatenate slide-level description scores [B, num_desc * C]
         slide_desc_scores = torch.cat(slide_desc_scores, dim=1)
+        print(f"slide_desc_scores shape: {slide_desc_scores.shape}")  # Debugging output
         return class_scores, slide_desc_scores
 
     def get_concept_scores(self, slide_desc_scores):
