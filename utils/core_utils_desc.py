@@ -136,8 +136,8 @@ def train(model, datasets, cur, args):
         torch.save(model.state_dict(), ckpt_path)
 
     # Final evaluation
-    _, val_error, val_auc, _, val_f1 = summary(args.mode, model, val_loader, args.n_classes)
-    results_dict, test_error, test_auc, acc_logger, test_f1 = summary(args.mode, model, test_loader, args.n_classes)
+    _, val_error, val_auc, _, val_f1 = summary(args.mode, model, val_loader, args.n_classes, args.results_dir)
+    results_dict, test_error, test_auc, acc_logger, test_f1 = summary(args.mode, model, test_loader, args.n_classes, args.results_dir)
 
     # Print results
     print(f"Val AUC:  {val_auc:.4f}, F1: {val_f1:.4f}")
@@ -274,7 +274,7 @@ def validate(cur, epoch, model, loader, n_classes, early_stopping = None, writer
 
     return False
 
-def summary(mode, model, loader, n_classes):
+def summary(mode, model, loader, n_classes, results_dir):
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     acc_logger = Accuracy_Logger(n_classes=n_classes)
     model.eval()
@@ -295,14 +295,24 @@ def summary(mode, model, loader, n_classes):
             data_s, coord_s, data_l, coords_l, label = data_s.to(device), coord_s.to(device), data_l.to(device), coords_l.to(device), label.to(device)
             slide_id = slide_ids.iloc[batch_idx]
             with torch.no_grad():
-                Y_prob, Y_hat, loss = model(data_s, coord_s, data_l, coords_l, label)
+                Y_prob, Y_hat, loss , desc = model(data_s, coord_s, data_l, coords_l, label)
 
             acc_logger.log(Y_hat, label)
             probs = Y_prob.cpu().numpy()
             all_probs[batch_idx] = probs
             all_labels[batch_idx] = label.item()
 
-            patient_results.update({slide_id: {'slide_id': np.array(slide_id), 'prob': probs, 'label': label.item()}})
+            # patient_results.update({slide_id: {'slide_id': np.array(slide_id), 'prob': probs, 'label': label.item()}})
+            patient_results.update({
+                slide_id: {
+                    'slide_id': slide_id,
+                    'prob': probs.tolist(),
+                    'label': label.item(),
+                    'pred': Y_hat.item(),
+                    'desc': ", ".join(desc) if isinstance(desc, list) else str(desc)
+                }
+            })
+        
             error = calculate_error(Y_hat, label)
             test_error += error
 
@@ -311,7 +321,12 @@ def summary(mode, model, loader, n_classes):
 
         test_error /= len(loader)
         test_f1 = f1_score(all_label, all_pred, average='macro')
+        import pandas as pd
 
+        # Convert results to DataFrame
+        df = pd.DataFrame.from_dict(patient_results, orient='index')
+        df.to_csv(f"{results_dir}/slide_predictions_with_desc.csv", index=False)
+        print(f"Saved slide predictions with descriptions to {results_dir}/slide_predictions_with_desc.csv")
         if n_classes == 2:
             auc = roc_auc_score(all_labels, all_probs[:, 1])
             aucs = []
