@@ -116,18 +116,14 @@ class Ver2a(nn.Module):
         class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
         class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
 
-        # Combine class scores from small and large patches
-        class_scores = (class_scores_s + class_scores_l) / 2  # [B, N, C]
-
-        # Reshape to [B*C, N, 1] to apply AttentionPooling over patch scores
-        B, N, C = class_scores.shape
-        class_scores_reshaped = class_scores.permute(0, 2, 1).reshape(B * C, N, 1)
-
-        # Use self.attn_pooling to pool over patch dimension
-        pooled_scores = self.attn_pooling(class_scores_reshaped)  # [B*C, 1]
-
-        # Reshape back to [B, C]
-        logits = pooled_scores.view(B, C)
+        # Aggregate patch scores to slide-level by averaging over N patches
+        # slide_logits_s = class_scores_s.mean(dim=1)  # [B, C] average scores for small patches
+        # slide_logits_l = class_scores_l.mean(dim=1)  # [B, C]
+        # logits = slide_logits_s + slide_logits_l  # [B, C] 
+        slide_logits_s = class_scores_s.mean(dim=1)  # [B, C] average scores for small patches
+        slide_logits_l = class_scores_l.mean(dim=1)  # [B, C]  
+        # Combine scores from small and large patches
+       
 
         # Compute loss if label is provided
         loss = self.loss_ce(logits, label) if label is not None else None
