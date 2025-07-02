@@ -313,8 +313,8 @@ class Ver2d(nn.Module):
             patch_scores: [B, N, T]
             slide_scores: [B, 1, T] (mean pooled)
         """
-        # patch_feats = F.normalize(patch_feats, dim=-1)
-        # desc_feats = F.normalize(desc_feats, dim=-1)  # [T, D]
+        patch_feats = F.normalize(patch_feats, dim=-1)
+        desc_feats = F.normalize(desc_feats, dim=-1)  # [T, D]
         sim = torch.matmul(patch_feats, desc_feats.T)  # [B, N, T]
         #per-slide description similarity scores  
         # Aggregate patch scores to slide-level by mean
