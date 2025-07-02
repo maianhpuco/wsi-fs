@@ -118,7 +118,7 @@ class Ver2a(nn.Module):
 
         # Combine class scores from small and large patches
         class_scores = (class_scores_s + class_scores_l) / 2  # [B, N, C]
-
+        print(f"Class scores shape: {class_scores.shape}")
         # Reshape to [B*C, N, 1] to apply AttentionPooling over patch scores
         B, N, C = class_scores.shape
         class_scores_reshaped = class_scores.permute(0, 2, 1).reshape(B * C, N, 1)
