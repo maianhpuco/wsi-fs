@@ -121,4 +121,4 @@ class Ver2a(nn.Module):
 
         return Y_prob, Y_hat, loss
 
-        
+     

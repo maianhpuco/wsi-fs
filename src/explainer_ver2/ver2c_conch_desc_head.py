@@ -8,18 +8,7 @@ sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
 
-class DescriptionHead(nn.Module):
-    def __init__(self, desc_feats):
-        super().__init__()
-        self.desc_feats = nn.Parameter(desc_feats.clone(), requires_grad=False)  # [T, D]
-        self.scale = desc_feats.shape[1] ** -0.5  # 1 / sqrt(D)
-
-    def forward(self, patch_feats):
-        # patch_feats: [B, N, D], desc_feats: [T, D]
-        sim = torch.matmul(patch_feats, self.desc_feats.T) * self.scale  # [B, N, T]
-        return F.softmax(sim, dim=-1)  # Attention over descriptions
- 
-class Ver2c(nn.Module):
+class Ver2a(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
@@ -50,9 +39,6 @@ class Ver2c(nn.Module):
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
         self.desc_text_features = self.desc_text_features.detach()
 
-        self.description_head = DescriptionHead(self.desc_text_features)
- 
- 
         self.text_features_low = self.aggregate_class_features().detach()
         self.text_features_high = self.text_features_low
 
@@ -88,6 +74,8 @@ class Ver2c(nn.Module):
             class_feats[class_id] = self.desc_text_features[start:end].max(dim=0)[0]
         return F.normalize(class_feats, dim=-1)
 
+    def compute_patch_scores(self, patch_feats, desc_feats):
+        return patch_feats @ desc_feats.T
 
     def get_class_scores_from_descriptions(self, logits_desc): # B=batch size, N=patches, T=total number of descriptions 
         B, N, T = logits_desc.shape
@@ -110,10 +98,8 @@ class Ver2c(nn.Module):
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
         # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
-        # logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
-        desc_representations = self.description_head(x_s_proj)  # [B, T, D]
-        logits_desc_s = F.normalize(x_s_proj, dim=-1) @ desc_representations.transpose(1, 2)  # [B, N, T]
-
+        logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
+        # logits_desc_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)  # [B, N, T]
 
         class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
         # class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
@@ -135,4 +121,4 @@ class Ver2c(nn.Module):
 
         return Y_prob, Y_hat, loss
 
-         
+     
