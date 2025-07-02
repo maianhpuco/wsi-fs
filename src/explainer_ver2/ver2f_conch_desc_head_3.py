@@ -34,7 +34,7 @@ class DescriptionAttentionPooling(nn.Module):
     def __init__(self, hidden_dim=256):
         super().__init__()
 
-    def forward(self, desc_attn_scores, patch_feats):
+    def forward(self, desc_attn_scores):
         """
         Args:
             desc_attn_scores: [B, N, num_desc]
