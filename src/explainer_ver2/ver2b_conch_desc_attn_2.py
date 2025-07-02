@@ -7,19 +7,25 @@ import torch.nn.functional as F
 sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
-
 class DescriptionHead(nn.Module):
     def __init__(self, desc_feats):
         super().__init__()
-        self.desc_feats = nn.Parameter(desc_feats.clone(), requires_grad=False)
-        self.scale = desc_feats.shape[1] ** -0.5
+        self.query = nn.Parameter(desc_feats.clone(), requires_grad=False)  # [T, D]
+        self.scale = desc_feats.shape[1] ** -0.5  # 1 / sqrt(D)
 
     def forward(self, patch_feats):
         # patch_feats: [B, N, D]
-        # desc_feats: [T, D]
-        return torch.matmul(patch_feats, self.desc_feats.T) * self.scale  # [B, N, T]
+        # query (desc_feats): [T, D]
 
+        # Compute attention: Q @ K^T => [B, T, N]
+        attn_scores = torch.einsum("td,bnd->btn", self.query, patch_feats) * self.scale  # [B, T, N]
+        attn_weights = F.softmax(attn_scores, dim=-1)  # [B, T, N]
 
+        # Aggregate patch features per description: Attn(Q,K)V = A @ V
+        # V = patch_feats → [B, N, D]
+        attended = torch.einsum("btn,bnd->btd", attn_weights, patch_feats)  # [B, T, D]
+        return attended  # description-level embeddings for each input
+ 
 class Ver2b(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
@@ -46,12 +52,14 @@ class Ver2b(nn.Module):
 
         feat_dim = getattr(config, "input_size", 512)
         self.visual_proj = nn.Linear(feat_dim, feat_dim)
-        self.attn_pooling = AttentionPooling(feat_dim)
+        # self.attn_pooling = AttentionPooling(feat_dim)
 
         self.desc_text_features, self.class_to_desc_idx = self.init_text_features()
         self.desc_text_features = self.desc_text_features.detach()
-        self.description_head = DescriptionHead(self.desc_text_features)
 
+        self.description_head = DescriptionHead(self.desc_text_features)
+ 
+ 
         self.text_features_low = self.aggregate_class_features().detach()
         self.text_features_high = self.text_features_low
 
@@ -87,13 +95,15 @@ class Ver2b(nn.Module):
             class_feats[class_id] = self.desc_text_features[start:end].max(dim=0)[0]
         return F.normalize(class_feats, dim=-1)
 
-    def get_class_scores_from_descriptions(self, logits_desc):
+
+    def get_class_scores_from_descriptions(self, logits_desc): # B=batch size, N=patches, T=total number of descriptions 
         B, N, T = logits_desc.shape
         C = self.num_classes
         class_scores = torch.zeros(B, N, C, device=logits_desc.device)
         for class_id, (start, end) in self.class_to_desc_idx.items():
             class_scores[:, :, class_id] = logits_desc[:, :, start:end].mean(dim=2)
-        return class_scores  # [B, N, C]
+        return class_scores # shape: [B, N, C] 
+
 
     def forward(self, x_s, coord_s, x_l, coord_l, label=None):
         if x_s.ndim == 2:
@@ -105,16 +115,31 @@ class Ver2b(nn.Module):
         B, N, D = x_s.shape
 
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
-        logits_desc_s = self.description_head(x_s_proj)  # [B, N, T]
-        class_scores = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C]
+        # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
-        # Use softmax over patches and weighted sum for final logits
+        # logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
+        desc_representations = self.description_head(x_s_proj)  # [B, T, D]
+        logits_desc_s = F.normalize(x_s_proj, dim=-1) @ desc_representations.transpose(1, 2)  # [B, N, T]
+
+
+        class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
+        # class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
+
+        # Combine class scores from small and large patches
+        class_scores = (class_scores_s)  # [B, N, C]
+        # print(f"Class scores shape: {class_scores.shape}")
+        logits = class_scores.mean(dim=1)  # [B, C]
+ 
+        # Apply attention over patches for each class
         attn_weights = F.softmax(class_scores, dim=1)  # [B, N, C]
         logits = torch.sum(attn_weights * class_scores, dim=1)  # [B, C]
 
+        # Compute loss if label is provided
         loss = self.loss_ce(logits, label) if label is not None else None
+
         Y_prob = F.softmax(logits, dim=1)
         Y_hat = Y_prob.argmax(dim=1)
 
         return Y_prob, Y_hat, loss
- 
+
+         
