@@ -7,24 +7,7 @@ import torch.nn.functional as F
 sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
-# class DescriptionHead(nn.Module):
-#     def __init__(self, desc_feats):
-#         super().__init__()
-#         self.query = nn.Parameter(desc_feats.clone(), requires_grad=False)  # [T, D]
-#         self.scale = desc_feats.shape[1] ** -0.5  # 1 / sqrt(D)
 
-#     def forward(self, patch_feats):
-#         # patch_feats: [B, N, D]
-#         # query (desc_feats): [T, D]
-
-#         # Compute attention: Q @ K^T => [B, T, N]
-#         attn_scores = torch.einsum("td,bnd->btn", self.query, patch_feats) * self.scale  # [B, T, N]
-#         attn_weights = F.softmax(attn_scores, dim=-1)  # [B, T, N]
-#         print(attn_scores)  
-#         # Aggregate patch features per description: Attn(Q,K)V = A @ V
-#         # V = patch_feats → [B, N, D]
-#         attended = torch.einsum("btn,bnd->btd", attn_weights, patch_feats)  # [B, T, D]
-#         return attended  # description-level embeddings for each input
 class DescriptionHead(nn.Module):
     def __init__(self, desc_feats):
         super().__init__()
@@ -36,7 +19,7 @@ class DescriptionHead(nn.Module):
         sim = torch.matmul(patch_feats, self.desc_feats.T) * self.scale  # [B, N, T]
         return F.softmax(sim, dim=-1)  # Attention over descriptions
  
-class Ver2b(nn.Module):
+class Ver2c(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
