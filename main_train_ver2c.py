@@ -33,6 +33,43 @@ def seed_torch(seed=7):
     torch.backends.cudnn.deterministic = True
 
 
+def apply_few_shot_sampling(dataset, n_shots, label_dict, seed=42):
+    """
+    Sample n_shots examples per class from the dataset
+    """
+    if n_shots is None or n_shots <= 0:
+        return dataset
+    
+    np.random.seed(seed)
+    
+    # Group samples by class
+    class_samples = {}
+    for idx, (slide_id, label) in enumerate(zip(dataset.slide_data['slide_id'], dataset.slide_data['label'])):
+        if label not in class_samples:
+            class_samples[label] = []
+        class_samples[label].append(idx)
+    
+    # Sample n_shots from each class
+    selected_indices = []
+    for class_label, indices in class_samples.items():
+        if len(indices) >= n_shots:
+            selected = np.random.choice(indices, n_shots, replace=False)
+        else:
+            selected = indices  # Use all available if less than n_shots
+        selected_indices.extend(selected)
+    
+    # Create new dataset with selected samples
+    selected_indices = sorted(selected_indices)
+    dataset.slide_data = dataset.slide_data.iloc[selected_indices].reset_index(drop=True)
+    
+    print(f"Few-shot sampling: {n_shots} shots per class")
+    for class_name, class_id in label_dict.items():
+        class_count = (dataset.slide_data['label'] == class_id).sum()
+        print(f"  {class_name}: {class_count} samples")
+    
+    return dataset
+
+
 def prepare_dataset(args, fold_id):
     if args.dataset_name == 'tcga_renal':
         from src.datasets.multiple_scales.tcga import return_splits_custom
@@ -50,7 +87,12 @@ def prepare_dataset(args, fold_id):
             seed=args.seed,
             use_h5=True,
         )
-        print(len(train_dataset))
+        
+        # Apply few-shot sampling to training dataset
+        if hasattr(args, 'n_shots') and args.n_shots is not None:
+            train_dataset = apply_few_shot_sampling(train_dataset, args.n_shots, args.label_dict, args.seed)
+        
+        print(f"Training dataset size: {len(train_dataset)}")
         return train_dataset, val_dataset, test_dataset  
     else:
         raise NotImplementedError(f"[✗] Dataset '{args.dataset_name}' not supported.")
@@ -74,7 +116,8 @@ def main(args):
         datasets = prepare_dataset(args, i)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        args.results_dir = os.path.join(args.paths['results_dir'], f"resuls_fold{i}_timestamp_{timestamp}")
+        few_shot_suffix = f"_{args.n_shots}shot" if args.n_shots is not None else "_fulldata"
+        args.results_dir = os.path.join(args.paths['results_dir'], f"results_fold{i}{few_shot_suffix}_timestamp_{timestamp}")
         os.makedirs(args.results_dir, exist_ok=True) 
         
         print(f"\n=========== Fold {i} ===========")
@@ -129,6 +172,8 @@ if __name__ == "__main__":
     parser.add_argument('--k_start', type=int, required=True)
     parser.add_argument('--k_end', type=int, required=True)
     parser.add_argument('--max_epochs', type=int, default=42)
+    parser.add_argument('--n_shots', type=int, default=None, 
+                       help='Number of shots per class for few-shot learning (1, 4, 8, 16). If None, use all data.')
     args = parser.parse_args()
 
     with open(args.config, 'r') as f:
