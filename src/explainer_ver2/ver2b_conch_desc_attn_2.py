@@ -128,7 +128,6 @@ class Ver2b(nn.Module):
         # Combine class scores from small and large patches
         class_scores = (class_scores_s)  # [B, N, C]
         # print(f"Class scores shape: {class_scores.shape}")
-        logits = class_scores.mean(dim=1)  # [B, C]
  
         # Apply attention over patches for each class
         attn_weights = F.softmax(class_scores, dim=1)  # [B, N, C]

@@ -76,17 +76,24 @@ class Ver2c(nn.Module):
 
     # def compute_patch_scores(self, patch_feats, desc_feats):
     #     return patch_feats @ desc_feats.T
+    #per-patch description similarity scores 
     def compute_patch_scores(self, patch_feats, desc_feats):
-        D = patch_feats.shape[-1]
-        scale = D ** -0.5
-        desc_feats = desc_feats.T  # [D, T]
-        
+        """
+        patch_feats: [B, N, D]
+        desc_feats: [T, D]
+        Returns:
+            patch_scores: [B, N, T]
+            slide_scores: [B, 1, T] (mean pooled)
+        """
         patch_feats = F.normalize(patch_feats, dim=-1)
-        desc_feats = F.normalize(desc_feats, dim=0)
+        desc_feats = F.normalize(desc_feats, dim=-1)  # [T, D]
+        sim = torch.matmul(patch_feats, desc_feats.T)  # [B, N, T]
+        #per-slide description similarity scores  
+        # Aggregate patch scores to slide-level by mean
+        slide_scores = sim.mean(dim=1, keepdim=True)  # [B, 1, T]
 
-        sim = torch.matmul(patch_feats, desc_feats) * scale  # [B, N, T]
-        attn = F.softmax(sim, dim=-1)  # [B, N, T]
-        return attn
+        return sim, slide_scores
+    
 
     def get_class_scores_from_descriptions(self, logits_desc): # B=batch size, N=patches, T=total number of descriptions 
         B, N, T = logits_desc.shape
@@ -109,16 +116,12 @@ class Ver2c(nn.Module):
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
         # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
-        logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
-        # logits_desc_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)  # [B, N, T]
+        logits_desc_s, slide_score = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
 
         class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
-        # class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
 
         # Combine class scores from small and large patches
         class_scores = (class_scores_s)  # [B, N, C]
-        # print(f"Class scores shape: {class_scores.shape}")
-        logits = class_scores.mean(dim=1)  # [B, C]
  
         # Apply attention over patches for each class
         attn_weights = F.softmax(class_scores, dim=1)  # [B, N, C]
