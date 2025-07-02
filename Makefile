@@ -54,7 +54,8 @@ pred_ver2e_tcga_renal:
 train_ver2f_tcga_renal:
 	python main_train_ver2f.py --config configs_maui/ver2e_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
 pred_ver2f_tcga_renal:
-	python main_train_ver2f.py --config configs_maui/ver2f_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 20
+	python main_train_ver2f.py --config configs_maui/ver2f_tcga_renal.yaml --k_start 1 --k_end 1 --max_epochs 2
+
 
 # ======================================= 
 pred_conch_meanpooling_tcga_lung:
