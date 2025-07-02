@@ -80,6 +80,7 @@ class DescriptionAttentionPooling(nn.Module):
 
         slide_desc_feats = torch.stack(slide_desc_feats, dim=1)  # [B, num_desc, D]
         slide_desc_scores = slide_desc_feats.norm(dim=-1)  # or dot with text feature if you want alignment
+        print(f"slide_desc_scores shape: {slide_desc_scores.shape}")  # Debugging output
         return slide_desc_scores  # [B, num_desc]
     
 # Define a module to compute attention scores between patch features and class descriptions
