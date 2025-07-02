@@ -73,7 +73,7 @@ class DescriptionHead(nn.Module):
         attn_scores = torch.matmul(queries, keys.T) * self.scale
         # Apply softmax to get attention weights over descriptions
         attn_weights = F.softmax(attn_scores, dim=-1)
-        print(f"attn_weights shape: {attn_weights}")  # Debugging output
+        print(f"attn_weights: {attn_weights}")  # Debugging output
         return attn_weights
 
 # Define the main model class
@@ -195,7 +195,7 @@ class Ver2f(nn.Module):
         for head, desc_pool in zip(self.desc_heads, self.desc_pooling):
             # Get attention scores for each description [B, N, num_desc]
             scores = head(patch_feats)
-            print(f"scores : {scores}")  # Debugging output
+            # print(f"scores : {scores}")  # Debugging output
             # Average scores across descriptions for this class [B, N, 1]
             class_scores.append(scores.mean(dim=-1, keepdim=True))
             # Compute slide-level scores for each description using attention pooling [B, num_desc]
