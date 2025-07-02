@@ -77,23 +77,18 @@ class Ver2c(nn.Module):
     # def compute_patch_scores(self, patch_feats, desc_feats):
     #     return patch_feats @ desc_feats.T
     #per-patch description similarity scores 
-    def compute_patch_scores(self, patch_feats, desc_feats):
-        """
-        patch_feats: [B, N, D]
-        desc_feats: [T, D]
-        Returns:
-            patch_scores: [B, N, T]
-            slide_scores: [B, 1, T] (mean pooled)
-        """
-        patch_feats = F.normalize(patch_feats, dim=-1)
-        desc_feats = F.normalize(desc_feats, dim=-1)  # [T, D]
-        sim = torch.matmul(patch_feats, desc_feats.T)  # [B, N, T]
-        #per-slide description similarity scores  
-        # Aggregate patch scores to slide-level by mean
-        slide_scores = sim.mean(dim=1, keepdim=True)  # [B, 1, T]
 
-        return sim, slide_scores
-    
+    def compute_patch_scores(self, patch_feats, desc_feats):
+        D = patch_feats.shape[-1]
+        scale = D ** -0.5
+        desc_feats = desc_feats.T  # [D, T]
+        
+        patch_feats = F.normalize(patch_feats, dim=-1)
+        desc_feats = F.normalize(desc_feats, dim=0)
+
+        sim = torch.matmul(patch_feats, desc_feats) * scale  # [B, N, T]
+        attn = F.softmax(sim, dim=-1)  # [B, N, T]
+        return attn 
 
     def get_class_scores_from_descriptions(self, logits_desc): # B=batch size, N=patches, T=total number of descriptions 
         B, N, T = logits_desc.shape
