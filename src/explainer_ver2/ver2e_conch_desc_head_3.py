@@ -87,7 +87,7 @@ class DescriptionHead(nn.Module):
         attn_scores = torch.matmul(queries, keys.T) * self.scale
         # Apply softmax to get attention weights over descriptions
         attn_weights = F.softmax(attn_scores, dim=-1)
-        print('attn_weights', attn_weights)
+        print('attn_weights: ', attn_weights)
         return attn_weights
 
 # Define the main model class
