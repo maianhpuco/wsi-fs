@@ -8,7 +8,7 @@ sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
 
-class Ver2a(nn.Module):
+class Ver2c(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
