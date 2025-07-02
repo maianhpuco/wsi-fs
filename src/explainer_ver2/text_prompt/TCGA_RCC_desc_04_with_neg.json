@@ -38,6 +38,18 @@
   "No Tumor Detected": [
     "Normal renal parenchyma with no visible tumor cells.",
     "Benign glomeruli and tubules without nuclear atypia.",
-    "Absence of papillary, clear cell, or chromophobe features."
+    "Absence of papillary, clear cell, or chromophobe features.",
+    "Regular cortical architecture with normal nephron structure.",
+    "Intact basement membranes without disruption or thickening.",
+    "Normal renal medulla with collecting ducts and loops of Henle.",
+    "Healthy renal interstitium without fibrosis or inflammation.",
+    "Normal vascular structures without tumor invasion or distortion.",
+    "Absence of mitotic figures or cellular proliferation.",
+    "Regular nuclear morphology without pleomorphism or hyperchromasia.",
+    "Normal tubular epithelium with preserved polarity and organization.",
+    "Absence of necrosis, hemorrhage, or cystic changes typical of tumors.",
+    "Normal glomerular capillary loops without endocapillary proliferation.",
+    "Preserved corticomedullary junction without tumor infiltration.",
+    "Regular spacing between tubules without crowding or architectural distortion."
   ] 
 }
