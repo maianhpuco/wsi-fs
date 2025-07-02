@@ -38,4 +38,4 @@ n_classes: 3
 log_data: false
 reg: 1e-5
 batch_size: 32
-n_shots: 4
+n_shots: 16
