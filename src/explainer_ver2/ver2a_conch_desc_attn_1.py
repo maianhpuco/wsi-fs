@@ -97,7 +97,7 @@ class Ver2a(nn.Module):
 
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
         # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
-
+        
         logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
         print(f"Logits desc shape: {logits_desc_s.shape}") #[1, 1111, 30]
         # logits_desc_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)  # [B, N, T]
