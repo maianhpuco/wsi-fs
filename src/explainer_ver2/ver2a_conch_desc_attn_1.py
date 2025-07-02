@@ -108,16 +108,16 @@ class Ver2a(nn.Module):
         B, N, D = x_s.shape
 
         x_s_proj = F.normalize(self.visual_proj(F.normalize(x_s, dim=-1)), dim=-1)
-        x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
+        # x_l_proj = F.normalize(self.visual_proj(F.normalize(x_l, dim=-1)), dim=-1)
 
         logits_desc_s = self.compute_patch_scores(x_s_proj, self.desc_text_features)  # [B, N, T]
-        logits_desc_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)  # [B, N, T]
+        # logits_desc_l = self.compute_patch_scores(x_l_proj, self.desc_text_features)  # [B, N, T]
 
         class_scores_s = self.get_class_scores_from_descriptions(logits_desc_s)  # [B, N, C] similarity between patches and descriptions (class level) 
-        class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
+        # class_scores_l = self.get_class_scores_from_descriptions(logits_desc_l)  # [B, N, C] 
 
         # Combine class scores from small and large patches
-        class_scores = (class_scores_s + class_scores_l) / 2  # [B, N, C]
+        class_scores = (class_scores_s) / 2  # [B, N, C]
         # print(f"Class scores shape: {class_scores.shape}")
          
         # Apply attention over patches for each class
