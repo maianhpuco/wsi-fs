@@ -8,18 +8,6 @@ sys.path.append("src/externals/CONCH")
 from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
 
 
-# class AttentionPooling(nn.Module):
-#     def __init__(self, feat_dim):
-#         super().__init__()
-#         self.attn_proj = nn.Linear(feat_dim, 1)
-
-#     def forward(self, feats):
-#         # feats: [B, N, D]
-#         attn_weights = self.attn_proj(feats).squeeze(-1)  # [B, N]
-#         attn_weights = F.softmax(attn_weights, dim=1)  # [B, N]
-#         return torch.sum(attn_weights.unsqueeze(-1) * feats, dim=1)  # [B, D]
-
-
 class Ver2a(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
