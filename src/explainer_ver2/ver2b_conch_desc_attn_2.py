@@ -20,7 +20,7 @@ class DescriptionHead(nn.Module):
         # Compute attention: Q @ K^T => [B, T, N]
         attn_scores = torch.einsum("td,bnd->btn", self.query, patch_feats) * self.scale  # [B, T, N]
         attn_weights = F.softmax(attn_scores, dim=-1)  # [B, T, N]
-
+        print(attn_scores)  
         # Aggregate patch features per description: Attn(Q,K)V = A @ V
         # V = patch_feats → [B, N, D]
         attended = torch.einsum("btn,bnd->btd", attn_weights, patch_feats)  # [B, T, D]
