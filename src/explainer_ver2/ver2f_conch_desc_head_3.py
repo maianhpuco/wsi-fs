@@ -49,6 +49,7 @@ class DescriptionAttentionPooling(nn.Module):
 class DescriptionHead(nn.Module): 
     def __init__(self, desc_feats): 
         super().__init__()
+        print("desc_feats", desc_feats)
         # Store description features as non-trainable parameters
         self.desc_feats = nn.Parameter(desc_feats.clone(), requires_grad=False)  # [num_desc, D]
         # Scaling factor for dot-product attention (1/sqrt(feature_dim))
