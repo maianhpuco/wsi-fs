@@ -66,13 +66,14 @@ class DescriptionHead(nn.Module):
         """
         # Project patch features to query space: [B, N, D]
         queries = self.query_proj(patch_feats)
-        print(f"queries shape: {queries.shape}")  # Debugging output
+        # print(f"queries shape: {queries.shape}")  # Debugging output
         # Project description features to key space: [num_desc, D]
         keys = self.key_proj(self.desc_feats)
         # Compute attention scores: [B, N, D] x [D, num_desc] -> [B, N, num_desc]
         attn_scores = torch.matmul(queries, keys.T) * self.scale
         # Apply softmax to get attention weights over descriptions
         attn_weights = F.softmax(attn_scores, dim=-1)
+        print(f"attn_weights shape: {attn_weights}")  # Debugging output
         return attn_weights
 
 # Define the main model class
