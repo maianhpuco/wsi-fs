@@ -26,7 +26,7 @@ class DescriptionHead(nn.Module):
         attended = torch.einsum("btn,bnd->btd", attn_weights, patch_feats)  # [B, T, D]
         return attended  # description-level embeddings for each input
  
-class Ver2b(nn.Module):
+class Ver2c(nn.Module):
     def __init__(self, config, num_classes=None):
         super().__init__()
         self.device = config.device
