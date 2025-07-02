@@ -68,8 +68,10 @@ class Ver2c(nn.Module):
         return torch.cat(desc_feats, dim=0), class_to_desc
 
     def aggregate_class_features(self):
-        C, D = self.num_classes, self.desc_text_features.size(1)
-        class_feats = torch.zeros(C, D, device=self.device)
+        # Use actual number of classes from class_to_desc_idx instead of self.num_classes
+        actual_num_classes = len(self.class_to_desc_idx)
+        D = self.desc_text_features.size(1)
+        class_feats = torch.zeros(actual_num_classes, D, device=self.device)
         for class_id, (start, end) in self.class_to_desc_idx.items():
             class_feats[class_id] = self.desc_text_features[start:end].max(dim=0)[0]
         return F.normalize(class_feats, dim=-1)
