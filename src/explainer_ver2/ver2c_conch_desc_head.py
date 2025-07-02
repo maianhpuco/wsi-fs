@@ -74,8 +74,19 @@ class Ver2a(nn.Module):
             class_feats[class_id] = self.desc_text_features[start:end].max(dim=0)[0]
         return F.normalize(class_feats, dim=-1)
 
+    # def compute_patch_scores(self, patch_feats, desc_feats):
+    #     return patch_feats @ desc_feats.T
     def compute_patch_scores(self, patch_feats, desc_feats):
-        return patch_feats @ desc_feats.T
+        D = patch_feats.shape[-1]
+        scale = D ** -0.5
+        desc_feats = desc_feats.T  # [D, T]
+        
+        patch_feats = F.normalize(patch_feats, dim=-1)
+        desc_feats = F.normalize(desc_feats, dim=0)
+
+        sim = torch.matmul(patch_feats, desc_feats) * scale  # [B, N, T]
+        attn = F.softmax(sim, dim=-1)  # [B, N, T]
+        return attn
 
     def get_class_scores_from_descriptions(self, logits_desc): # B=batch size, N=patches, T=total number of descriptions 
         B, N, T = logits_desc.shape
